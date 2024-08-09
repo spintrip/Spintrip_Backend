@@ -630,15 +630,30 @@ router.post('/findcars', authenticate, async (req, res) => {
           reverseCamera: carAdditional.Reversecamera,
           transmission: carAdditional.Transmission,
           airBags: carAdditional.Airbags,
+          fuelType: carAdditional.FuelType,
+          petFriendly: carAdditional.PetFriendly,
+          powerSteering: carAdditional.PowerSteering,
+          abs: carAdditional.ABS,
+          tractionControl: carAdditional.tractionControl,
+          fullBootSpace: carAdditional.fullBootSpace,
+          keylessEntry: carAdditional.KeylessEntry,
+          airPurifier: carAdditional.airPurifier,
+          cruiseControl: carAdditional.cruiseControl,
+          voiceControl: carAdditional.voiceControl,
+          usbCharger: carAdditional.usbCharger,
+          bluetooth: carAdditional.bluetooth,
+          airFreshner: carAdditional.airFreshner,
+          ventelatedFrontSeat: carAdditional.ventelatedFrontSeat,
+          additionalInfo: carAdditional.Additionalinfo,
           latitude: carAdditional.latitude,
           longitude: carAdditional.longitude,
-          fuelType: carAdditional.FuelType,
-          additionalInfo: carAdditional.Additionalinfo,
           carImage1: carAdditional.carimage1,
           carImage2: carAdditional.carimage2,
           carImage3: carAdditional.carimage3,
           carImage4: carAdditional.carimage4,
           carImage5: carAdditional.carimage5,
+
+
         }
       
       if (cph) {
