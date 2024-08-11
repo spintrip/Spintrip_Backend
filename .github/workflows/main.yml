@@ -1,0 +1,37 @@
+name: Pull Latest Code on PR [Main]
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  update_code:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python (if needed, adjust if you're using another language)
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Pull Latest Code from Main
+        run: |
+          # Change directory to your working folder
+          cd /home/your-username/SpinTrip_Backend
+          
+          # Configure git user
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # Fetch the latest changes from the remote
+          git fetch origin
+
+          # Checkout the main branch
+          git checkout main
+
+          # Pull the latest code from the main branch
+          git pull origin main
