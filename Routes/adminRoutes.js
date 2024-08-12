@@ -523,13 +523,13 @@ router.put('/approve-profile', authenticate, async (req, res) => {
   }
 });
 
-router.put('/approve-carprofile', async (req, res) => {
+router.put('/approve-carprofile', authenticate, async (req, res) => {
   try {
-    // const adminId = req.user.id;
-    // const admin = await Admin.findByPk(adminId);
-    // if (admin){
-    //   return res.status(404).json({ message: 'Admin not found' });
-    // }
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+    if (admin){
+      return res.status(404).json({ message: 'Admin not found' });
+    }
     const carId = req.body.carId;
     await CarAdditional.update({ verification_status: 2 }, { where: { carid: carId } });
     res.status(200).json({ message: 'Car Profile approved successfully' });
@@ -547,20 +547,20 @@ router.put('/reject-profile', authenticate, async (req, res) => {
     }
     const userId = req.body.userId;
     await UserAdditional.update({ dl: null , aadhar: null, verification_status: null }, { where: { id: userId } });
-    res.status(200).json({ message: 'Profile approved successfully' });
+    res.status(200).json({ message: 'Profile rejected successfully' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error approving profile', error });
+    res.status(500).json({ message: 'Error rejected profile', error });
   }
 });
-router.put('/reject-carprofile',  async (req, res) => {
+router.put('/reject-carprofile', authenticate,  async (req, res) => {
   try {
-    // const adminId = req.user.id;
-    // const admin = await Admin.findByPk(adminId);
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
 
-    // if (!admin) {
-    //   return res.status(404).json({ message: 'Admin not found' });
-    // }
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
     const carId = req.body.carId;
     await CarAdditional.update({ verification_status: null }, { where: { carid: carId } });
     res.status(200).json({ message: 'Car Profile rejected successfully' });
