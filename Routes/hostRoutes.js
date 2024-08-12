@@ -522,6 +522,7 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       longitude: longitude,
       address: address,
       Additionalinfo: additionalInfo,
+      verification_status: 1,
     };
 
     const imageFields = {

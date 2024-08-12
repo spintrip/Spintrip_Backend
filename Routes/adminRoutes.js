@@ -473,7 +473,7 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     let pendingProfiles = await CarAdditional.findAll({
-      where: { verification_status: null },
+      where: { verification_status: 1 },
     });
     if (pendingProfiles.length === 0) {
       res.status(200).json({ message: 'No car approval required' });
@@ -527,7 +527,7 @@ router.put('/approve-carprofile', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;
     const admin = await Admin.findByPk(adminId);
-    if (admin){
+    if (!admin){
       return res.status(404).json({ message: 'Admin not found' });
     }
     const carId = req.body.carId;
