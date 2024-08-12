@@ -507,8 +507,11 @@ router.post('/findcars', authenticate, async (req, res) => {
         return null;
       }
       const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
-      if(carAdditional) {
+      if(!carAdditional) {
           return null;
+      }
+      if(carAdditional.verification_status != 2){
+        return null;
       }
       const check_booking = await Booking.findOne({
         where: {

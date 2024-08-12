@@ -349,7 +349,7 @@ router.put('/bookings/:id', authenticate, async (req, res) => {
 
 router.delete('/bookings/:id', authenticate, async (req, res) => {
   try {
-    await Booking.destroy({ where: { id: req.params.id } });
+    await Booking.destroy({ where: { Bookingid: req.params.id } });
     res.status(200).json({ message: 'Booking deleted' });
   } catch (error) {
     console.log(error);
@@ -522,6 +522,21 @@ router.put('/approve-profile', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error approving profile', error });
   }
 });
+
+router.put('/approve-carprofile', async (req, res) => {
+  try {
+    // const adminId = req.user.id;
+    // const admin = await Admin.findByPk(adminId);
+    // if (admin){
+    //   return res.status(404).json({ message: 'Admin not found' });
+    // }
+    const carId = req.body.carId;
+    await CarAdditional.update({ verification_status: 2 }, { where: { carid: carId } });
+    res.status(200).json({ message: 'Car Profile approved successfully' });
+  } catch (error) {
+    console.log(error);
+    }
+  });
 router.put('/reject-profile', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;
@@ -531,27 +546,27 @@ router.put('/reject-profile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     const userId = req.body.userId;
-    await UserAdditional.update({ verification_status: null }, { where: { id: userId } });
+    await UserAdditional.update({ dl: null , aadhar: null, verification_status: null }, { where: { id: userId } });
     res.status(200).json({ message: 'Profile approved successfully' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error approving profile', error });
   }
 });
-router.put('/reject-carprofile', authenticate, async (req, res) => {
+router.put('/reject-carprofile',  async (req, res) => {
   try {
-    const adminId = req.user.id;
-    const admin = await Admin.findByPk(adminId);
+    // const adminId = req.user.id;
+    // const admin = await Admin.findByPk(adminId);
 
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
+    // if (!admin) {
+    //   return res.status(404).json({ message: 'Admin not found' });
+    // }
     const carId = req.body.carId;
     await CarAdditional.update({ verification_status: null }, { where: { carid: carId } });
-    res.status(200).json({ message: 'Car Profile approved successfully' });
+    res.status(200).json({ message: 'Car Profile rejected successfully' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error in approving Car profile', error });
+    res.status(500).json({ message: 'Error in rejected Car profile', error });
   }
 });
 router.post('/new-brand', upload.single('carImage'), async (req, res) => {
