@@ -506,6 +506,10 @@ router.post('/findcars', authenticate, async (req, res) => {
         // Skip or handle the error appropriately if Car data is not found
         return null;
       }
+      const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
+      if(carAdditional) {
+          return null;
+      }
       const check_booking = await Booking.findOne({
         where: {
           carid: carId,
@@ -602,7 +606,6 @@ router.post('/findcars', authenticate, async (req, res) => {
       if (check_booking) {
         return null;
       }
-      const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
 
       // Fetch the Pricing data for the Car
       const cph = await Pricing.findOne({ where: { carid: carId } });

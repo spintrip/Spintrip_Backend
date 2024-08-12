@@ -82,7 +82,7 @@ const pricing = async (car, carAdditional) => {
   try {
     const currentYear = new Date().getFullYear();
     let brand = await Brand.findOne({
-      where: { carmodel: car.carmodel, type: car.type, brand: car.brand },
+      where: { type: car.type, brand: car.brand },
     });
 
     if (brand) {

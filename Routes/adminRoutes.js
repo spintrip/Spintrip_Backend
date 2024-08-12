@@ -454,7 +454,7 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     let pendingProfiles = await CarAdditional.findAll({
-      where: { verification_status: 1 },
+      where: { verification_status: null },
     });
     if (pendingProfiles.length === 0) {
       res.status(200).json({ message: 'No car approval required' });
