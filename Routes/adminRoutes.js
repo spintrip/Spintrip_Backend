@@ -16,6 +16,7 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const csv = require('csv-parser');
 const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
+const { Op } = require('sequelize');
 
 // Set up multer storage with S3
 const upload = multer({
@@ -239,11 +240,12 @@ router.delete('/users/:id', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const additionalinfo = await UserAdditional.findByPk(req.params.id);
-    if (!additionalinfo) {
-      return res.status(404).json({ message: 'User additional not found' });
-    }
-    await additionalinfo.destroy();
+    // const additionalinfo = await UserAdditional.findByPk(req.params.id);
+    // if (!additionalinfo) {
+    //   return res.status(404).json({ message: 'User additional not found' });
+    // }
+
+    // await additionalinfo.destroy();
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
@@ -473,7 +475,12 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     let pendingProfiles = await CarAdditional.findAll({
-      where: { verification_status: 1 },
+      where: {
+        [Op.or]: [
+          { verification_status: 1 },
+          { verification_status: null }
+        ]
+      }
     });
     if (pendingProfiles.length === 0) {
       res.status(200).json({ message: 'No car approval required' });

@@ -56,27 +56,27 @@ const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
     Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment  } = sequelize.models;
 
-  Support.belongsTo(User, { foreignKey: 'userId' });
+  Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Support, { foreignKey: 'supportId' });
-  SupportChat.belongsTo(User, { foreignKey: 'userId' });
+  SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId' });
   carFeature.belongsTo(Feature, { foreignKey: 'featureid' });
   carFeature.belongsTo(Car, { foreignKey: 'carid' });
   BlogComment.belongsTo(Blog, {foreignKey: 'blogId'});
-  User.hasMany(Support, { foreignKey: 'userId' });
+  User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
   Support.hasMany(SupportChat, { foreignKey: 'supportId' });
-  User.hasMany(SupportChat, { foreignKey: 'userId' });
+  User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
   Admin.hasMany(SupportChat, { foreignKey: 'adminId' });
   Host.belongsTo(User, { foreignKey: 'id' });
   Admin.belongsTo(User, { foreignKey: 'id' });
-  UserAdditional.belongsTo(User, { foreignKey: 'id' });
+  UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
   CarAdditional.belongsTo(Car, { foreignKey: 'carid' });
   Car.belongsTo(Host, { foreignKey: 'carid' });
   Booking.hasOne(User);
   Booking.hasOne(Car);
-  Booking.belongsTo(User, { foreignKey: 'id' });
+  Booking.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE'});
   Booking.belongsTo(Car, { foreignKey: 'carid' });
-  Booking.belongsTo(UserAdditional, { foreignKey: 'id' });
+  Booking.belongsTo(UserAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
   User.hasOne(Admin);
   User.hasOne(Host);
   User.hasMany(Booking);

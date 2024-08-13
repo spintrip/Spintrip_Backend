@@ -100,7 +100,7 @@ const viewSupportTickets = async (req, res) => {
       if (!ticket) {
         return res.status(404).json({ message: 'Ticket not found' });
       }
-      await SupportChat.create({ id:id, ticketId, adminId: req.user.id, reply  });
+      await SupportChat.create({ id:id, supportId: ticketId, adminId: req.user.id, senderId: req.user.id,  message: reply  });
       ticket.status = 'Replied';
       await ticket.save();
       res.status(200).json({ message: 'Reply sent successfully' });
