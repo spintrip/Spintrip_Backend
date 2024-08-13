@@ -150,7 +150,7 @@ router.post('/login', authenticate, async (req, res) => {
     if (!host) {
       return res.status(401).json({ message: 'Invalid phone or password' });
     }
-    if (phone == '+91host') {
+    if (phone == '+910123456789') {
       return res.status(201).json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', phone, otp: user.otp });
     }
     const otp = generateOTP();

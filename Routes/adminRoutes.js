@@ -18,6 +18,68 @@ const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
 const { Op } = require('sequelize');
 
+const pricing1 = async (car, carAdditional) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    let brand = await Brand.findOne({
+      where: { type: car.type, brand: car.brand },
+    });
+
+    if (brand) {
+      brand_value = brand.brand_value;
+      base_price = brand.base_price;
+    }
+    else {
+      brand_value = 10;
+      base_price = 100;
+    }
+
+    let val, horsePower;
+
+    if ((car.Registrationyear.substring(0, 4) < 2018)) {
+      val = (currentYear - car.Registrationyear.substring(0, 4)) * 3;
+    }
+    else {
+      val = (currentYear - car.Registrationyear.substring(0, 4)) * 1.5;
+    }
+    if ((carAdditional.HorsePower <= 80) || (!carAdditional.HorsePower)) {
+      horsePower = 0;
+    }
+    else if ((carAdditional.HorsePower > 80 && carAdditional.HorsePower < 150)) {
+      horsePower = 20;
+    }
+    else {
+      horsePower = 30;
+    }
+    let Price;
+    let Sevenseater;
+    if (car.type === 'SUV') {
+      Sevenseater = 30;
+    }
+    else {
+      Sevenseater = 15;
+    }
+    if (car.type === 'Hatchback') {
+      Price = brand_value + horsePower +
+        3 * (carAdditional.AC ? 1 : 0) + 3 * (carAdditional.Musicsystem ? 1 : 0) + 2 * (carAdditional.Autowindow ? 1 : 0) +
+        2 * (carAdditional.Sunroof ? 1 : 0) + 2 * (carAdditional.touchScreen ? 1 : 0) + 15 * (carAdditional.Sevenseater ? 1 : 0) +
+        2 * (carAdditional.Reversecamera ? 1 : 0) + 3 * (carAdditional.Transmission ? 1 : 0) + 10 * (carAdditional.FuelType ? 1 : 0) +
+        2 * (carAdditional.Airbags ? 1 : 0) - val + base_price;
+      return Price;
+    }
+    else {
+      Price = brand_value + horsePower +
+        5 * (carAdditional.AC ? 1 : 0) + 5 * (carAdditional.Musicsystem ? 1 : 0) + 2 * (carAdditional.Autowindow ? 1 : 0) +
+        2 * (carAdditional.Sunroof ? 1 : 0) + 2 * (carAdditional.touchScreen ? 1 : 0) + Sevenseater * (carAdditional.Sevenseater ? 1 : 0) +
+        2 * (carAdditional.Reversecamera ? 1 : 0) + 5 * (carAdditional.Transmission ? 1 : 0) + 10 * (carAdditional.FuelType ? 1 : 0) +
+        2 * (carAdditional.Airbags ? 1 : 0) - val + base_price;
+      return Price;
+    }
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 // Set up multer storage with S3
 const upload = multer({
   storage: multerS3({
@@ -240,12 +302,6 @@ router.delete('/users/:id', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    // const additionalinfo = await UserAdditional.findByPk(req.params.id);
-    // if (!additionalinfo) {
-    //   return res.status(404).json({ message: 'User additional not found' });
-    // }
-
-    // await additionalinfo.destroy();
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
@@ -328,22 +384,20 @@ router.get('/bookings/:id', authenticate, async (req, res) => {
 
 router.put('/bookings/:id', authenticate, async (req, res) => {
   try {
-    const bookingId = req.params.id;
+    const { id } = req.params;
     const updatedFields = req.body;
 
-    // Find the existing booking
-    const booking = await Booking.findByPk(bookingId);
+    const booking = await Booking.findByPk(id);
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Update the booking with the provided fields
     await booking.update(updatedFields);
 
     res.status(200).json({ message: 'Booking updated successfully', booking });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Error updating booking', error });
   }
 });
@@ -485,29 +539,7 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
     if (pendingProfiles.length === 0) {
       res.status(200).json({ message: 'No car approval required' });
     }
-    else {
-      const carProfiles = await Promise.all(
-        pendingProfiles.map(async (item) => {
-          let id = item.carid;
-          console.log(id);
-          let carid = id;
-          let userFolder = path.join('./uploads/host/CarAdditional', carid);
-          if (fs.existsSync(userFolder)) {
-            let files = fs.readdirSync(userFolder);
-            if (files) {
-              let carImage_1 = files.filter(file => file.includes('carImage_1')).map(file => `${process.env.BASE_URL}/uploads/host/CarAdditional/${carid}/${file}`);
-              let carImage_2 = files.filter(file => file.includes('carImage_2')).map(file => `${process.env.BASE_URL}/uploads/host/CarAdditional/${carid}/${file}`);
-              let carImage_3 = files.filter(file => file.includes('carImage_3')).map(file => `${process.env.BASE_URL}/uploads/host/CarAdditional/${carid}/${file}`);
-              let carImage_4 = files.filter(file => file.includes('carImage_4')).map(file => `${process.env.BASE_URL}/uploads/host/CarAdditional/${carid}/${file}`);
-              let carImage_5 = files.filter(file => file.includes('carImage_5')).map(file => `${process.env.BASE_URL}/uploads/host/CarAdditional/${carid}/${file}`);
-              return { ...item.toJSON(), carImage_1: carImage_1[0], carImage_2: carImage_2[0], carImage_3: carImage_3[0], carImage_4: carImage_4[0], carImage_5: carImage_5[0] };
-            }
-          }
-          return item.toJSON();
-        }
-        ));
-      res.status(200).json({ carProfiles });
-    }
+      res.status(200).json({ pendingProfiles });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching pending profiles', error });
@@ -544,6 +576,7 @@ router.put('/approve-carprofile', authenticate, async (req, res) => {
     console.log(error);
     }
   });
+
 router.put('/reject-profile', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;
@@ -560,6 +593,7 @@ router.put('/reject-profile', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error rejected profile', error });
   }
 });
+
 router.put('/reject-carprofile', authenticate,  async (req, res) => {
   try {
     const adminId = req.user.id;
@@ -576,6 +610,7 @@ router.put('/reject-carprofile', authenticate,  async (req, res) => {
     res.status(500).json({ message: 'Error in rejected Car profile', error });
   }
 });
+
 router.post('/new-brand', upload.single('carImage'), async (req, res) => {
   try {
     const { brand } = req.body;
@@ -779,6 +814,7 @@ router.put('/update_brand', authenticate, async (req, res) => {
 });
 
 router.get('/pricing', authenticate, async (req, res) => {
+ try{ 
   const adminId = req.user.id;
   const admin = await Admin.findByPk(adminId);
 
@@ -786,13 +822,17 @@ router.get('/pricing', authenticate, async (req, res) => {
     return res.status(404).json({ message: 'Admin not found' });
   }
   const pricing = await Pricing.findAll();
-  res.status(200).json({ "message": "Car pricing asscoiated", pricing })
+  res.status(200).json({ "message": "Car pricing asscoiated", pricing });
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ message: 'Error getting Pricing', error });
+}
 });
 
-router.put('/pricing/:carid', authenticate, async (req, res) => {
+router.put('/pricing', authenticate, async (req, res) => {
+ try {
   const adminId = req.user.id;
-  const { carid } = req.params;
-  const { costperhr } = req.body;
+  const { carid, costperhr } = req.body;
 
   const admin = await Admin.findByPk(adminId);
   if (!admin) {
@@ -808,6 +848,63 @@ router.put('/pricing/:carid', authenticate, async (req, res) => {
   await pricing.save();
 
   res.status(200).json({ message: 'Pricing updated successfully', pricing });
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ message: 'Error adding Pricing', error });
+}
+});
+
+router.put('/auto-pricing', authenticate, async (req, res) => {
+try{ 
+  const adminId = req.user.id;
+  const { carid } = req.body;
+
+  const admin = await Admin.findByPk(adminId);
+  if (!admin) {
+    return res.status(404).json({ message: 'Admin not found' });
+  }
+
+  const pricing = await Pricing.findByPk(carid);
+  if (!pricing) {
+    return res.status(404).json({ message: 'Pricing record not found' });
+  }
+  const car = await Car.findOne({
+    where: {
+      carid: carid,
+    }})
+  if(!car){
+    return res.status(404).json({ message: 'Car record not found' });
+  }   
+  const carAdditional = await CarAdditional.findOne({
+    where: {
+      carid: car.carid,
+    }
+  });
+  const costperhr = await pricing1(car, carAdditional);
+  console.log(costperhr);
+  const Price = await Pricing.findOne({ where: { carid: car.carid } });
+  var price;
+  if (Price) {
+    price = await Pricing.update(
+      { costperhr: costperhr },
+      {
+        where: {
+          carid: car.carid
+        }
+      }
+    )
+  }
+  else {
+    price = await Pricing.create({
+      costperhr: costperhr,
+      carid: car.carid
+    })
+  }
+  res.status(200).json({ message: 'Pricing updated successfully',carid, costperhr });
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ message: 'Error adding Pricing', error });
+}
 });
 
 router.post('/features', authenticate, async (req, res) => {
