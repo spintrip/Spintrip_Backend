@@ -694,6 +694,8 @@ router.put('/update_brand', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     let brands = await Brand.update({
+      type: type,
+      brand: brand,
       brand_value: brand_value,
       base_price: base_price
     },
@@ -981,6 +983,7 @@ router.get('/device', async (req, res) => {
 });
 router.get('/device/:id', async (req, res) => {
   const id = req.params.id;
+  const limit = parseInt(req.query.limit, 10) || 10; 
 
   try {
     const results = await Device.findAll({
@@ -988,7 +991,7 @@ router.get('/device/:id', async (req, res) => {
         deviceid: id,
       },
       order: [['createdAt', 'DESC']],
-      limit: 5,
+      limit: limit, // Apply the limit
     });
 
     if (results.length === 0) {
