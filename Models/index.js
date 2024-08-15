@@ -52,10 +52,12 @@ db.BlogComment = require('./blogCommentModel')(sequelize, DataTypes);
 db.Device = require('./deviceModel')(sequelize, DataTypes);
 db.Feature = require('./featureModel')(sequelize, DataTypes);
 db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
+db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
-    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment  } = sequelize.models;
+    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices  } = sequelize.models;
 
+  carDevices.belongsTo(Car, { foreignKey: 'carid' })  
   Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Support, { foreignKey: 'supportId' });
   SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
@@ -80,6 +82,7 @@ const associateModels = () => {
   User.hasOne(Admin);
   User.hasOne(Host);
   User.hasMany(Booking);
+  Car.hasOne(carDevices);
   Listing.hasOne(Car, { foreignKey: 'carid' });
   Listing.hasOne(Host, { foreignKey: 'id', sourcekey: 'hostid' });
   Host.hasMany(Car, { foreignKey: 'carhostid', sourceKey: 'id' });

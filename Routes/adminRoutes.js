@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
-const { User, Admin, UserAdditional, Booking, Host, Car, Brand, Pricing, Listing, CarAdditional, Tax, Device, Feature } = require('../Models');
+const { User, Admin, UserAdditional, Booking, Host, Car, Brand, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices } = require('../Models');
 const path = require('path');
 const uuid = require('uuid');
 const { sendOTP, generateOTP, authAdmin, client } = require('../Controller/adminController');
@@ -1005,22 +1005,116 @@ router.get('/device/:id', async (req, res) => {
   }
 });
 
-router.get('/alldevice', async (req, res) => {
-  try {
-    const results = await Device.findAll({
-      attributes: [
-        [sequelize.fn('DISTINCT', sequelize.col('deviceid')), 'deviceid'],
-      ],
-    });
 
-    if (results.length === 0) {
-      return res.status(404).send('No data found');
+router.post('/car-device', async (req, res) => {
+  try {
+    const { deviceid, carid } = req.body;
+    const car = await Car.findOne({
+      where: {
+        carid: carid,
+      }})
+    if(!car){
+      res.status(400).json({ message: 'Car not found' });
+    }  
+    const mapping = await carDevices.findOne({
+      where: {
+        [Op.or]: [
+          { carid: carid },
+          { deviceid: deviceid }
+        ]
+      }
+    });
+    if(mapping)
+    {
+      return res.status(400).json({ message: 'Car or device id already mapped' });
+    }  
+    const newMapping = await carDevices.create({ deviceid, carid });
+
+    res.status(201).json({ message: 'Mapping created successfully', newMapping });
+  } catch (error) {
+    console.error('Error creating mapping:', error.message);
+    res.status(500).json({ message: 'Error creating mapping', error });
+  }
+});
+
+// READ - Get all mappings
+router.get('/car-device', async (req, res) => {
+  try {
+    const mappings = await carDevices.findAll();
+
+    if (mappings.length === 0) {
+      return res.status(404).json({ message: 'No mappings found' });
+    }
+    res.json(mappings);
+  } catch (error) {
+    console.error('Error fetching mappings:', error.message);
+    res.status(500).json({ message: 'Error fetching mappings', error });
+  }
+});
+
+router.get('/car-device/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const mapping = await carDevices.findByPk(id);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
+    }
+    res.json(mapping);
+  } catch (error) {
+    console.error('Error fetching mapping:', error.message);
+    res.status(500).json({ message: 'Error fetching mapping', error });
+  }
+});
+
+
+router.put('/car-device', async (req, res) => {
+
+  const { deviceid, carid } = req.body;
+
+  try {
+    const mapping = await carDevices.findByPk(deviceid);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
+    }
+    const car = await Car.findOne({
+      where: {
+        carid: carid,
+      }})
+    if(!car){
+      res.status(400).json({ message: 'Car not found' });
+    } 
+
+    mapping.carid = carid !== undefined ? carid : mapping.carid;
+
+    await mapping.save();
+
+    res.json({ message: 'Mapping updated successfully', mapping });
+  } catch (error) {
+    console.error('Error updating mapping:', error.message);
+    res.status(500).json({ message: 'Error updating mapping', error });
+  }
+});
+
+
+router.delete('/car-device/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const mapping = await carDevices.findByPk(id);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
     }
 
-    res.json(results);
+    await mapping.destroy();
+
+    res.json({ message: 'Mapping deleted successfully' });
   } catch (error) {
-    console.error('Error retrieving data from database:', error.message);
-    res.status(500).send('Error retrieving data from database');
+    console.error('Error deleting mapping:', error.message);
+    res.status(500).json({ message: 'Error deleting mapping', error });
   }
 });
 //Support

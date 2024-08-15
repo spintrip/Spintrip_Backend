@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
-const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog } = require('../Models');
+const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device } = require('../Models');
 const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
@@ -1306,6 +1306,38 @@ router.post('/getCarReg', async (req, res) => {
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).json({ error: 'Error fetching data' });
+  }
+});
+
+router.get('/device/:carid', authenticate, async (req, res) => {
+  try {
+    const id = req.params.carid;
+    const limit = parseInt(req.query.limit, 10) || 10; 
+    const hostId = req.user.id;
+    const car = await Car.findOne({ where: { carid: id, hostId: hostId } });
+    if (!car) {
+      return res.status(404).json({ message: 'Car not found or unauthorized access' });
+    }
+    const device = await carDevices.findOne({ where: { carid: id } });
+    if (!device) {
+      return res.status(404).json({ message: 'Car not available for tracking' });
+    }
+    const results = await Device.findAll({
+      where: {
+        deviceid: device.deviceid,
+      },
+      order: [['createdAt', 'DESC']],
+      limit: limit, // Apply the limit
+    });
+
+    if (results.length === 0) {
+      return res.status(404).send('No data found for the provided id');
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error retrieving data from database:', error.message);
+    res.status(500).send('Error retrieving data from database');
   }
 });
 
