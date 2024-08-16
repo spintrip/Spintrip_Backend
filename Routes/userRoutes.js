@@ -1843,7 +1843,7 @@ router.post('/view-breakup', authenticate, async (req, res) => {
     let insuranceAmount = ( amount * tax.insurance )/100;
     let hostGst = ( amount - ( amount * tax.Commission / 100 ) ) * (tax.HostGST / 100);
     let gstAmount = spinTripGST + hostGst;
-    let totalUserAmount = amount + gstAmount;
+    let totalUserAmount = amount + gstAmount+ insuranceAmount;
 
     return res.status(200).json({
       totalHours: hours,
