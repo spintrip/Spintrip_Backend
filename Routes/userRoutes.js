@@ -7,7 +7,7 @@ const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, C
        carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog } = require('../Models');
 const { sendOTP, generateOTP, razorpay } = require('../Controller/userController');
 const { getAllBlogs } = require('../Controller/blogController');
-const { initiatePayment, checkPaymentStatus } = require('../Controller/paymentController');
+const { initiatePayment, checkPaymentStatus, phonePayment } = require('../Controller/paymentController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { Op } = require('sequelize');
@@ -2154,10 +2154,27 @@ router.get('/top-rating' , async (req, res) => {
   }
 });
 
+router.get('/webhook/phonepe' , async (req, res) => {
+  try {
+    const webhookData = req.body;
+
+    // Process the webhook data
+    console.log('Webhook received:', webhookData);
+
+    // Respond with a 200 status to acknowledge receipt
+    res.status(200).send('Webhook received');
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 //Payment
 
 // Initiate Payment Route
 router.post('/payment', authenticate, initiatePayment);
+
+router.post('/phonepayment', phonePayment);
 
 // Payment Status Check Route
 router.post('/status/:txnId', checkPaymentStatus);
