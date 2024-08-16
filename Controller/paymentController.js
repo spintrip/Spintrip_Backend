@@ -98,7 +98,7 @@ const phonePayment = async (req, res) => {
     }
     const payload = {
         "merchantId": "M2207FVORVMF0",
-        "merchantTransactionId": 6,
+        "merchantTransactionId": bookingId,
         "merchantUserId": "M2207FVORVMF0",
         "amount": 1,
         "redirectUrl": "https://spintrip.in",
