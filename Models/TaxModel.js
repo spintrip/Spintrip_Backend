@@ -4,7 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     GST: { type: DataTypes.FLOAT, defaultValue: 18 },
     HostGST: { type: DataTypes.FLOAT, defaultValue: 5 },
     TDS: { type: DataTypes.FLOAT, defaultValue: 1 },
-    Commission: { type: DataTypes.FLOAT, defaultValue: 35 },
+    Commission: { type: DataTypes.FLOAT, defaultValue: 30 },
+    insurance: { type: DataTypes.FLOAT, defaultValue: 14 },
   });
   return Tax;
 };

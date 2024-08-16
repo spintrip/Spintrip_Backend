@@ -1236,7 +1236,8 @@ router.post('/booking', authenticate, async (req, res) => {
       
       // Update booking amounts using dynamic tax rates
       let gstAmount = (parseFloat(spinTripGST) + parseFloat(hostGst)).toFixed(2);
-      let totalUserAmount = (amount + parseFloat(gstAmount)).toFixed(2);
+      let insuranceAmount = ( amount * tax.insurance )/100;
+      let totalUserAmount = (amount + parseFloat(gstAmount) + insuranceAmount).toFixed(2);
       let tds = ((amount * HostCommision) * tdsRate).toFixed(2);
       let totalHostAmount = ((amount * HostCommision) - parseFloat(tds)).toFixed(2);
       const bookingid = uuid.v4();
@@ -1251,6 +1252,7 @@ router.post('/booking', authenticate, async (req, res) => {
         status: 5,
         amount: amount,
         GSTAmount: gstAmount,
+        insurance: insuranceAmount,
         totalUserAmount: totalUserAmount,
         TDSAmount: tds,
         totalHostAmount: totalHostAmount,
@@ -1269,6 +1271,7 @@ router.post('/booking', authenticate, async (req, res) => {
         startTripTime: booking.startTripTime,
         endTripTime: booking.endTripTime,
         gstAmount: booking.GSTAmount,
+        insurance: booking.insurance,
         totalUserAmount: booking.totalUserAmount,
       }
       req.body.bookingId = booking.Bookingid;
@@ -1968,6 +1971,7 @@ router.get('/User-Bookings', authenticate, async (req, res) => {
             status: bookings.status,
             amount: bookings.amount,
             gstAmount: bookings.GSTAmount,
+            insurance: bookings.insurance,
             totalUserAmount: bookings.totalUserAmount,
             transactionId: bookings.Transactionid,
             startTripDate: bookings.startTripDate,

@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     status: { type: DataTypes.INTEGER,allowNull: true },
     amount: { type: DataTypes.FLOAT, allowNull: true },
     GSTAmount: { type: DataTypes.FLOAT, allowNull: true }, 
+    insurance: { type: DataTypes.FLOAT, allowNull: true }, 
     totalUserAmount: { type: DataTypes.FLOAT, allowNull: true },
     TDSAmount: { type: DataTypes.FLOAT, allowNull: true },
     totalHostAmount: { type: DataTypes.FLOAT, allowNull: true },

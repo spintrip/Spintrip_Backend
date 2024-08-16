@@ -709,13 +709,14 @@ router.put('/update_brand', authenticate, async (req, res) => {
 });
 router.post('/tax', async (req, res) => {
   try {
-    const { GST, HostGST, TDS, Commission } = req.body;
+    const { GST, HostGST, TDS, Commission, insurance } = req.body;
 
     let tax = await Tax.create({
       GST: GST,
       HostGST: HostGST,
       TDS: TDS,
-      Commission: Commission
+      Commission: Commission,
+      insurance: insurance
     }
     );
     res.status(200).json({ message: 'Tax Updated', tax });
@@ -738,7 +739,7 @@ router.get('/tax', async (req, res) => {
 router.put('/tax/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { GST, HostGST, TDS, Commission } = req.body;
+    const { GST, HostGST, TDS, Commission, insurance } = req.body;
 
     let tax = await Tax.findByPk(id);
     if (!tax) {
@@ -749,6 +750,7 @@ router.put('/tax/:id', async (req, res) => {
     tax.HostGST = HostGST !== undefined ? HostGST : tax.HostGST;
     tax.TDS = TDS !== undefined ? TDS : tax.TDS;
     tax.Commission = Commission !== undefined ? Commission : tax.Commission;
+    tax.insurance = insurance !== undefined ? insurance: tax.insurance;
 
     await tax.save();
 
