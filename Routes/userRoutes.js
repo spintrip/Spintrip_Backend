@@ -1840,6 +1840,7 @@ router.post('/view-breakup', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Tax data not found' });
     }
     let spinTripGST = amount * (tax.GST / 100) * (tax.Commission / 100);
+    let insuranceAmount = ( amount * tax.insurance )/100;
     let hostGst = ( amount - ( amount * tax.Commission / 100 ) ) * (tax.HostGST / 100);
     let gstAmount = spinTripGST + hostGst;
     let totalUserAmount = amount + gstAmount;
@@ -1851,6 +1852,7 @@ router.post('/view-breakup', authenticate, async (req, res) => {
       spinTripGST: spinTripGST,
       hostGst: hostGst,
       gstAmount: gstAmount,
+      insurance: insuranceAmount,
       grossAmount: totalUserAmount,
     });
   } catch (error) {
