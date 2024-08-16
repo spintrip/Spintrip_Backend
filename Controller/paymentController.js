@@ -98,7 +98,7 @@ const phonePayment = async (req, res) => {
     }
     const payload = {
         "merchantId": "M2207FVORVMF0",
-        "merchantTransactionId": bookingId,
+        "merchantTransactionId": 6,
         "merchantUserId": "M2207FVORVMF0",
         "amount": 1,
         "redirectUrl": "https://spintrip.in",
@@ -138,7 +138,10 @@ const phonePayment = async (req, res) => {
         .then(function (response) {
             console.log('Response received:', response.data);
             if (response.data.success == true){
-            return res.status(200).json({ "message": response.data});
+            return res.status(200).json({ "paymentUrl": response.data.data.instrumentResponse.redirectInfo.url});
+            }
+            else{
+              return res.status(400).json( { message: 'Failed to create payment link', error: response.data.message });
             }
         })
         .catch(function (error) {
