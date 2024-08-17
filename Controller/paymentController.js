@@ -238,6 +238,22 @@ const webhook = async (req, res) => {
     if (success && code === 'PAYMENT_SUCCESS') {
         await transaction.update({ status: 2 });
         console.log(`Payment successful for transaction ${data.merchantTransactionId}`);
+
+        // Fetch user and booking details
+        const booking = await Booking.findOne({ where: { Bookingid: transaction.Bookingid } });
+        const user = await User.findByPk(booking.id);
+
+        // Prepare email content
+        const bookingDetails = {
+          carModel: booking.carmodel,
+          startDate: booking.startTripDate,
+          endDate: booking.endTripDate,
+          amount: booking.totalUserAmount
+        };
+
+        // Send email to the user
+        await sendBookingConfirmationEmail(user.email, bookingDetails);
+
     } else {
         await transaction.update({ status: 3 });
         console.log(`Payment failed for transaction ${data.merchantTransactionId}`);
@@ -249,7 +265,6 @@ const webhook = async (req, res) => {
     res.status(500).send({ message: error.message });
   }
 };
-
 
 module.exports = {
   initiatePayment,

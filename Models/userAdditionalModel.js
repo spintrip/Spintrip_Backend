@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
 
     });
  
+    UserAdditional.associate = (models) => {
+      UserAdditional.belongsTo(models.User, { foreignKey: 'id', onDelete: 'CASCADE' });
+    };
+  
   
     return UserAdditional;
   };
