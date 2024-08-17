@@ -122,9 +122,9 @@ const phonePayment = async (req, res) => {
         "merchantTransactionId": orderId,
         "merchantUserId": "M2207FVORVMF0",
         "amount": amount * 100,
-        "redirectUrl": "https://spintrip.in",
+        "redirectUrl": "https://spintrip.in/user/user-dashboard",
         "redirectMode": "REDIRECT",
-        "callbackUrl": "https://spintrip.in/user/user-dashboard",
+        "callbackUrl": "https://spintripbackend.site/api/users/webhook/phonepe",
         "mobileNumber": user.phone,
         "paymentInstrument": {
             "type": "PAY_PAGE"

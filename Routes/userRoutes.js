@@ -2161,7 +2161,7 @@ router.get('/top-rating', async (req, res) => {
   }
 });
 
-router.get('/webhook/phonepe', webhook ); 
+router.post('/webhook/phonepe', webhook ); 
 //Payment
 
 // Initiate Payment Route
