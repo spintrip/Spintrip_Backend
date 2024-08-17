@@ -1075,7 +1075,7 @@ router.post('/car-device', async (req, res) => {
         carid: carid,
       }})
     if(!car){
-      res.status(400).json({ message: 'Car not found' });
+      return res.status(400).json({ message: 'Car not found' });
     }  
     const mapping = await carDevices.findOne({
       where: {
@@ -1145,7 +1145,7 @@ router.put('/car-device', async (req, res) => {
         carid: carid,
       }})
     if(!car){
-      res.status(400).json({ message: 'Car not found' });
+      return res.status(400).json({ message: 'Car not found' });
     } 
 
     mapping.carid = carid !== undefined ? carid : mapping.carid;
