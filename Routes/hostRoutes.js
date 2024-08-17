@@ -10,6 +10,15 @@ const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricin
 const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
+const { 
+  sendBookingConfirmationEmail, 
+  sendBookingApprovalEmail, 
+  sendTripStartEmail, 
+  sendTripEndEmail, 
+  sendPaymentConfirmationEmail,
+  sendBookingCancellationEmail,
+  sendBookingCompletionEmail
+} = require('../Controller/emailController');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
@@ -1093,6 +1102,45 @@ router.post('/rating', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+const getBookingDetails = async (bookingId) => {
+  try {
+    const booking = await Booking.findOne({
+      where: { Bookingid: bookingId }});
+
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+
+    // Fetch the host's user details using the hostId from the car model
+    const user = await UserAdditional.findOne({
+      where: { id: booking.id }
+    });
+    const host = await Car.findOne({
+      where: { carid: booking.carid }
+    })
+
+    const userEmail = user?.Email;
+    const hostId = host?.hostId;
+    var hostEmail =  await UserAdditional.findOne({
+      where: { id: hostId }
+    });
+    const bookingDetails = {
+      carModel: host.carmodel,
+      startDate: booking.startTripDate,
+      startTime: booking.startTripTime,
+      endDate: booking.endTripDate,
+      endTime:booking.endTripTime,
+    };  
+    hostEmail = hostEmail.Email;
+    return { userEmail, hostEmail, bookingDetails };
+  } catch (error) {
+    console.error('Error in getBookingDetails:', error);
+    throw error;
+  }
+};
+
+
 router.post('/booking-request', authenticate, async (req, res) => {
   try {
     let bk = req.body;
@@ -1110,16 +1158,20 @@ router.post('/booking-request', authenticate, async (req, res) => {
       await booking.update({
         status: 1,
       });
+      const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bookingId);
+      await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved');
       return res.status(201).json({ message: 'Booking confirmed by host' });
     }
     if (bk.status == '4') {
       const today = new Date();
       const cancelDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       await booking.update({
-        status: 4,
+        status: 4,  
         cancelDate: cancelDate,
         cancelReason: bk.CancelReason
       });
+      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails,"The booking has been cancelled");
       return res.status(201).json({ message: 'Booking cancelled by host' });
     }
     return res.status(404).json({ message: 'No Action performed' });

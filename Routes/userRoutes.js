@@ -20,6 +20,15 @@ const axios = require('axios');
 const path = require('path');
 const csv = require('csv-parser');
 const router = express.Router();
+const { 
+  sendBookingConfirmationEmail, 
+  sendBookingApprovalEmail, 
+  sendTripStartEmail, 
+  sendTripEndEmail, 
+  sendPaymentConfirmationEmail,
+  sendBookingCancellationEmail,
+  sendBookingCompletionEmail
+} = require('../Controller/emailController');
 const ImageStorage = multerS3({
   s3: s3,
   bucket: 'spintrip-bucket',
@@ -982,8 +991,45 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
 
   return diffHours;
 }
+const getBookingDetails = async (bookingId) => {
+  try {
+    const booking = await Booking.findOne({
+      where: { Bookingid: bookingId }});
 
-//Booking
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+
+    // Fetch the host's user details using the hostId from the car model
+    const user = await UserAdditional.findOne({
+      where: { id: booking.id }
+    });
+    const host = await Car.findOne({
+      where: { carid: booking.carid }
+    })
+
+    const userEmail = user?.Email;
+    const hostId = host?.hostId;
+    var hostEmail =  await UserAdditional.findOne({
+      where: { id: hostId }
+    });
+    const bookingDetails = {
+      carModel: host.carmodel,
+      startDate: booking.startTripDate,
+      startTime: booking.startTripTime,
+      endDate: booking.endTripDate,
+      endTime:booking.endTripTime,
+    };  
+    hostEmail = hostEmail.Email;
+    return { userEmail, hostEmail, bookingDetails };
+  } catch (error) {
+    console.error('Error in getBookingDetails:', error);
+    throw error;
+  }
+};
+
+
+
 router.post('/booking', authenticate, async (req, res) => {
   try {
     const { carId, startDate, endDate, startTime, endTime, features } = req.body;
@@ -1282,6 +1328,9 @@ router.post('/booking', authenticate, async (req, res) => {
       req.body.amount = amount;
       //const paymentUrl = await initiatePayment(req);
       //res.status(201).json({ message: 'Booking successful', booking, paymentUrl });
+      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
+      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
+
       res.status(201).json({ message: 'Booking successful', bookings });
     } catch (error) {
       console.error(error);
@@ -1883,6 +1932,9 @@ router.post('/Trip-Started', authenticate, async (req, res) => {
         { status: 2 },
         { where: { Bookingid: bookingId } }
       );
+      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+      await sendTripStartEmail(userEmail, hostEmail, bookingDetails, "Trip has been started");
+
       res.status(201).json({ message: 'Trip Has Started' });
     }
     else {
@@ -2042,6 +2094,8 @@ router.post('/booking-completed', authenticate, async (req, res) => {
         { status: 3 },
         { where: { Bookingid: bookingId } }
       );
+      const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bookingId);
+      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
       return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
     }
     else {
