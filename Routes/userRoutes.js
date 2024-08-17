@@ -4,10 +4,11 @@ const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
 const bcrypt = require('bcrypt');
 const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog } = require('../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, 
+  Transaction} = require('../Models');
 const { sendOTP, generateOTP, razorpay } = require('../Controller/userController');
 const { getAllBlogs } = require('../Controller/blogController');
-const { initiatePayment, checkPaymentStatus, phonePayment } = require('../Controller/paymentController');
+const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { Op } = require('sequelize');
@@ -1835,9 +1836,7 @@ router.post('/view-breakup', authenticate, async (req, res) => {
 
     amount += featureCost;
     const costperhr = cph.costperhr;
-
-    // Fetch the latest GST value from the database
-    const tax = await Tax.findOne({ where: { id: 1 } }); // Assuming there's only one row for tax or fetch as per your requirements
+    const tax = await Tax.findOne({ where: { id: 1 } }); 
     if (!tax) {
       return res.status(404).json({ message: 'Tax data not found' });
     }
@@ -1870,6 +1869,12 @@ router.post('/Trip-Started', authenticate, async (req, res) => {
       { where: { Bookingid: bookingId, status: 1 } }
     );
     if (booking) {
+      const transaction = await Transaction.findOne(
+        { where: { Transactionid: booking.Transactionid, status: 2 } }
+      );
+      if(!transaction){
+        return res.status(400).json({ message: 'Payment not completed or unsuccessful' });
+      }
       await Listing.update(
         { bookingId: bookingId },
         { where: { carid: booking.carid } }
@@ -2156,27 +2161,13 @@ router.get('/top-rating', async (req, res) => {
   }
 });
 
-router.get('/webhook/phonepe', async (req, res) => {
-  try {
-    const webhookData = req.body;
-
-    // Process the webhook data
-    console.log('Webhook received:', webhookData);
-
-    // Respond with a 200 status to acknowledge receipt
-    res.status(200).send('Webhook received');
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
+router.get('/webhook/phonepe', webhook ); 
 //Payment
 
 // Initiate Payment Route
 router.post('/payment', authenticate, initiatePayment);
 
-router.post('/phonepayment', phonePayment);
+router.post('/phonepayment', authenticate, phonePayment);
 
 // Payment Status Check Route
 router.post('/status/:txnId', checkPaymentStatus);

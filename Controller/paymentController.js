@@ -1,7 +1,8 @@
 const axios = require('axios');
-const { Booking, Transaction } = require('../Models');
+const { Booking, Transaction, User } = require('../Models');
 require('dotenv').config();
 const crypto = require('crypto');
+const uuid = require('uuid');
 function roundToTwo(num) {
   return Math.round((num + Number.EPSILON) * 100) / 100;
 }
@@ -80,6 +81,7 @@ const initiatePayment = async (req, res) => {
 
 const phonePayment = async (req, res) => {
   try {
+    const user = await User.findByPk(req.user.id);
     const { bookingId } = req.body;
     const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
     if (!booking) {
@@ -90,21 +92,40 @@ const phonePayment = async (req, res) => {
     }
     let amount;
     if ( booking.status == 2 ) {
-      let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } });     
-      amount = roundToTwo( booking.totalUserAmount - transaction.totalAmount );
+      let transactions = await Transaction.findAll({ 
+        where: { Bookingid: bookingId },
+        attributes: ['totalAmount'] 
+      });
+    
+      let totalTransactionAmount = transactions.reduce((sum, transaction) => {
+        return sum + transaction.totalAmount;
+      }, 0);
+    
+      amount = roundToTwo( booking.totalUserAmount - totalTransactionAmount );
     }
     else {
       amount = roundToTwo( booking.totalUserAmount );
     }
+    const orderId = uuid.v4();
+    await Transaction.create({
+      Transactionid: orderId,
+      Bookingid: bookingId,
+      id: req.user.id,
+      status: 1,
+      amount: booking.amount,
+      GSTamount: booking.GSTAmount,
+      totalAmount: booking.totalUserAmount
+    });
+    await Booking.update({ Transactionid: orderId }, { where: { Bookingid: bookingId } });
     const payload = {
         "merchantId": "M2207FVORVMF0",
-        "merchantTransactionId": bookingId,
+        "merchantTransactionId": orderId,
         "merchantUserId": "M2207FVORVMF0",
-        "amount": 1,
+        "amount": amount * 100,
         "redirectUrl": "https://spintrip.in",
         "redirectMode": "REDIRECT",
-        "callbackUrl": "https://spintrip.in",
-        "mobileNumber": "8433745550",
+        "callbackUrl": "https://spintrip.in/user/user-dashboard",
+        "mobileNumber": user.phone,
         "paymentInstrument": {
             "type": "PAY_PAGE"
         }
@@ -132,7 +153,8 @@ const phonePayment = async (req, res) => {
         },
         data: { "request": payloadBase64 }
      };
-
+    
+     
     axios
         .request(options)
         .then(function (response) {
@@ -145,10 +167,10 @@ const phonePayment = async (req, res) => {
             }
         })
         .catch(function (error) {
-            console.error('Error:', error);
+          return res.status(400).json( { message: 'Failed to create payment link' });
         });
 } catch (error) {
-    console.error('Error:', error);
+  return res.status(500).json( { message: 'Server Error' });
 }
 };
 
@@ -187,9 +209,51 @@ const checkPaymentStatus = async (req, res) => {
   }
 };
 
+const webhook = async (req, res) => {
+  try {
+    const base64Response = req.body.response;
+
+    const decodedResponse = Buffer.from(base64Response, 'base64').toString('utf-8');
+
+    const jsonResponse = JSON.parse(decodedResponse);
+
+    const xVerify = req.headers['x-verify'];
+    const saltKey = process.env.SALT_KEY; 
+    const saltIndex = 1;  
+
+    const computedChecksum = crypto.createHash('sha256').update(base64Response + saltKey).digest('hex') + '###' + saltIndex;
+
+    if (xVerify !== computedChecksum) {
+        return res.status(400).send('Invalid checksum');
+    }
+
+    const { success, code, message, data } = jsonResponse;
+    const transaction = await Transaction.findOne({ where: { Transactionid: data.merchantTransactionId } });
+
+    if (!transaction) {
+        console.error(`Transaction with ID ${data.transactionId} not found`);
+        return res.status(404).send('Transaction not found');
+    }
+
+    if (success && code === 'PAYMENT_SUCCESS') {
+        await transaction.update({ status: 2 });
+        console.log(`Payment successful for transaction ${data.merchantTransactionId}`);
+    } else {
+        await transaction.update({ status: 3 });
+        console.log(`Payment failed for transaction ${data.merchantTransactionId}`);
+    }
+
+    res.status(200).send('Webhook processed successfully');
+  } catch (error) {
+    console.error('Error processing payment status:', error);
+    res.status(500).send({ message: error.message });
+  }
+};
+
 
 module.exports = {
   initiatePayment,
   checkPaymentStatus,
-  phonePayment
+  phonePayment,
+  webhook
 };

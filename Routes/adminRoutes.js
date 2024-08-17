@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
-const { User, Admin, UserAdditional, Booking, Host, Car, Brand, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices } = require('../Models');
+const { User, Admin, UserAdditional, Booking, Host, Car, Brand, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices, Transaction } = require('../Models');
 const path = require('path');
 const uuid = require('uuid');
 const { sendOTP, generateOTP, authAdmin, client } = require('../Controller/adminController');
@@ -353,6 +353,65 @@ router.put('/listings/:id', authenticate, async (req, res) => {
 //   }
 // });
 //Get All Bookings
+router.get('/transaction', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const transactions = await Transaction.findAll();
+    res.status(200).json({ "message": "All available transaction", transactions });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching transaction', error });
+  }
+})
+
+router.get('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    const transactions = await Transaction.findByPk(req.params.id);
+    if (!transactions) {
+      return res.status(404).json({ message: 'transaction not found' });
+    }
+    res.status(200).json({ transactions });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching booking', error });
+  }
+});
+
+router.put('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedFields = req.body;
+
+    const transactions = await Transaction.findByPk(id);
+
+    if (!transactions) {
+      return res.status(404).json({ message: 'transaction not found' });
+    }
+
+    await transactions.update(updatedFields);
+
+    res.status(200).json({ message: 'transaction updated successfully', transactions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating transaction', error });
+  }
+});
+
+
+router.delete('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    await Transaction.destroy({ where: { Transactionid: req.params.id } });
+    res.status(200).json({ message: 'Transaction deleted' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting transaction', error });
+  }
+});
 router.get('/bookings', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;
