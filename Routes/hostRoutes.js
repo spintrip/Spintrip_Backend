@@ -11,6 +11,7 @@ const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
 const { setTimeout } = require('timers/promises');
+const { Payout } = require('../Models');
 
 const { 
   sendBookingConfirmationEmail, 
@@ -319,6 +320,26 @@ router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCoun
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error updating profile', error: error });
+  }
+});
+
+router.get('/payouts', authenticate, async (req, res) => {
+  try {
+    const hostId = req.user.id;
+
+    // Find all payouts related to the host's userId
+    const payouts = await Payout.findAll({
+      where: { userId: hostId },
+    });
+
+    if (!payouts.length) {
+      return res.status(404).json({ message: 'No payouts found for this host' });
+    }
+
+    res.status(200).json({ payouts });
+  } catch (error) {
+    console.error('Error fetching payouts:', error.message);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 router.post('/car', authenticate, async (req, res) => {

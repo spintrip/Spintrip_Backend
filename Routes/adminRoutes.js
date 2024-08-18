@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
-const { User, Admin, UserAdditional, Booking, Host, Car, Brand, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices, Transaction } = require('../Models');
+const { User, Admin, UserAdditional, Booking, Host, Car, Brand,Payout, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices, Transaction } = require('../Models');
 const path = require('path');
 const uuid = require('uuid');
 const { sendOTP, generateOTP, authAdmin, client } = require('../Controller/adminController');
@@ -119,7 +119,104 @@ const csvWriter = createCsvWriter({
   ],
   append: true // Append to the file instead of overwriting
 });
+router.post('/payouts', authenticate, async (req, res) => {
+  try {
+    const { userId, bookingIds, date, time, modeOfPayment } = req.body;
 
+    // Validate the input
+    if (!userId || !bookingIds || !date || !time || !modeOfPayment) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Create the new payout
+    const newPayout = await Payout.create({
+      userId,
+      bookingIds,
+      date,
+      time,
+      modeOfPayment,
+    });
+
+    res.status(201).json({ message: 'Payout added successfully', newPayout });
+  } catch (error) {
+    console.error('Error creating payout:', error.message);
+    res.status(500).json({ message: 'Error creating payout', error });
+  }
+});
+router.get('/payouts', authenticate, async (req, res) => {
+  try {
+    const payouts = await Payout.findAll();
+
+    if (payouts.length === 0) {
+      return res.status(404).json({ message: 'No payouts found' });
+    }
+
+    res.status(200).json(payouts);
+  } catch (error) {
+    console.error('Error fetching payouts:', error.message);
+    res.status(500).json({ message: 'Error fetching payouts', error });
+  }
+});
+
+router.get('/payouts/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payout = await Payout.findByPk(id);
+
+    if (!payout) {
+      return res.status(404).json({ message: 'Payout not found' });
+    }
+
+    res.status(200).json(payout);
+  } catch (error) {
+    console.error('Error fetching payout:', error.message);
+    res.status(500).json({ message: 'Error fetching payout', error });
+  }
+});
+router.put('/payouts/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, bookingIds, date, time, modeOfPayment } = req.body;
+
+    const payout = await Payout.findByPk(id);
+
+    if (!payout) {
+      return res.status(404).json({ message: 'Payout not found' });
+    }
+
+    // Update the payout
+    payout.userId = userId || payout.userId;
+    payout.bookingIds = bookingIds || payout.bookingIds;
+    payout.date = date || payout.date;
+    payout.time = time || payout.time;
+    payout.modeOfPayment = modeOfPayment || payout.modeOfPayment;
+
+    await payout.save();
+
+    res.status(200).json({ message: 'Payout updated successfully', payout });
+  } catch (error) {
+    console.error('Error updating payout:', error.message);
+    res.status(500).json({ message: 'Error updating payout', error });
+  }
+});
+router.delete('/payouts/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const payout = await Payout.findByPk(id);
+
+    if (!payout) {
+      return res.status(404).json({ message: 'Payout not found' });
+    }
+
+    await payout.destroy();
+
+    res.status(200).json({ message: 'Payout deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting payout:', error.message);
+    res.status(500).json({ message: 'Error deleting payout', error });
+  }
+});
 router.post('/login', async (req, res) => {
   try {
     const { phone } = req.body;
