@@ -595,13 +595,25 @@ router.get('/users', authenticate, async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
+
     const users = await User.findAll();
-    res.status(200).json({ "message": "All available Users", users })
+    const userAdditional = await UserAdditional.findAll();
+
+    const usersWithAdditionalInfo = users.map(user => {
+      const additionalInfo = userAdditional.find(additional => additional.id === user.id);
+      return {
+        ...user.toJSON(),  // Convert Sequelize model instance to plain object
+        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null
+      };
+    });
+
+    res.status(200).json({ message: "All available Users", users: usersWithAdditionalInfo });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching user', error });
   }
 });
+
 
 router.put('/users/:id', authenticate, async (req, res) => {
   try {
