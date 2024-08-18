@@ -284,6 +284,20 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    await user.destroy();
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting user', error });
+  }
+});
+
 // Admin Profile
 router.get('/profile', authenticate, async (req, res) => {
   try {
@@ -313,60 +327,85 @@ router.get('/cars', authenticate, async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
+    
     const cars = await Car.findAll();
-    res.status(200).json({ "message": "All available cars", cars });
+    const carsWithAdditionalInfo = await Promise.all(cars.map(async (car) => {
+      const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+      return {
+        ...car.toJSON(),
+        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
+      };
+    }));
+
+    res.status(200).json({ message: "All available cars", cars: carsWithAdditionalInfo });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching cars', error });
   }
-})
+});
 
+// Get Car by ID
 router.get('/cars/:id', authenticate, async (req, res) => {
   try {
     const car = await Car.findByPk(req.params.id);
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
     }
-    res.status(200).json({ car });
+
+    const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+
+    res.status(200).json({
+      car: {
+        ...car.toJSON(),
+        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching car', error });
   }
 });
 
+// Update Car by ID
 router.put('/cars/:carid', authenticate, async (req, res) => {
   try {
     const { carid } = req.params;
     const updateFields = {};
+    const { additionalInfo, ...carData } = req.body;
 
-    // Map request body to model fields
-    if (req.body.carmodel) updateFields.carmodel = req.body.carmodel;
-    if (req.body.type) updateFields.type = req.body.type;
-    if (req.body.brand) updateFields.brand = req.body.brand;
-    if (req.body.variant) updateFields.variant = req.body.variant;
-    if (req.body.color) updateFields.color = req.body.color;
-    if (req.body.chassisno) updateFields.chassisno = req.body.chassisno;
-    if (req.body.Rcnumber) updateFields.Rcnumber = req.body.Rcnumber;
-    if (req.body.mileage) updateFields.mileage = req.body.mileage;
-    if (req.body.Enginenumber) updateFields.Enginenumber = req.body.Enginenumber;
-    if (req.body.Registrationyear) updateFields.Registrationyear = req.body.Registrationyear;
-    if (req.body.bodytype) updateFields.bodytype = req.body.bodytype;
-    if (req.body.timestamp) updateFields.timestamp = req.body.timestamp;
-    if (req.body.rating) updateFields.rating = req.body.rating;
-    if (req.body.hostId) updateFields.hostId = req.body.hostId;
-
-    const [updated] = await Car.update(updateFields, {
-      where: { carid }
-    });
-
-    if (updated) {
-      const updatedCar = await Car.findByPk(carid);
-      res.status(200).json({ message: 'Car updated successfully', car: updatedCar });
-    } else {
-      res.status(404).json({ message: 'Car not found' });
+    // Update Car data
+    for (let key in carData) {
+      if (carData.hasOwnProperty(key)) {
+        updateFields[key] = carData[key];
+      }
     }
+
+    const [updated] = await Car.update(updateFields, { where: { carid } });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Car not found' });
+    }
+
+    if (additionalInfo) {
+      let additionalRecord = await CarAdditional.findOne({ where: { carid } });
+
+      if (additionalRecord) {
+          await additionalRecord.update(additionalInfo);
+      }
+    }
+
+    // Fetch updated car with additional info
+    const updatedCar = await Car.findByPk(carid);
+    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { carid } });
+
+    res.status(200).json({
+      message: 'Car updated successfully',
+      car: {
+        ...updatedCar.toJSON(),
+        additionalInfo: updatedAdditionalInfo ? updatedAdditionalInfo.toJSON() : null,
+      }
+    });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: 'Error updating car', error });
   }
 });
@@ -384,29 +423,29 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
 router.get('/users/:id', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json({ user });
+
+    // Fetch the additional info separately
+    const additionalInfo = await UserAdditional.findOne({
+      where: { id: user.id }
+    });
+
+    res.status(200).json({
+      user: {
+        ...user.toJSON(),
+        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
+      }
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Error fetching user', error });
   }
 });
 
-router.delete('/users/:id', async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    await user.destroy();
-    res.status(200).json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting user', error });
-  }
-});
+
 
 router.get('/listings', authenticate, async (req, res) => {
   try {
@@ -596,6 +635,7 @@ router.get('/users', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
 
+
     const users = await User.findAll();
     const userAdditional = await UserAdditional.findAll();
 
@@ -610,40 +650,50 @@ router.get('/users', authenticate, async (req, res) => {
     res.status(200).json({ message: "All available Users", users: usersWithAdditionalInfo });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error fetching user', error });
+    res.status(500).json({ message: 'Error fetching users', error });
   }
 });
 
 
 router.put('/users/:id', authenticate, async (req, res) => {
   try {
+    console.log(req.user.id);
     const adminId = req.user.id;
-    const { id } = req.params;
-    const { phone, password, role, otp, timestamp, status, rating } = req.body;
-
     const admin = await Admin.findByPk(adminId);
+
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
-
-    let user = await User.findByPk(id);
+    const user = await User.findByPk(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    console.log(user);
+    // Update the User data
+    const { additionalInfo, ...userData } = req.body;
+    // await user.update(userData);
 
-    user.phone = phone !== undefined ? phone : user.phone;
-    user.password = password !== undefined ? password : user.password;
-    user.role = role !== undefined ? role : user.role;
-    user.otp = otp !== undefined ? otp : user.otp;
-    user.timestamp = timestamp !== undefined ? timestamp : user.timestamp;
-    user.status = status !== undefined ? status : user.status;
-    user.rating = rating !== undefined ? rating : user.rating;
+    if (additionalInfo) {
+      let additionalRecord = await UserAdditional.findOne({ where: { id: req.params.id } });
 
-    await user.save();
+      if (additionalRecord) {
+        await additionalRecord.update(additionalInfo);
+      } 
+    }
 
-    res.status(200).json({ message: 'User updated successfully', user });
+    // Fetch the updated user data and additional info separately
+    const updatedUser = await User.findByPk(req.params.id);
+    const updatedAdditionalInfo = await UserAdditional.findOne({ where: { id:  req.params.id  } });
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: {
+        ...updatedUser.toJSON(),
+        additionalInfo: updatedAdditionalInfo ? updatedAdditionalInfo.toJSON() : null,
+      },
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: 'Error updating user', error });
   }
 });
