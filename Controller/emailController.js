@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
     port: 465,
     secure: true, // Use SSL/TLS
     auth: {
-        user: 'info@spintrip.in', // Your Hostinger email
-        pass: 'PandaBhosdiKe24@', // Your Hostinger email password
+        user: 'info@spintrip.in', 
+        pass: 'PandaBhosdiKe24@',
     }
 });
 
@@ -90,24 +90,26 @@ const generateEmailTemplate = (subject, bodyContent) => {
 };
 
 const sendEmail = async (recipient, subject, bodyContent) => {
-    try {
-        let mailOptions = {
-            from: 'info@spintrip.in',
-            to: recipient,
-            subject: subject,
-            html: generateEmailTemplate(subject, bodyContent),
-            attachments: [{
-                filename: 'logo.png',
-                path: path.join(__dirname, 'logo.png'),
-                cid: 'logo',
-            }],
-        };
+    setImmediate(async () => {
+        try {
+            let mailOptions = {
+                from: 'info@spintrip.in',
+                to: recipient,
+                subject: subject,
+                html: generateEmailTemplate(subject, bodyContent),
+                attachments: [{
+                    filename: 'logo.png',
+                    path: path.join(__dirname, 'logo.png'),
+                    cid: 'logo',
+                }],
+            };
 
-        await transporter.sendMail(mailOptions);
-        console.log(`${subject} email sent successfully to ${recipient}.`);
-    } catch (error) {
-        console.error(`Error in sending ${subject} email:`, error);
-    }
+            await transporter.sendMail(mailOptions);
+            console.log(`${subject} email sent successfully to ${recipient}.`);
+        } catch (error) {
+            console.error(`Error in sending ${subject} email:`, error);
+        }
+    });
 };
 
 const sendBookingConfirmationEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -123,8 +125,8 @@ const sendBookingConfirmationEmail = async (userEmail, hostEmail, bookingDetails
         </table>
         <p>We wish you a fantastic journey. Should you need any assistance, feel free to contact us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'New Spintrip Booking Request', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'New Spintrip Booking Request', bodyContent);
 };
 
 const sendBookingApprovalEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -140,8 +142,8 @@ const sendBookingApprovalEmail = async (userEmail, hostEmail, bookingDetails) =>
         </table>
         <p>If you have any questions, reach out to us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Your Spintrip Booking is Approved', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Your Spintrip Booking is Approved', bodyContent);
 };
 
 const sendTripStartEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -157,8 +159,8 @@ const sendTripStartEmail = async (userEmail, hostEmail, bookingDetails) => {
         </table>
         <p>We wish you a safe and enjoyable journey. For any support, contact us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Your Spintrip Journey is About to Start', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Your Spintrip Journey is About to Start', bodyContent);
 };
 
 const sendTripEndEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -174,8 +176,8 @@ const sendTripEndEmail = async (userEmail, hostEmail, bookingDetails) => {
         </table>
         <p>We look forward to serving you again. For any feedback or inquiries, please reach out to us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Your Spintrip Journey Has Ended', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Your Spintrip Journey Has Ended', bodyContent);
 };
 
 const sendPaymentConfirmationEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -192,8 +194,8 @@ const sendPaymentConfirmationEmail = async (userEmail, hostEmail, bookingDetails
         <p>If you have any questions or need assistance, feel free to reach out to us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
         <p>We wish you a safe and enjoyable trip!</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Payment Received for Your Booking', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Payment Received for Your Booking', bodyContent);
 };
 
 const sendBookingCancellationEmail = async (userEmail, hostEmail, bookingDetails) => {
@@ -209,9 +211,10 @@ const sendBookingCancellationEmail = async (userEmail, hostEmail, bookingDetails
         </table>
         <p>If you have any questions or need further information, feel free to contact us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Booking Cancelled for Your Car', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Booking Cancelled for Your Car', bodyContent);
 };
+
 const sendBookingCompletionEmail = async (userEmail, hostEmail, bookingDetails) => {
     const subject = 'Your Spintrip Booking is Complete';
     const bodyContent = `
@@ -225,8 +228,8 @@ const sendBookingCompletionEmail = async (userEmail, hostEmail, bookingDetails) 
         </table>
         <p>We hope you had a great experience with Spintrip. For any feedback or further inquiries, please reach out to us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    await sendEmail(userEmail, subject, bodyContent);
-    await sendEmail(hostEmail, 'Your Spintrip Booking is Complete', bodyContent);
+    sendEmail(userEmail, subject, bodyContent);
+    sendEmail(hostEmail, 'Your Spintrip Booking is Complete', bodyContent);
 };
 
 module.exports = { 
@@ -236,5 +239,6 @@ module.exports = {
     sendTripEndEmail, 
     sendPaymentConfirmationEmail,
     sendBookingCancellationEmail,
-    sendBookingCompletionEmail
+    sendBookingCompletionEmail,
+    sendEmail
 };

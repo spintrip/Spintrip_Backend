@@ -6,10 +6,12 @@ const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
-const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device } = require('../Models');
+const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction } = require('../Models');
 const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
+const { setTimeout } = require('timers/promises');
+
 const { 
   sendBookingConfirmationEmail, 
   sendBookingApprovalEmail, 
@@ -704,6 +706,31 @@ router.delete('/features', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error deleting car feature' });
   }
 });
+const autoCancelBooking = async (bookingId) => {
+  try {
+      // Wait for 30 minutes (1800000 milliseconds)
+      await setTimeout(1800000);
+
+      // Fetch the booking again to check if it's still in the pending status
+      const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
+      const transaction = await Transaction.findOne({where: { Bookingid: booking.Bookingid }});
+      // If the booking is still pending approval (status 5), cancel it
+      if (booking && booking.status === 1 && transaction && transaction.status!=2) {
+          await Booking.update(
+              { status: 4, cancelDate: new Date(), cancelReason: 'Auto-cancelled due to no approval from host within 30 minutes.' },
+              { where: { Bookingid: bookingId } }
+          );
+
+          const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+          await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'Booking auto-cancelled due to no payment from user within 30 minutes.');
+
+          console.log(`Booking ${bookingId} auto-cancelled after 30 minutes of no host approval.`);
+      }
+  } catch (error) {
+      console.error(`Error in auto-cancelling booking ${bookingId}:`, error);
+  }
+};
+
 //Listing
 router.get('/listing', authenticate, async (req, res) => {
   const hostid = req.user.userid;
@@ -1160,6 +1187,7 @@ router.post('/booking-request', authenticate, async (req, res) => {
       });
       const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bookingId);
       await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved');
+      autoCancelBooking(booking.Bookingid);
       return res.status(201).json({ message: 'Booking confirmed by host' });
     }
     if (bk.status == '4') {
@@ -1171,7 +1199,7 @@ router.post('/booking-request', authenticate, async (req, res) => {
         cancelReason: bk.CancelReason
       });
       const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails,"The booking has been cancelled");
+      await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails,"The booking has been cancelled");
       return res.status(201).json({ message: 'Booking cancelled by host' });
     }
     return res.status(404).json({ message: 'No Action performed' });

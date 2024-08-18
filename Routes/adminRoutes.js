@@ -17,6 +17,7 @@ const csv = require('csv-parser');
 const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
 const { Op } = require('sequelize');
+const { sendEmail } = require('../Controller/emailController');
 
 const pricing1 = async (car, carAdditional) => {
   try {
@@ -1200,4 +1201,36 @@ router.post('/updateBlog', authenticate, upload1.fields([{ name: 'blogImage_1', 
 router.get('/deleteBlog/:id', authenticate, deleteBlog);
 router.get('/getAllBlogs', getAllBlogs);
 router.get('/getBlogById/:id', getBlogById);
+router.post('/send-notifications', authenticate, async (req, res) => {
+  try {
+      const { userIds, subject, message } = req.body;
+
+      if (!userIds || userIds.length === 0) {
+          return res.status(400).json({ message: 'No user IDs provided' });
+      }
+
+      const users = await UserAdditional.findAll({
+          where: {
+              id: userIds
+          }
+      });
+
+      if (!users || users.length === 0) {
+          return res.status(404).json({ message: 'Users not found' });
+      }
+
+      for (const user of users) {
+          const email = user.Email; // Fetch email from UserAdditional
+          if (email) {
+              await sendEmail(email, subject, message);
+          }
+      }
+
+      res.status(200).json({ message: 'Emails sent successfully' });
+  } catch (error) {
+      console.error('Error sending notifications:', error.message);
+      res.status(500).json({ message: 'Error sending notifications', error });
+  }
+});
+
 module.exports = router;

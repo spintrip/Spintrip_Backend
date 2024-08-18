@@ -20,6 +20,8 @@ const axios = require('axios');
 const path = require('path');
 const csv = require('csv-parser');
 const router = express.Router();
+const { setTimeout } = require('timers/promises');
+
 const { 
   sendBookingConfirmationEmail, 
   sendBookingApprovalEmail, 
@@ -1330,7 +1332,7 @@ router.post('/booking', authenticate, async (req, res) => {
       //res.status(201).json({ message: 'Booking successful', booking, paymentUrl });
       const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
       await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
-
+      autoCancelBooking(booking.Bookingid);
       res.status(201).json({ message: 'Booking successful', bookings });
     } catch (error) {
       console.error(error);
@@ -1410,6 +1412,7 @@ router.post('/cancelwishlist', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 router.get('/wishlist', authenticate, async (req, res) => {
   try {
     const userId = req.user.userid;
@@ -1946,6 +1949,30 @@ router.post('/Trip-Started', authenticate, async (req, res) => {
   }
 
 });
+const autoCancelBooking = async (bookingId) => {
+  try {
+      // Wait for 30 minutes (1800000 milliseconds)
+      await setTimeout(1800000);
+
+      // Fetch the booking again to check if it's still in the pending status
+      const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
+
+      // If the booking is still pending approval (status 5), cancel it
+      if (booking && booking.status === 5) {
+          await Booking.update(
+              { status: 4, cancelDate: new Date(), cancelReason: 'Auto-cancelled due to no approval from host within 30 minutes.' },
+              { where: { Bookingid: bookingId } }
+          );
+
+          const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+          await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'Booking auto-cancelled due to no approval from host within 30 minutes.');
+
+          console.log(`Booking ${bookingId} auto-cancelled after 30 minutes of no host approval.`);
+      }
+  } catch (error) {
+      console.error(`Error in auto-cancelling booking ${bookingId}:`, error);
+  }
+};
 
 //Cancel-Booking
 router.post('/Cancel-Booking', authenticate, async (req, res) => {
