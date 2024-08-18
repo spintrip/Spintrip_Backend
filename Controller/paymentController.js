@@ -14,12 +14,13 @@ const initiatePayment = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    if (booking.Transactionid != null && booking.status == 1 ) {
+    let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } }); 
+    if (booking.Transactionid != null && booking.status == 1 && transaction && transaction.status == 2) {
       return res.status(200).json({ message: 'Payment Already completed' });
     }
     let amount;
     if ( booking.status == 2 ) {
-      let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } });     
+      // let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } });     
       amount = roundToTwo( booking.totalUserAmount - transaction.totalAmount );
     }
     else {
@@ -87,7 +88,8 @@ const phonePayment = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    if (booking.Transactionid != null && booking.status == 1 ) {
+    let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } }); 
+    if (booking.Transactionid != null && booking.status == 1 && transaction && transaction.status == 2) {
       return res.status(200).json({ message: 'Payment Already completed' });
     }
     let amount;
