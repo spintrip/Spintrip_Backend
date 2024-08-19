@@ -2139,7 +2139,7 @@ router.post('/booking-completed', authenticate, async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
-});
+});``
 
 //Rating
 router.post('/rating', authenticate, async (req, res) => {
@@ -2189,10 +2189,7 @@ router.post('/rating', authenticate, async (req, res) => {
         hostId: car.hostId,
       }
     });
-    const host = await User.update(
-      { rating: car_ratings },
-      { where: { id: car.hostId } }
-    );
+    
     if (feedback) {
       Feedback.create({
         carId: car.carid,
@@ -2201,11 +2198,9 @@ router.post('/rating', authenticate, async (req, res) => {
         hostId: car.hostId,
         rating: rating,
         comment: feedback
-      }).then(feedback => {
-        res.status(201).json({ message: 'Thank you for your response' });
-      }).catch(error => {
-        res.status(400).json({ message: 'Error creating feedback' })
-      });
+      }).then(() => {
+        res.status(200).json({ message: 'Thank you for your response' });
+      })
 
     }
   }
@@ -2311,6 +2306,27 @@ router.post('/support/supportChat', authenticate, viewSupportChats);
 router.get('/support', authenticate, viewUserSupportTickets);
 
 router.get('/view-blog', getAllBlogs);
+
+router.get('/transactions', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let transactions = []; // Initialize transactions as an array
+    const bookings = await Booking.findAll({ where: { id: userId } });
+    console.log(bookings);
+
+    for (let i = 0; i < bookings.length; i++) {
+      const bookingTransactions = await Transaction.findAll({ where: { Bookingid: bookings[i].Bookingid } });
+      transactions = transactions.concat(bookingTransactions); // Concatenate the transactions
+    }
+
+    console.log(transactions);
+
+    res.status(200).json({ message: 'Transactions for the user', transactions: transactions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 
