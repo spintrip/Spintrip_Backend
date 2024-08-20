@@ -135,7 +135,7 @@ const pricing = async (car, carAdditional) => {
       Price = brand_value + horsePower +
         3 * (carAdditional.AC ? 1 : 0) + 3 * (carAdditional.Musicsystem ? 1 : 0) + 2 * (carAdditional.Autowindow ? 1 : 0) +
         2 * (carAdditional.Sunroof ? 1 : 0) + 2 * (carAdditional.touchScreen ? 1 : 0) + 15 * (carAdditional.Sevenseater ? 1 : 0) +
-        2 * (carAdditional.Reversecamera ? 1 : 0) + 3 * (carAdditional.Transmission ? 1 : 0) + 10 * (carAdditional.FuelType ? 1 : 0) +
+        2 * (carAdditional.Reversecamera ? 1 : 0) + 15 * (carAdditional.Transmission ? 1 : 0) + 10 * (carAdditional.FuelType ? 1 : 0) +
         2 * (carAdditional.Airbags ? 1 : 0) - val + base_price;
       return Price;
     }
