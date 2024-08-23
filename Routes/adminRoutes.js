@@ -382,9 +382,9 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
 
     const [updated] = await Car.update(updateFields, { where: { carid } });
 
-    if (!updated) {
-      return res.status(404).json({ message: 'Car not found' });
-    }
+    // if (!updated) {
+    //   return res.status(404).json({ message: 'Car not found' });
+    // }
 
     if (additionalInfo) {
       let additionalRecord = await CarAdditional.findOne({ where: { carid } });
@@ -668,10 +668,9 @@ router.put('/users/:id', authenticate, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    console.log(user);
-    // Update the User data
+
     const { additionalInfo, ...userData } = req.body;
-    // await user.update(userData);
+    await user.update(userData);
 
     if (additionalInfo) {
       let additionalRecord = await UserAdditional.findOne({ where: { id: req.params.id } });
