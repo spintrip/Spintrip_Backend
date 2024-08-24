@@ -704,40 +704,45 @@ router.get('/pending-profile', authenticate, async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
+
     let pendingProfiles = await UserAdditional.findAll({
-      where: { verification_status: 1 },
+      where: { verification_status: 1 }
     });
+
     if (pendingProfiles.length === 0) {
-      res.status(200).json({ message: 'No user approval required' });
+      return res.status(200).json({ message: 'No user approval required' });
     }
-    else {
-      const updatedProfiles = await Promise.all(
-        pendingProfiles.map(async (item) => {
-          let id = item.id;
-          console.log(id);
-          let userId = id;
-          let userFolder = path.join('./uploads', userId);
-          if (fs.existsSync(userFolder)) {
-            // List all files in the user's folder
-            let files = fs.readdirSync(userFolder);
-            if (files) {
-              // Filter and create URLs for Aadhar and DL files
-              let aadharFile = files.filter(file => file.includes('aadharFile')).map(file => `${process.env.BASE_URL}/uploads/${userId}/${file}`);
-              let dlFile = files.filter(file => file.includes('dlFile')).map(file => `${process.env.BASE_URL}/uploads/${userId}/${file}`);
-              console.log(aadharFile[0], dlFile);
-              return { ...item.toJSON(), aadharFile: aadharFile[0], dlFile: dlFile[0] };
-            }
-          }
-          return item.toJSON();
+
+    const updatedProfiles = await Promise.all(
+      pendingProfiles.map(async (profile) => {
+        const user = await User.findByPk(profile.id);
+        let userFolder = path.join('./uploads', profile.id.toString());
+        let aadharFile = [];
+        let dlFile = [];
+        
+        if (fs.existsSync(userFolder)) {
+          let files = fs.readdirSync(userFolder);
+          aadharFile = files.filter(file => file.includes('aadharFile')).map(file => `${process.env.BASE_URL}/uploads/${profile.id}/${file}`);
+          dlFile = files.filter(file => file.includes('dlFile')).map(file => `${process.env.BASE_URL}/uploads/${profile.id}/${file}`);
         }
-        ));
-      res.status(200).json({ updatedProfiles });
-    }
+        
+        return {
+          ...profile.toJSON(),
+          aadharFile: aadharFile[0] || null,
+          dlFile: dlFile[0] || null,
+          user: user ? user.toJSON() : null
+        };
+      })
+    );
+
+    res.status(200).json({ updatedProfiles });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching pending profiles', error });
   }
 });
+
+
 router.get('/pending-carprofile', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;
@@ -746,6 +751,7 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
+
     let pendingProfiles = await CarAdditional.findAll({
       where: {
         [Op.or]: [
@@ -754,15 +760,29 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
         ]
       }
     });
+
     if (pendingProfiles.length === 0) {
-      res.status(200).json({ message: 'No car approval required' });
+      return res.status(200).json({ message: 'No car approval required' });
     }
-      res.status(200).json({ pendingProfiles });
+
+    const updatedProfiles = await Promise.all(
+      pendingProfiles.map(async (profile) => {
+        const car = await Car.findByPk(profile.carid);
+        
+        return {
+          ...profile.toJSON(),
+          car: car ? car.toJSON() : null
+        };
+      })
+    );
+
+    res.status(200).json({ pendingProfiles: updatedProfiles });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error fetching pending profiles', error });
+    res.status(500).json({ message: 'Error fetching pending car profiles', error });
   }
 });
+
 router.put('/approve-profile', authenticate, async (req, res) => {
   try {
     const adminId = req.user.id;

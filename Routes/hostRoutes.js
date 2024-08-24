@@ -1206,7 +1206,7 @@ router.post('/booking-request', authenticate, async (req, res) => {
       await booking.update({
         status: 1,
       });
-      const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bookingId);
+      const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bk.bookingId);
       await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved');
       autoCancelBooking(booking.Bookingid);
       return res.status(201).json({ message: 'Booking confirmed by host' });
