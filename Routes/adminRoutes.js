@@ -298,6 +298,25 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+router.delete('/hosts/:id', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+    const host = await Host.findByPk(req.params.id);
+    if(!host){
+      return res.status(404).json({ message: 'Host not found' });
+    }
+    await user.destroy();
+    res.status(200).json({ message: 'Host deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting user', error });
+  }
+});
+
+
 // Admin Profile
 router.get('/profile', authenticate, async (req, res) => {
   try {
@@ -753,12 +772,8 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
     }
 
     let pendingProfiles = await CarAdditional.findAll({
-      where: {
-        [Op.or]: [
-          { verification_status: 1 },
-          { verification_status: null }
-        ]
-      }
+      where: 
+          { verification_status: 1 }
     });
 
     if (pendingProfiles.length === 0) {

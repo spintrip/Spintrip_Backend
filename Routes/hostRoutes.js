@@ -381,7 +381,7 @@ router.post('/car', authenticate, async (req, res) => {
       mileage: mileage,
       Enginenumber: engineNumber,
       Registrationyear: registrationYear,
-      bodytype: bodyType,
+      //bodytype: bodyType,
       carid: carid,
       hostId: carhostid,
       timestamp: timeStamp
@@ -450,6 +450,24 @@ router.post('/car', authenticate, async (req, res) => {
 //chat
 router.post('/chat/send', chatController.sendMessage);
 router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
+
+router.get('/delete_host', authenticate, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+    const host = await Host.findByPk(req.user.id);
+    if(!host){
+      return res.status(404).json({ message: 'Host not found' });
+    }
+    await user.destroy();
+    res.status(200).json({ message: 'Host deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting user', error });
+  }
+});
 
 router.post('/createListing', authenticate, async (req, res) => {
   const { carId } = req.body;
