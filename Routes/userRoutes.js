@@ -2032,42 +2032,47 @@ router.post('/getFeedback', authenticate, async (req, res) => {
 router.get('/User-Bookings', authenticate, async (req, res) => {
   try {
     let userId = req.user.userid;
-    const booking = await Booking.findAll({ where: { id: userId } })
-    if (booking) {
+    const bookings = await Booking.findAll({ where: { id: userId } });
+
+    if (bookings && bookings.length > 0) {
       const featureList = await Feature.findAll();
       const featureMap = featureList.reduce((map, feature) => {
         map[feature.id] = feature.featureName;
         return map;
       }, {});
-      const userBooking = booking.map(async (bookings) => {
-        const car = await Car.findOne({
-          where: {
-            carid: bookings.carid,
-          }
-        });
+
+      const userBookingPromises = bookings.map(async (booking) => {
+        const car = await Car.findOne({ where: { carid: booking.carid } });
         if (!car) {
-          return;
+          return null;
         }
-        const carAdditional = await CarAdditional.findOne({ where: { carid: bookings.carid } });
-        const featureDetails = (bookings.features || []).map(featureId => ({
+
+        const carAdditional = await CarAdditional.findOne({ where: { carid: booking.carid } });
+        const transaction = await Transaction.findOne({ where: { Transactionid: booking.Transactionid } });
+
+        const featureDetails = (booking.features || []).map(featureId => ({
           featureId,
           featureName: featureMap[featureId] || 'Unknown Feature'
         }));
-        let bk;
-        bk = {
-          bookingId: bookings.Bookingid,
-          carId: bookings.carid,
-          id: bookings.id,
-          status: bookings.status,
-          amount: bookings.amount,
-          gstAmount: bookings.GSTAmount,
-          insurance: bookings.insurance,
-          totalUserAmount: bookings.totalUserAmount,
-          transactionId: bookings.Transactionid,
-          startTripDate: bookings.startTripDate,
-          endTripDate: bookings.endTripDate,
-          startTripTime: bookings.startTripTime,
-          endTripTime: bookings.endTripTime,
+
+        return {
+          bookingId: booking.Bookingid,
+          carId: booking.carid,
+          id: booking.id,
+          status: booking.status,
+          amount: booking.amount,
+          gstAmount: booking.GSTAmount,
+          insurance: booking.insurance,
+          totalUserAmount: booking.totalUserAmount,
+          transactionId: booking.Transactionid,
+          transaction: transaction ? {
+            transactionId: transaction.Transactionid,
+            status: transaction.status,
+          } : null,
+          startTripDate: booking.startTripDate,
+          endTripDate: booking.endTripDate,
+          startTripTime: booking.startTripTime,
+          endTripTime: booking.endTripTime,
           carModel: car.carmodel,
           hostId: car.hostId,
           carImage1: carAdditional.carimage1,
@@ -2077,22 +2082,19 @@ router.get('/User-Bookings', authenticate, async (req, res) => {
           carImage5: carAdditional.carimage5,
           latitude: carAdditional.latitude,
           longitude: carAdditional.longitude,
-          cancelDate: bookings.cancelDate,
-          cancelReason: bookings.cancelReason,
+          cancelDate: booking.cancelDate,
+          cancelReason: booking.cancelReason,
           features: featureDetails,
-          createdAt: bookings.createdAt,
-
-        }
-        return { ...bk };
+          createdAt: booking.createdAt,
+        };
       });
-      const userBookings = await Promise.all(userBooking);
+
+      const userBookings = (await Promise.all(userBookingPromises)).filter(booking => booking !== null);
       res.status(201).json({ message: userBookings });
-    }
-    else {
+    } else {
       res.status(404).json({ message: 'Booking Not found' });
     }
-  }
-  catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 });
