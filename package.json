@@ -4,7 +4,7 @@
   "description": "",
   "main": "Server.js",
   "scripts": {
-    "start": "nodemon Server.js",
+    "start": "nodemon Server.js --config nodemon.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -34,6 +34,7 @@
     "mysql2": "^3.6.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.14",
+    "openai": "^4.57.0",
     "pg": "^8.7.3",
     "pg-hstore": "^2.3.4",
     "pm2": "^5.4.2",

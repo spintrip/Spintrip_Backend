@@ -15,7 +15,8 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     min: 5,
     acquire: 30000,
     idle: 10000
-  }
+  },
+  logging:false
 });
 
 sequelize.authenticate()
