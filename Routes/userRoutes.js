@@ -93,7 +93,7 @@ router.post('/login', async (req, res) => {
   sendOTP(phone, otp);
   await user.update({ otp: otp })
   // Redirect to verify OTP route
-  return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', phone, otp });
+  return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp' });
 });
 
 
@@ -438,7 +438,7 @@ router.post('/findcars', authenticate, async (req, res) => {
                       {
                         [Op.or]: [
                           { pausetime_end_date: startDate },
-                          { start_date: null },
+                          { pausetime_end_date: null },
                         ],
                       },
                       {
@@ -619,6 +619,12 @@ router.post('/findcars', authenticate, async (req, res) => {
                   ]
                 }
               ]
+            },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.lt]: startDate } },
+                { endTripDate: { [Op.gt]: endDate } }
+              ]
             }
           ]
         }
@@ -752,7 +758,7 @@ router.post('/onecar', async (req, res) => {
                       {
                         [Op.or]: [
                           { pausetime_end_date: startDate },
-                          { start_date: null },
+                          { pausetime_end_date: null },
                         ],
                       },
                       {
@@ -822,8 +828,8 @@ router.post('/onecar', async (req, res) => {
               },
             ],
           },
+          
         ],
-        bookingId: { [Op.eq]: null },
         carid: carId,
       },
       include: [Car],
@@ -923,6 +929,12 @@ router.post('/onecar', async (req, res) => {
                     }
                   ]
                 }
+              ]
+            },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.lt]: startDate } },
+                { endTripDate: { [Op.gt]: endDate } }
               ]
             }
           ]
@@ -1088,7 +1100,7 @@ router.post('/booking', authenticate, async (req, res) => {
                       {
                         [Op.or]: [
                           { pausetime_end_date: startDate },
-                          { start_date: null },
+                          { pausetime_end_date: null },
                         ],
                       },
                       {
@@ -1250,6 +1262,12 @@ router.post('/booking', authenticate, async (req, res) => {
                     }
                   ]
                 }
+              ]
+            },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.lt]: startDate } },
+                { endTripDate: { [Op.gt]: endDate } }
               ]
             }
           ]
@@ -1632,7 +1650,7 @@ router.post('/extend-booking', authenticate, async (req, res) => {
                       {
                         [Op.or]: [
                           { pausetime_end_date: booking.startTripDate },
-                          { start_date: null },
+                          { pausetime_end_date: null },
                         ],
                       },
                       {
@@ -1796,6 +1814,12 @@ router.post('/extend-booking', authenticate, async (req, res) => {
                   ]
                 }
               ]
+            },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.lte]: startDate } },  
+                { endTripDate: { [Op.gte]: endDate } }     
+              ]
             }
           ]
         }
@@ -1823,7 +1847,7 @@ router.post('/extend-booking', authenticate, async (req, res) => {
     // Update booking with new end date, end time, and amount
     booking.endTripDate = newEndDate;
     booking.endTripTime = newEndTime;
-    booking.amount += additionalAmount;
+    booking.amount += additionalAmount + 20 * (additionalAmount)/ 100;
     const tax = await Tax.findOne({ where: { id: 1 } });
     if (!tax) {
       return res.status(404).json({ message: 'Tax data not found' });
@@ -2156,6 +2180,7 @@ router.post('/rating', authenticate, async (req, res) => {
         id: userId,
       }
     });
+
     const booking = await Booking.findOne({
       where: {
         Bookingid: bookingId,
@@ -2164,6 +2189,7 @@ router.post('/rating', authenticate, async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+
     const car = await Car.findOne({
       where: {
         carid: booking.carid,
@@ -2172,50 +2198,65 @@ router.post('/rating', authenticate, async (req, res) => {
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
     }
+
     const bookingCount = await Booking.count({
       where: {
         carid: booking.carid,
         status: 3,
       }
     });
+
     let new_rating;
     if (bookingCount == 1) {
       new_rating = parseFloat(rating);
-    }
-    else {
+    } else {
       new_rating = (parseFloat(rating) + parseFloat(car.rating * (bookingCount - 1))) / bookingCount;
     }
-    car.update({ rating: new_rating });
+
+    await car.update({ rating: new_rating });
+
     const car_ratings = await Car.sum('rating', {
       where: {
         hostId: car.hostId,
       }
     });
-    
+
     if (feedback) {
-      Feedback.create({
+      await Feedback.create({
         carId: car.carid,
         userId: userId,
         userName: user.FullName,
         hostId: car.hostId,
         rating: rating,
         comment: feedback
-      }).then(() => {
-        res.status(200).json({ message: 'Thank you for your response' });
-      })
-
+      });
+      res.status(200).json({ message: 'Thank you for your response with feedback' });
+    } else {
+      // This block handles the case where there is no feedback
+      res.status(200).json({ message: 'Thank you for your response' });
     }
-  }
-  catch (error) {
+
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 router.get('/delete_user', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    const pendingBookings = await Booking.findOne({
+      where: {
+        id: req.user.id,
+        status: [1, 2, 5], 
+      },
+    });
+
+    if (pendingBookings) {
+      return res.status(400).json({ message: 'Cannot delete account with pending bookings' });
     }
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
@@ -2262,7 +2303,7 @@ router.post('/payment', authenticate, initiatePayment);
 router.post('/phonepayment', authenticate, phonePayment);
 
 // Payment Status Check Route
-router.post('/status/:txnId', checkPaymentStatus);
+router.post('/webhook/cashfree', checkPaymentStatus);
 
 //chat
 router.get('/chat/history', authenticate, async (req, res) => {

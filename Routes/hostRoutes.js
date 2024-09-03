@@ -168,7 +168,7 @@ router.post('/login', authenticate, async (req, res) => {
     const otp = generateOTP();
     sendOTP(phone, otp);
     await user.update({ otp: otp })
-    return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', phone, otp });
+    return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -461,6 +461,7 @@ router.get('/delete_host', authenticate, async (req, res) => {
     if(!host){
       return res.status(404).json({ message: 'Host not found' });
     }
+    
     await user.destroy();
     res.status(200).json({ message: 'Host deleted successfully' });
   } catch (error) {
@@ -1473,4 +1474,5 @@ router.get('/support', authenticate, viewUserSupportTickets);
 
 router.get('/view-blog',authenticate, getAllBlogs );
 module.exports = router;
+
 
