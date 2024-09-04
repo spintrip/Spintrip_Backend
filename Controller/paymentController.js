@@ -187,8 +187,7 @@ const checkPaymentStatus = async (req, res) => {
   try {
     const { type, data } = req.body; 
 
-    const payload = JSON.parse(req.body.toString());
-    console.log('Webhook verified and payload received:', payload);
+    console.log('Webhook verified and payload received:');
 
     switch (type) {
       case 'PAYMENT_LINK_EVENT':

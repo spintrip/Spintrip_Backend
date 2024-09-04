@@ -621,6 +621,19 @@ router.post('/findcars', authenticate, async (req, res) => {
               ]
             },
             {
+           [Op.and]: [
+                { startTripDate: { [Op.lt]: startDate } }, 
+                { endTripDate: { [Op.gt]: startDate } },  
+                { endTripDate: { [Op.lt]: endDate } }     
+              ]
+          },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.gte]: startDate } },
+                { endTripDate: { [Op.lte]: endDate } },
+              ],
+            },
+            {
               [Op.and]: [
                 { startTripDate: { [Op.lt]: startDate } },
                 { endTripDate: { [Op.gt]: endDate } }
@@ -933,10 +946,23 @@ router.post('/onecar', async (req, res) => {
             },
             {
               [Op.and]: [
+                   { startTripDate: { [Op.lt]: startDate } }, 
+                   { endTripDate: { [Op.gt]: startDate } },  
+                   { endTripDate: { [Op.lt]: endDate } }     
+                 ]
+             },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.gte]: startDate } },
+                { endTripDate: { [Op.lte]: endDate } },
+              ],
+            },
+            {
+              [Op.and]: [
                 { startTripDate: { [Op.lt]: startDate } },
                 { endTripDate: { [Op.gt]: endDate } }
               ]
-            }
+            },
           ]
         }
       });
@@ -1263,6 +1289,19 @@ router.post('/booking', authenticate, async (req, res) => {
                   ]
                 }
               ]
+            },
+            {
+              [Op.and]: [
+                   { startTripDate: { [Op.lt]: startDate } }, 
+                   { endTripDate: { [Op.gt]: startDate } },  
+                   { endTripDate: { [Op.lt]: endDate } }     
+                 ]
+             },
+            {
+              [Op.and]: [
+                { startTripDate: { [Op.gte]: startDate } },
+                { endTripDate: { [Op.lte]: endDate } },
+              ],
             },
             {
               [Op.and]: [
