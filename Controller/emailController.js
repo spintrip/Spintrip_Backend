@@ -1,6 +1,34 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const axios = require('axios');
 
+const generateLegalContractPDF = (bookingDetails) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const filePath = './legal_contract.pdf';
+
+    doc.pipe(fs.createWriteStream(filePath));
+    doc.fontSize(12).text('Legal Contract Between Host and User', { align: 'center' });
+    doc.moveDown();
+    doc.text(`Car Model: ${bookingDetails.carModel}`);
+    doc.text('The user agrees to return the car in the same condition and with the same amount of fuel as received.');
+    doc.text('The user is liable for any damages caused to the car during the rental period.');
+    doc.text('This contract helps Spintrip legally in case of any issues during the rental period.');
+
+    doc.end();
+
+    doc.on('finish', () => resolve(filePath));
+    doc.on('error', (err) => reject(err));
+  });
+};
+const fetchPrivacyPolicyPDF = async () => {
+    const response = await axios.get('https://spintrip.in/pages/privacy-policy', { responseType: 'arraybuffer' });
+    const filePath = './privacy_policy.pdf';
+    fs.writeFileSync(filePath, response.data);
+    return filePath;
+  };
 const transporter = nodemailer.createTransport({
     host: 'smtp.hostinger.com',
     port: 465,
@@ -142,10 +170,23 @@ const sendBookingApprovalEmail = async (userEmail, hostEmail, bookingDetails) =>
         </table>
         <p>If you have any questions, reach out to us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
     `;
-    sendEmail(userEmail, subject, bodyContent);
-    sendEmail(hostEmail, 'Your Spintrip Booking is Approved', bodyContent);
-};
 
+    // Generate the PDFs
+    const legalContractPath = await generateLegalContractPDF(bookingDetails);
+    const privacyPolicyPath = await fetchPrivacyPolicyPDF();
+
+    // Send email to user
+    sendEmail(userEmail, subject, bodyContent, [
+        { filename: 'Legal_Contract.pdf', path: legalContractPath },
+        { filename: 'Privacy_Policy.pdf', path: privacyPolicyPath },
+    ]);
+
+    // Send email to host
+    sendEmail(hostEmail, 'Your Spintrip Booking is Approved', bodyContent, [
+        { filename: 'Legal_Contract.pdf', path: legalContractPath },
+        { filename: 'Privacy_Policy.pdf', path: privacyPolicyPath },
+    ]);
+};
 const sendTripStartEmail = async (userEmail, hostEmail, bookingDetails) => {
     const subject = 'Your Spintrip Journey is Starting!';
     const bodyContent = `

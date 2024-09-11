@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-09-11T13:29:35.607Z",
+    "body": {
+      "message": "{\"message\":\"Error creating admin\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-11T13:29:38.395Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"deadpool\",\"otp\":\"1499\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-11T13:29:41.063Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"ad03e89b-e46f-4ee3-9ce3-1a58c5ed3229\",\"phone\":\"deadpool\",\"password\":\"$2b$10$tYXhmigjTeFoX226Oz59K.Kp/EdL4lzcIq25/Q9EQDSbiGiIdYAbu\",\"role\":\"user\",\"otp\":\"1499\",\"timestamp\":null,\"status\":null,\"rating\":null,\"createdAt\":\"2024-09-02T00:29:03.532Z\",\"updatedAt\":\"2024-09-11T13:29:38.379Z\",\"BookingBookingid\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkMDNlODliLWU0NmYtNGVlMy05Y2UzLTFhNThjNWVkMzIyOSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcyNjA2MTM4MX0.7Rnav_Q5zYfLvYzjOiaoBIPPwzaFifnQOzQDdFZQ2QI\"}"
+    }
+  }
+]
