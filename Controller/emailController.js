@@ -139,7 +139,31 @@ const sendEmail = async (recipient, subject, bodyContent) => {
         }
     });
 };
+const sendEmailWithAttachments = async (recipient, subject, bodyContent, attachments = []) => {
+    setImmediate(async () => {
+        try {
+            let mailOptions = {
+                from: 'info@spintrip.in',
+                to: recipient,
+                subject: subject,
+                html: generateEmailTemplate(subject, bodyContent),
+                attachments: [
+                    {
+                        filename: 'logo.png',
+                        path: path.join(__dirname, 'logo.png'),
+                        cid: 'logo',
+                    },
+                    ...attachments, // Add additional attachments provided as argument
+                ],
+            };
 
+            await transporter.sendMail(mailOptions);
+            console.log(`${subject} email sent successfully to ${recipient}.`);
+        } catch (error) {
+            console.error(`Error in sending ${subject} email:`, error);
+        }
+    });
+};
 const sendBookingConfirmationEmail = async (userEmail, hostEmail, bookingDetails) => {
     const subject = 'Your Spintrip Booking Confirmation';
     const bodyContent = `
@@ -174,15 +198,15 @@ const sendBookingApprovalEmail = async (userEmail, hostEmail, bookingDetails) =>
     // Generate the PDFs
     const legalContractPath = await generateLegalContractPDF(bookingDetails);
     const privacyPolicyPath = await fetchPrivacyPolicyPDF();
-
+    console.log("done")
     // Send email to user
-    sendEmail(userEmail, subject, bodyContent, [
+    sendEmailWithAttachments(userEmail, subject, bodyContent, [
         { filename: 'Legal_Contract.pdf', path: legalContractPath },
         { filename: 'Privacy_Policy.pdf', path: privacyPolicyPath },
     ]);
 
     // Send email to host
-    sendEmail(hostEmail, 'Your Spintrip Booking is Approved', bodyContent, [
+    sendEmailWithAttachments(hostEmail, 'Your Spintrip Booking is Approved', bodyContent, [
         { filename: 'Legal_Contract.pdf', path: legalContractPath },
         { filename: 'Privacy_Policy.pdf', path: privacyPolicyPath },
     ]);

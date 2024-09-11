@@ -24,6 +24,30 @@ const csv = require('csv-parser');
 const router = express.Router();
 const { setTimeout } = require('timers/promises');
 
+
+const {
+  sendBookingConfirmationEmail,
+  sendBookingApprovalEmail,
+  sendTripStartEmail,
+  sendTripEndEmail,
+  sendPaymentConfirmationEmail,
+  sendBookingCancellationEmail,
+  sendBookingCompletionEmail
+} = require('../Controller/emailController');
+const ImageStorage = multerS3({
+  s3: s3,
+  bucket: 'spintrip-bucket',
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  key: function (req, file, cb) {
+    const userId = req.user.id;
+    const fileName = `${file.fieldname}${path.extname(file.originalname)}`;
+    const filePath = `${userId}/${fileName}`;
+    cb(null, filePath);
+  }
+});
+const fs = require('fs');
+
+const upload = multer({ storage: ImageStorage });
 const sendOTP = async (phone, otp) => {
   console.log(`Sending OTP ${otp} to phone number ${phone}`);
   const url = `https://2factor.in/API/V1/${process.env.SMS_API_KEY}/SMS/${phone}//${otp}/`;
