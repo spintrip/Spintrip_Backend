@@ -504,15 +504,15 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
   }
 });
 
-// router.delete('/cars/:id', authenticate, async (req, res) => {
-//   try {
-//     await Car.destroy({ where: { id: req.params.id } });
-//     res.status(200).json({ message: 'Car deleted' });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: 'Error deleting car', error });
-//   }
-// });
+router.delete('/cars/:id', authenticate, async (req, res) => {
+  try {
+    await Car.destroy({ where: { carid: req.params.id } });
+    res.status(200).json({ message: 'Car deleted' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting car', error });
+  }
+});
 
 router.get('/users/:id', authenticate, async (req, res) => {
   try {
