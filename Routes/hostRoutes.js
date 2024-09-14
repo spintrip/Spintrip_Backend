@@ -336,12 +336,36 @@ router.get('/payouts', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'No payouts found for this host' });
     }
 
-    res.status(200).json({ payouts });
+    // Calculate total amount for each payout
+    const payoutsWithTotalAmount = await Promise.all(
+      payouts.map(async (payout) => {
+        // Assuming payout has a field 'bookingIds' that is an array of booking IDs
+        const bookings = await Booking.findAll({
+          where: {
+            Bookingid: payout.bookingIds, // replace 'bookingIds' with the correct field name
+          },
+        });
+
+        // Calculate the sum of totalHostAmount for the bookings
+        const totalAmount = bookings.reduce((sum, booking) => {
+          return sum + (booking.totalHostAmount || 0); // Safely handle null or undefined values
+        }, 0);
+
+        // Add totalAmount to the payout object
+        return {
+          ...payout.toJSON(), // Convert sequelize instance to plain object
+          totalAmount,
+        };
+      })
+    );
+
+    res.status(200).json({ payouts: payoutsWithTotalAmount });
   } catch (error) {
     console.error('Error fetching payouts:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 router.post('/car', authenticate, async (req, res) => {
   const {
     carModel,
@@ -1226,7 +1250,7 @@ router.post('/booking-request', authenticate, async (req, res) => {
         status: 1,
       });
       const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bk.bookingId);
-      await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved');
+      await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved by host');
       autoCancelBooking(booking.Bookingid);
       return res.status(201).json({ message: 'Booking confirmed by host' });
     }
