@@ -2216,23 +2216,82 @@ const deleteuser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const pendingBookings = await Booking.findOne({
+
+    // Fetch all bookings related to the user with status 1, 2, or 5
+    const pendingBookings = await Booking.findAll({
       where: {
         id: req.user.id,
         status: [1, 2, 5],
       },
+      include: [{ 
+        model: Transaction, 
+        where: { Bookingid: Sequelize.col('Booking.Bookingid') }, 
+        required: false 
+      }],
+      raw: true
     });
 
-    if (pendingBookings) {
-      return res.status(400).json({ message: 'Cannot delete account with pending bookings' });
+    // If there are pending bookings, prevent account deletion
+    if (pendingBookings && pendingBookings.length > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete account with pending bookings', 
+        bookings: pendingBookings 
+      });
     }
+
+    // Audit bookings and transactions if there are any bookings
+    if (pendingBookings.length > 0) {
+      const auditBookings = pendingBookings.map(booking => ({
+        Bookingid: booking.Bookingid,
+        Date: booking.Date,
+        carid: booking.carid,
+        time: booking.time,
+        timestamp: booking.timestamp,
+        id: booking.id,
+        status: booking.status,
+        amount: booking.amount,
+        GSTAmount: booking.GSTAmount,
+        insurance: booking.insurance,
+        totalUserAmount: booking.totalUserAmount,
+        TDSAmount: booking.TDSAmount,
+        totalHostAmount: booking.totalHostAmount,
+        Transactionid: booking.Transactionid,
+        startTripDate: booking.startTripDate,
+        endTripDate: booking.endTripDate,
+        startTripTime: booking.startTripTime,
+        endTripTime: booking.endTripTime,
+        cancelDate: booking.cancelDate,
+        cancelReason: booking.cancelReason,
+        features: booking.features
+      }));
+
+      const auditTransactions = pendingBookings
+        .filter(booking => booking['Transactions.Transactionid'])
+        .map(booking => ({
+          Transactionid: booking['Transactions.Transactionid'],
+          Bookingid: booking.Bookingid,
+          Date: booking['Transactions.Date'],
+          time: booking['Transactions.time'],
+          timestamp: booking['Transactions.timestamp'],
+          id: booking['Transactions.id'],
+          status: booking['Transactions.status'],
+          amount: booking['Transactions.amount'],
+          GSTAmount: booking['Transactions.GSTAmount'],
+          totalAmount: booking['Transactions.totalAmount']
+        }));
+
+      await auditBooking.bulkCreate(auditBookings);
+      await auditTransaction.bulkCreate(auditTransactions);
+    }
+
+    // Delete the user
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error deleting user', error });
   }
-}
+};
 const rating = async (req, res) => {
   try {
     let { bookingId, rating, feedback } = req.body;

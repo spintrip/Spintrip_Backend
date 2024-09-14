@@ -216,6 +216,4 @@ router.get('/view-blog', getAllBlogs);
 
 router.get('/transactions', authenticate, transactions);
 
-
-
 module.exports = router;
