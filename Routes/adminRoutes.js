@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
-const { User, Admin, UserAdditional, Booking, Host, Car, Brand,Payout, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices, Transaction } = require('../Models');
+const { User, Admin, UserAdditional, Booking, Host, Car, Brand,Payout, Pricing, Listing, CarAdditional, Tax, Device, Feature, carDevices, Transaction, auditBooking, auditTransaction } = require('../Models');
 const path = require('path');
 const uuid = require('uuid');
 const { sendOTP, generateOTP, authAdmin, client } = require('../Controller/adminController');
@@ -289,6 +289,55 @@ router.delete('/users/:id', async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    const bookings = await Booking.findAll({
+      where: { id: user.id },
+      include: [{ model: Transaction, where: { Bookingid: Sequelize.col('Booking.Bookingid') }, required: false }], // Fetch related transactions
+      raw: true
+    });
+    
+    if (bookings && bookings.length > 0) {
+      const auditBookings = bookings.map(booking => ({
+        Bookingid: booking.Bookingid,
+        Date: booking.Date,
+        carid: booking.carid,
+        time: booking.time,
+        timestamp: booking.timestamp,
+        id: booking.id,
+        status: booking.status,
+        amount: booking.amount,
+        GSTAmount: booking.GSTAmount,
+        insurance: booking.insurance,
+        totalUserAmount: booking.totalUserAmount,
+        TDSAmount: booking.TDSAmount,
+        totalHostAmount: booking.totalHostAmount,
+        Transactionid: booking.Transactionid,
+        startTripDate: booking.startTripDate,
+        endTripDate: booking.endTripDate,
+        startTripTime: booking.startTripTime,
+        endTripTime: booking.endTripTime,
+        cancelDate: booking.cancelDate,
+        cancelReason: booking.cancelReason,
+        features: booking.features
+      }));
+    
+      const auditTransactions = bookings
+        .filter(booking => booking['Transactions.Transactionid']) 
+        .map(booking => ({
+          Transactionid: booking['Transactions.Transactionid'],
+          Bookingid: booking.Bookingid,
+          Date: booking['Transactions.Date'],
+          time: booking['Transactions.time'],
+          timestamp: booking['Transactions.timestamp'],
+          id: booking['Transactions.id'],
+          status: booking['Transactions.status'],
+          amount: booking['Transactions.amount'],
+          GSTAmount: booking['Transactions.GSTAmount'],
+          totalAmount: booking['Transactions.totalAmount']
+        }));
+    
+      await auditBooking.bulkCreate(auditBookings);
+      await auditTransaction.bulkCreate(auditTransactions);
     }
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });

@@ -56,9 +56,11 @@ db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.Payout = require('./payoutModel')(sequelize, DataTypes);
 db.BookingExtenstion = require('./bookingExtension')(sequelize, DataTypes);
+db.auditBooking = require('./auditbookingModel')(sequelize, DataTypes);
+db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
 const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
-    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices  } = sequelize.models;
+    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, auditBooking, auditTransaction  } = sequelize.models;
 
   carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' })  
   Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });

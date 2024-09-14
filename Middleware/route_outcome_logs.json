@@ -1,12 +1,72 @@
 [
   {
     "method": "POST",
-    "url": "/api/admin/signup",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-14T08:38:43.550Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-14T08:39:15.785Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFiNDkyMWExLTNlNGYtNGNlOC04YzRkLTQzNmQ0ZDY2MWU0YiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzI2MzAzMTU1fQ.E9NhdL-OsU5duUKbV3hX3zMlSNLY1B_Iub5HRq_bXmo\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:39:30.937Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"phone\":\"+918433745550\",\"role\":\"user\",\"createdAt\":\"2024-08-05T23:07:44.695Z\",\"updatedAt\":\"2024-09-14T08:38:43.521Z\"},\"profile\":{\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"dlNumber\":null,\"fullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findcars",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:40:09.103Z",
+    "body": {
+      "message": "{\"availableCars\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
     "status": 500,
     "user": null,
-    "timestamp": "2024-09-11T13:29:35.607Z",
+    "timestamp": "2024-09-14T08:40:29.343Z",
     "body": {
-      "message": "{\"message\":\"Error creating admin\"}"
+      "message": "{\"message\":\"Error logging in\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-09-14T08:40:40.924Z",
+    "body": {
+      "message": "{\"message\":\"Invalid phone number\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-09-14T08:43:58.582Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"timestamp\":\"2024-09-14T08:43:58.556Z\",\"UserId\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"updatedAt\":\"2024-09-14T08:43:58.557Z\",\"createdAt\":\"2024-09-14T08:43:58.557Z\",\"SecurityQuestion\":null}}"
     }
   },
   {
@@ -14,9 +74,9 @@
     "url": "/api/admin/login",
     "status": 200,
     "user": null,
-    "timestamp": "2024-09-11T13:29:38.395Z",
+    "timestamp": "2024-09-14T08:44:03.573Z",
     "body": {
-      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"deadpool\",\"otp\":\"1499\"}"
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918433745550\",\"otp\":\"6374\"}"
     }
   },
   {
@@ -24,9 +84,199 @@
     "url": "/api/admin/verify-otp",
     "status": 200,
     "user": null,
-    "timestamp": "2024-09-11T13:29:41.063Z",
+    "timestamp": "2024-09-14T08:44:32.160Z",
     "body": {
-      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"ad03e89b-e46f-4ee3-9ce3-1a58c5ed3229\",\"phone\":\"deadpool\",\"password\":\"$2b$10$tYXhmigjTeFoX226Oz59K.Kp/EdL4lzcIq25/Q9EQDSbiGiIdYAbu\",\"role\":\"user\",\"otp\":\"1499\",\"timestamp\":null,\"status\":null,\"rating\":null,\"createdAt\":\"2024-09-02T00:29:03.532Z\",\"updatedAt\":\"2024-09-11T13:29:38.379Z\",\"BookingBookingid\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkMDNlODliLWU0NmYtNGVlMy05Y2UzLTFhNThjNWVkMzIyOSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcyNjA2MTM4MX0.7Rnav_Q5zYfLvYzjOiaoBIPPwzaFifnQOzQDdFZQ2QI\"}"
+      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"phone\":\"+918433745550\",\"password\":\"$2b$10$TrMrXkGQ8geKYjW5Jj7/3OWqbpPKa3vkinK35MoO6a/YVS4bFCks2\",\"role\":\"user\",\"otp\":\"6374\",\"timestamp\":null,\"status\":null,\"rating\":null,\"createdAt\":\"2024-08-05T23:07:44.695Z\",\"updatedAt\":\"2024-09-14T08:44:03.562Z\",\"BookingBookingid\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFiNDkyMWExLTNlNGYtNGNlOC04YzRkLTQzNmQ0ZDY2MWU0YiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTcyNjMwMzQ3Mn0.ftquATcWD9o_7wzdQMMW8xzXfVozocL_2AvgifEiBPM\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/pending-carprofile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:45:00.520Z",
+    "body": {
+      "message": "{\"message\":\"No car approval required\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/car",
+    "status": 201,
+    "user": "eba4be0b-9805-4812-a2af-0ef966b622f2",
+    "timestamp": "2024-09-14T08:45:55.393Z",
+    "body": {
+      "message": "{\"message\":\"Car and listing added successfully for the host\",\"postedCar\":{\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"carModel\":\"baleno\",\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"\",\"color\":\"\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"8010\",\"mileage\":\"\",\"bodyType\":null,\"hostId\":\"eba4be0b-9805-4812-a2af-0ef966b622f2\",\"rating\":null,\"listingId\":\"a2110557-fc76-4f11-b797-91225b776105\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 400,
+    "user": "eba4be0b-9805-4812-a2af-0ef966b622f2",
+    "timestamp": "2024-09-14T08:46:04.189Z",
+    "body": {
+      "message": "{\"message\":\"Car not found\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/pending-carprofile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:47:03.004Z",
+    "body": {
+      "message": "{\"message\":\"No car approval required\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "eba4be0b-9805-4812-a2af-0ef966b622f2",
+    "timestamp": "2024-09-14T08:47:50.787Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"carAdditionals\":{\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"horsePower\":null,\"ac\":true,\"musicSystem\":true,\"autoWindow\":true,\"sunroof\":null,\"touchScreen\":true,\"sevenSeater\":true,\"reverseCamera\":true,\"transmission\":true,\"airBags\":true,\"fuelType\":false,\"petFriendly\":null,\"powerSteering\":null,\"abs\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"keylessEntry\":null,\"airPurifier\":null,\"carImage1\":null,\"carImage2\":null,\"carImage3\":null,\"carImage4\":null,\"carImage5\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"\",\"verificationStatus\":1}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findcars",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:48:05.004Z",
+    "body": {
+      "message": "{\"availableCars\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/pending-carprofile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:48:35.645Z",
+    "body": {
+      "message": "{\"pendingProfiles\":[{\"carid\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"HorsePower\":null,\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"Additionalinfo\":null,\"carimage1\":null,\"carimage2\":null,\"carimage3\":null,\"carimage4\":null,\"carimage5\":null,\"verification_status\":1,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"\",\"timestamp\":null,\"createdAt\":\"2024-09-14T08:45:55.362Z\",\"updatedAt\":\"2024-09-14T08:47:50.771Z\",\"car\":{\"carmodel\":\"baleno\",\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"\",\"color\":\"\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"8010\",\"mileage\":\"\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"bodytype\":null,\"carid\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"timestamp\":null,\"rating\":null,\"hostId\":\"eba4be0b-9805-4812-a2af-0ef966b622f2\",\"createdAt\":\"2024-09-14T08:45:55.355Z\",\"updatedAt\":\"2024-09-14T08:45:55.355Z\",\"BookingBookingid\":null,\"carhostid\":null}}]}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/admin/approve-carprofile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:48:56.806Z",
+    "body": {
+      "message": "{\"message\":\"Car Profile approved successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findcars",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:49:49.389Z",
+    "body": {
+      "message": "{\"availableCars\":[{\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"carModel\":\"baleno\",\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"\",\"color\":\"\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"8010\",\"bodyType\":null,\"hostId\":\"eba4be0b-9805-4812-a2af-0ef966b622f2\",\"rating\":null,\"mileage\":\"\",\"registrationYear\":\"2020-01-01\",\"horsePower\":null,\"ac\":true,\"musicSystem\":true,\"autoWindow\":true,\"sunRoof\":null,\"touchScreen\":true,\"sevenSeater\":true,\"reverseCamera\":true,\"transmission\":true,\"airBags\":true,\"fuelType\":false,\"petFriendly\":null,\"powerSteering\":null,\"abs\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"keylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"carImage1\":null,\"carImage2\":null,\"carImage3\":null,\"carImage4\":null,\"carImage5\":null,\"pricing\":{\"costPerHr\":146,\"hours\":8799.016666666666,\"amount\":1284656},\"distance\":1340.4518685778069}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onecar",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-14T08:51:44.226Z",
+    "body": {
+      "message": "{\"cars\":{\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"carModel\":\"baleno\",\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"\",\"color\":\"\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"8010\",\"bodyType\":null,\"hostId\":\"eba4be0b-9805-4812-a2af-0ef966b622f2\",\"rating\":null,\"mileage\":\"\"},\"pricing\":{\"costPerHr\":146,\"hours\":44.5,\"amount\":6497}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 400,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:52:22.191Z",
+    "body": {
+      "message": "{\"message\":\"Your DL and Aadhar is not Approved\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/admin/approve-profile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:53:44.008Z",
+    "body": {
+      "message": "{\"message\":\"Profile approved successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 404,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:53:55.675Z",
+    "body": {
+      "message": "{\"message\":\"Tax data not found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/tax",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-09-14T08:54:30.379Z",
+    "body": {
+      "message": "{\"message\":\"Tax Updated\",\"tax\":{\"id\":1,\"GST\":18,\"HostGST\":5,\"TDS\":1,\"Commission\":30,\"insurance\":14,\"updatedAt\":\"2024-09-14T08:54:30.360Z\",\"createdAt\":\"2024-09-14T08:54:30.360Z\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:54:46.307Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"542b5d34-b61e-41b9-bb6d-621f930af4b3\",\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"status\":5,\"amount\":3506,\"Transactionid\":null,\"startTripDate\":\"2024-05-24\",\"endTripDate\":\"2024-05-25\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"gstAmount\":312.03,\"insurance\":490.84,\"totalUserAmount\":4308.87}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/Cancel-Booking",
+    "status": 201,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:56:23.476Z",
+    "body": {
+      "message": "{\"message\":\"Trip Has been Cancelled\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:58:33.849Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "eba4be0b-9805-4812-a2af-0ef966b622f2",
+    "timestamp": "2024-09-14T08:59:11.211Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b",
+    "timestamp": "2024-09-14T08:59:36.171Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"a2d92f87-f3b1-45ff-96a5-5882363f72bd\",\"carId\":\"a7a7941c-7bce-443b-ba86-16f188cc4572\",\"id\":\"ab4921a1-3e4f-4ce8-8c4d-436d4d661e4b\",\"status\":5,\"amount\":3506,\"Transactionid\":null,\"startTripDate\":\"2024-05-24\",\"endTripDate\":\"2024-05-25\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"gstAmount\":312.03,\"insurance\":490.84,\"totalUserAmount\":4308.87}}"
     }
   }
 ]
