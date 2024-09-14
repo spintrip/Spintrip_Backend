@@ -2240,8 +2240,8 @@ const deleteuser = async (req, res) => {
     }
 
     // Audit bookings and transactions if there are any bookings
-    if (pendingBookings.length > 0) {
-      const auditBookings = pendingBookings.map(booking => ({
+    if (Bookings.length > 0) {
+      const auditBookings = Bookings.map(booking => ({
         Bookingid: booking.Bookingid,
         Date: booking.Date,
         carid: booking.carid,
@@ -2265,7 +2265,7 @@ const deleteuser = async (req, res) => {
         features: booking.features
       }));
 
-      const auditTransactions = pendingBookings
+      const auditTransactions = Bookings
         .filter(booking => booking['Transactions.Transactionid'])
         .map(booking => ({
           Transactionid: booking['Transactions.Transactionid'],

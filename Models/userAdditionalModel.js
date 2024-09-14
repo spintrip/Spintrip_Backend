@@ -14,11 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       aadhar: DataTypes.STRING
 
     });
- 
-    UserAdditional.associate = (models) => {
-      UserAdditional.belongsTo(models.User, { foreignKey: 'id', onDelete: 'CASCADE' });
-    };
-  
+
   
     return UserAdditional;
   };

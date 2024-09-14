@@ -16,7 +16,7 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     acquire: 30000,
     idle: 10000
   },
-  logging:false
+  logging: false
 });
 
 sequelize.authenticate()
@@ -58,41 +58,49 @@ db.Payout = require('./payoutModel')(sequelize, DataTypes);
 db.BookingExtenstion = require('./bookingExtension')(sequelize, DataTypes);
 db.auditBooking = require('./auditbookingModel')(sequelize, DataTypes);
 db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
+
 const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
-    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, auditBooking, auditTransaction  } = sequelize.models;
+    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, auditBooking, auditTransaction } = sequelize.models;
 
-  carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' })  
+  carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
   Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Support, { foreignKey: 'supportId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
   carFeature.belongsTo(Feature, { foreignKey: 'featureid', onDelete: 'CASCADE' });
   carFeature.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
-  BlogComment.belongsTo(Blog, {foreignKey: 'blogId', onDelete: 'CASCADE'});
+  BlogComment.belongsTo(Blog, { foreignKey: 'blogId', onDelete: 'CASCADE' });
+
+  // Adjust cascade behavior here to prevent unintentional deletions:
   User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
   Support.hasMany(SupportChat, { foreignKey: 'supportId', onDelete: 'CASCADE' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
   Admin.hasMany(SupportChat, { foreignKey: 'adminId', onDelete: 'CASCADE' });
-  Host.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
-  Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
-  UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
-  CarAdditional.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
-  Car.belongsTo(Host, { foreignKey: 'carid', onDelete: 'CASCADE' });
-  Booking.hasOne(User);
-  Booking.hasOne(Car);
-  Booking.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE'});
-  Booking.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
-  Booking.belongsTo(UserAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
-  User.hasOne(Admin);
-  User.hasOne(Host);
-  User.hasMany(Booking);
-  Car.hasOne(carDevices);
-  Listing.hasOne(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
-  Listing.hasOne(Host, { foreignKey: 'id', sourcekey: 'hostid', onDelete: 'CASCADE' });
-  Host.hasMany(Car, { foreignKey: 'carhostid', sourceKey: 'id', onDelete: 'CASCADE' });
-  Car.hasMany(Feedback, { foreignKey: 'carId', onDelete: 'CASCADE' });
-  Feedback.belongsTo(Car, { foreignKey: 'carId', onDelete: 'CASCADE' });
+
+  // Set 'onDelete: 'SET NULL' or 'NO ACTION' to prevent data loss in Booking:
+  Host.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
+  Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
+  UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
+  CarAdditional.belongsTo(Car, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  Car.belongsTo(Host, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  
+  // Explicitly specify onDelete action:
+  Booking.hasOne(User, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  Booking.hasOne(Car, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  Booking.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
+  Booking.belongsTo(Car, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  Booking.belongsTo(UserAdditional, { foreignKey: 'id', onDelete: 'SET NULL' });
+
+  User.hasOne(Admin, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  User.hasOne(Host, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  User.hasMany(Booking, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  Car.hasOne(carDevices, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  Listing.hasOne(Car, { foreignKey: 'carid', onDelete: 'SET NULL' });
+  Listing.hasOne(Host, { foreignKey: 'id', sourceKey: 'hostid', onDelete: 'SET NULL' });
+  Host.hasMany(Car, { foreignKey: 'carhostid', sourceKey: 'id', onDelete: 'SET NULL' });
+  Car.hasMany(Feedback, { foreignKey: 'carId', onDelete: 'SET NULL' });
+  Feedback.belongsTo(Car, { foreignKey: 'carId', onDelete: 'SET NULL' });
 };
 
 associateModels();

@@ -310,38 +310,20 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-const deleteuser = async (req, res) => {
+router.delete('/users/:id', async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
+    const user = await User.findByPk(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    // Fetch all bookings related to the user with status 1, 2, or 5
-    const pendingBookings = await Booking.findAll({
-      where: {
-        id: req.user.id,
-        status: [1, 2, 5],
-      },
-      include: [{ 
-        model: Transaction, 
-        where: { Bookingid: Sequelize.col('Booking.Bookingid') }, 
-        required: false 
-      }],
+    const bookings = await Booking.findAll({
+      where: { id: user.id },
+      include: [{ model: Transaction, where: { Bookingid: Sequelize.col('Booking.Bookingid') }, required: false }], // Fetch related transactions
       raw: true
     });
-
-    // If there are pending bookings, prevent account deletion
-    if (pendingBookings && pendingBookings.length > 0) {
-      return res.status(400).json({ 
-        message: 'Cannot delete account with pending bookings', 
-        bookings: pendingBookings 
-      });
-    }
-
-    // Audit bookings and transactions if there are any bookings
-    if (pendingBookings.length > 0) {
-      const auditBookings = pendingBookings.map(booking => ({
+    
+    if (bookings && bookings.length > 0) {
+      const auditBookings = bookings.map(booking => ({
         Bookingid: booking.Bookingid,
         Date: booking.Date,
         carid: booking.carid,
@@ -364,9 +346,9 @@ const deleteuser = async (req, res) => {
         cancelReason: booking.cancelReason,
         features: booking.features
       }));
-
-      const auditTransactions = pendingBookings
-        .filter(booking => booking['Transactions.Transactionid'])
+    
+      const auditTransactions = bookings
+        .filter(booking => booking['Transactions.Transactionid']) 
         .map(booking => ({
           Transactionid: booking['Transactions.Transactionid'],
           Bookingid: booking.Bookingid,
@@ -379,20 +361,17 @@ const deleteuser = async (req, res) => {
           GSTAmount: booking['Transactions.GSTAmount'],
           totalAmount: booking['Transactions.totalAmount']
         }));
-
+    
       await auditBooking.bulkCreate(auditBookings);
       await auditTransaction.bulkCreate(auditTransactions);
     }
-
-    // Delete the user
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error deleting user', error });
   }
-};
-
+});
 
 router.delete('/hosts/:id', async (req, res) => {
   try {
@@ -1374,6 +1353,8 @@ router.get('/device/:id', async (req, res) => {
     res.status(500).send('Error retrieving data from database');
   }
 });
+
+
 router.post('/car-device', async (req, res) => {
   try {
     const { deviceid, carid } = req.body;
@@ -1404,6 +1385,8 @@ router.post('/car-device', async (req, res) => {
     res.status(500).json({ message: 'Error creating mapping', error });
   }
 });
+
+// READ - Get all mappings
 router.get('/car-device', async (req, res) => {
   try {
     const mappings = await carDevices.findAll();
@@ -1417,6 +1400,7 @@ router.get('/car-device', async (req, res) => {
     res.status(500).json({ message: 'Error fetching mappings', error });
   }
 });
+
 router.get('/car-device/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -1432,6 +1416,8 @@ router.get('/car-device/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching mapping', error });
   }
 });
+
+
 router.put('/car-device', async (req, res) => {
 
   const { deviceid, carid } = req.body;
@@ -1460,6 +1446,8 @@ router.put('/car-device', async (req, res) => {
     res.status(500).json({ message: 'Error updating mapping', error });
   }
 });
+
+
 router.delete('/car-device/:id', async (req, res) => {
   const { id } = req.params;
 
