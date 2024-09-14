@@ -143,20 +143,47 @@ router.post('/payouts', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error creating payout', error });
   }
 });
+
 router.get('/payouts', authenticate, async (req, res) => {
   try {
+    // Fetch all payouts
     const payouts = await Payout.findAll();
 
     if (payouts.length === 0) {
       return res.status(404).json({ message: 'No payouts found' });
     }
 
-    res.status(200).json(payouts);
+    // Iterate over each payout to calculate total amount
+    const payoutsWithTotalAmount = await Promise.all(
+      payouts.map(async (payout) => {
+        // Assuming payout has a field 'bookingIds' that is an array of booking IDs
+        const bookings = await Booking.findAll({
+          where: {
+            Bookingid: payout.bookingIds, // replace 'bookingIds' with the correct field name
+          },
+        });
+
+        // Calculate the sum of totalHostAmount for the bookings
+        const totalAmount = bookings.reduce((sum, booking) => {
+          return sum + (booking.totalHostAmount || 0); // Safely handle null or undefined values
+        }, 0);
+
+        // Add totalAmount to the payout object
+        return {
+          ...payout.toJSON(), // Convert sequelize instance to plain object
+          totalAmount,
+        };
+      })
+    );
+
+    // Return the payouts with totalAmount included
+    res.status(200).json(payoutsWithTotalAmount);
   } catch (error) {
     console.error('Error fetching payouts:', error.message);
     res.status(500).json({ message: 'Error fetching payouts', error });
   }
 });
+
 
 router.get('/payouts/:id', authenticate, async (req, res) => {
   try {
@@ -234,7 +261,6 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Error logging in', error });
   }
 });
-
 //Verify-Otp
 router.post('/verify-otp', async (req, res) => {
   try {
@@ -627,6 +653,25 @@ router.delete('/bookings/:id', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error deleting booking', error });
   }
 });
+
+router.delete('/bookings', authenticate, async (req, res) => {
+  try {
+
+
+    // Delete all bookings with status 4
+    const deletedCount = await Booking.destroy({ where: { status: 4 } });
+
+    if (deletedCount === 0) {
+      return res.status(404).json({ message: 'No bookings with status 4 found' });
+    }
+
+    res.status(200).json({ message: `${deletedCount} bookings deleted` });
+  } catch (error) {
+    console.log('Error deleting bookings:', error);
+    res.status(500).json({ message: 'Error deleting bookings', error });
+  }
+});
+
 //Get All Hosts
 router.get('/hosts', authenticate, async (req, res) => {
   try {
