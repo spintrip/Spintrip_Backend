@@ -1977,7 +1977,7 @@ const cancelbooking = async (req, res) => {
           },
           { where: { Bookingid: bookingId } }
         );
-        const { userEmail, hostEmail, bookingDetails } = getBookingDetails(booking.Bookingid);
+        const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
         sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
         res.status(201).json({ message: 'Trip Has been Cancelled' });
       }

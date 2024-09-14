@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
       id: { type: DataTypes.STRING(36), primaryKey: true },
       Dlverification: DataTypes.STRING(16),
       FullName: DataTypes.STRING(100),
-      Email: DataTypes.STRING(30),
+      Email: DataTypes.STRING,
       AadharVfid: DataTypes.STRING(12),
       Address: DataTypes.TEXT,
       verification_status: DataTypes.INTEGER,
