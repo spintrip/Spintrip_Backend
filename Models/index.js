@@ -55,7 +55,7 @@ db.Feature = require('./featureModel')(sequelize, DataTypes);
 db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.Payout = require('./payoutModel')(sequelize, DataTypes);
-db.BookingExtension = require('./bookingExtension')(sequelize, DataTypes);
+db.BookingExtenstion = require('./bookingExtension')(sequelize, DataTypes);
 db.auditBooking = require('./auditbookingModel')(sequelize, DataTypes);
 db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
 
