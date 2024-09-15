@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const Razorpay = require('razorpay');
 const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension,
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog,
   Transaction } = require('../Models');
 const express = require('express');
 const uuid = require('uuid');
@@ -1759,43 +1759,26 @@ const extend = async (req, res) => {
     if (!cph) {
       return res.status(400).json({ message: 'Car pricing is not available' });
     }
-    let additionalAmount = Math.round(cph.costperhr * additionalHours);
-    additionalAmount += 20 * (additionalAmount)/ 100;
-    const tax = await Tax.findOne({ where: { id: 1 } });
-    if (!tax) {
-      return res.status(404).json({ message: 'Tax data not found' });
-    }
-    let spinTripGST = additionalAmount * (tax.GST / 100) * (tax.Commission / 100);
-    let hostGst = (additionalAmount - (additionalAmount * tax.Commission / 100)) * (tax.HostGST / 100);
-    let gstAmount = spinTripGST + hostGst;
-    let insuranceAmount = (additionalAmount * tax.insurance) / 100;
-    const tdsRate = tax.TDS / 100;
-    const hostCommission = 1 - (tax.Commission / 100);
-    let tds = ((additionalAmount * hostCommission) * tdsRate).toFixed(2);
-    let totalUserAmount = additionalAmount + gstAmount + insuranceAmount;
-    let totalHostAmount = ((additionalAmount * hostCommission) - parseFloat(tds)).toFixed(2);
+    const additionalAmount = Math.round(cph.costperhr * additionalHours);
 
     // Create a new booking for the extension
     const extensionBookingId = uuid.v4();
     const newBooking = await Booking.create({
       Bookingid: extensionBookingId,
       carid: booking.carid,
-      startTripDate: currentEndDate, 
+      startTripDate: currentEndDate, // Extension starts from the current end date
       endTripDate: newEndDate,
       startTripTime: currentEndTime,
       endTripTime: newEndTime,
       id: userId,
-      status: 5, 
+      status: 5, // Pending host approval
       amount: additionalAmount,
-      GSTAmount: gstAmount,
-      insurance: insuranceAmount,
-      totalUserAmount: totalUserAmount,
-      totalHostAmount: totalHostAmount,
-      TDSAmount: tds,
     });
-    const bookingExtension = await BookingExtension.findOne({ where: { bookingId:bookingId } });
+
+    // Update or create the BookingExtension entry
+    const bookingExtension = await BookingExtension.findOne({ where: { bookingId } });
     if (bookingExtension) {
-      bookingExtension.extendedBookings = [...bookingExtension.extendedBookings, extensionBookingId];
+      bookingExtension.extendedBookings.push(newBooking.Bookingid);
       await bookingExtension.save();
     } else {
       await BookingExtension.create({
@@ -1864,11 +1847,11 @@ const mergeBooking = async (originalBookingId) => {
     const bookingExtension = await BookingExtension.findOne({ where: { bookingId: originalBookingId } });
 
     if (bookingExtension) {
+      // Iterate through each extended booking and merge it with the original booking
       for (const extendedBookingId of bookingExtension.extendedBookings) {
-        const extendedBooking = await Booking.findOne({ where: { Bookingid: extendedBookingId, status: 1 } });
+        const extendedBooking = await Booking.findOne({ where: { Bookingid: extendedBookingId, status: 5 } });
 
         if (extendedBooking) {
-          console.log(extendedBooking);
           // Update the original booking with the extended details
           await Booking.update(
             {
@@ -1897,25 +1880,17 @@ const mergeBooking = async (originalBookingId) => {
     }
 
     // After merging, set the status of the current booking to 3
-    // await Booking.update(
-    //   { status: 3 },
-    //   { where: { Bookingid: originalBookingId } }
-    // );
+    await Booking.update(
+      { status: 3 },
+      { where: { Bookingid: originalBookingId } }
+    );
 
   } catch (error) {
     console.error(`Error merging extended bookings for ${originalBookingId}:`, error);
     throw new Error('Failed to merge extended bookings.');
   }
 };
-const getAllBookingExtensions = async (req, res) => {
-  try {
-    const bookingExtensions = await BookingExtension.findAll();
-     res.status(200).json({ message: bookingExtensions });
-  } catch (error) {
-    console.error('Error fetching booking extensions:', error);
-    throw error;
-  }
-};
+
 const tripstart = async (req, res) => {
   try {
     const { bookingId } = req.body;
@@ -1928,27 +1903,28 @@ const tripstart = async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: 'Trip already started or not present' });
     }
-    const bookingExtension = await BookingExtension.findOne({
-      where: {
-        extendedBookings: {
-          [Op.contains]: [bookingId], 
-        },
-      },
-    });
-    console.log(bookingExtension);
+
+    // Check if the booking is an extended booking
+    const bookingExtension = await BookingExtension.findOne({ where: { bookingId } });
+
     if (bookingExtension) {
-      await mergeBooking(bookingExtension.bookingId);
+      // Call the merge function to handle the merging of bookings
+      await mergeBooking(bookingId);
     } else {
+      // For non-extended bookings, set status to 2 (active)
       await Booking.update(
         { status: 2 },
         { where: { Bookingid: bookingId } }
       );
     }
+
+    // Update the car listing with the booking ID
     await Listing.update(
       { bookingId: bookingId },
       { where: { carid: booking.carid } }
     );
 
+    // Send trip start email notifications
     const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
     await sendTripStartEmail(userEmail, hostEmail, bookingDetails, "Trip has been started");
 
@@ -2424,6 +2400,5 @@ module.exports = {
   chathistory,
   toprating,
   deleteuser,
-  rating,
-  getAllBookingExtensions
+  rating
 }
