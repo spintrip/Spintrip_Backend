@@ -1633,6 +1633,28 @@ const extend = async (req, res) => {
       return res.status(400).json({ message: 'New end date and time must be after the current end date and time' });
     }
 
+    // Check for overlapping extensions
+    const bookingExtension = await BookingExtension.findOne({ where: { bookingId } });
+    if (bookingExtension) {
+      const overlappingExtension = await Booking.findOne({
+        where: {
+          Bookingid: { [Op.in]: bookingExtension.extendedBookings },
+          [Op.or]: [
+            {
+              startTripDate: { [Op.lte]: newEndDate },
+              endTripDate: { [Op.gte]: booking.startTripDate },
+              startTripTime: { [Op.lt]: newEndTime },
+              endTripTime: { [Op.gt]: booking.startTripTime },
+            },
+          ],
+        },
+      });
+
+      if (overlappingExtension) {
+        return res.status(400).json({ message: 'Extension dates overlap with existing extensions' });
+      }
+    }
+
     // Check car availability
     const listing = await Listing.findOne({
       where: {
@@ -1753,30 +1775,20 @@ const extend = async (req, res) => {
       return res.status(400).json({ message: 'Car is not available' });
     }
 
-    // Calculate additional hours and cost
+    // Create the extended booking if all checks pass
     const additionalHours = calculateTripHours(currentEndDate, newEndDate, currentEndTime, newEndTime);
-    const cph = await Pricing.findOne({ where: { carid: booking.carid } });
-    if (!cph) {
-      return res.status(400).json({ message: 'Car pricing is not available' });
-    }
-    const additionalAmount = Math.round(cph.costperhr * additionalHours);
-
-    // Create a new booking for the extension
-    const extensionBookingId = uuid.v4();
     const newBooking = await Booking.create({
-      Bookingid: extensionBookingId,
+      Bookingid: uuid.v4(),
       carid: booking.carid,
-      startTripDate: currentEndDate, // Extension starts from the current end date
+      startTripDate: booking.startTripDate,
       endTripDate: newEndDate,
-      startTripTime: currentEndTime,
+      startTripTime: booking.startTripTime,
       endTripTime: newEndTime,
       id: userId,
-      status: 5, // Pending host approval
-      amount: additionalAmount,
+      status: 5,
+      amount: booking.amount + additionalHours * booking.amount / (await Pricing.findOne({ where: { carid: booking.carid } })).costperhr,
     });
 
-    // Update or create the BookingExtension entry
-    const bookingExtension = await BookingExtension.findOne({ where: { bookingId } });
     if (bookingExtension) {
       bookingExtension.extendedBookings.push(newBooking.Bookingid);
       await bookingExtension.save();
@@ -1793,6 +1805,7 @@ const extend = async (req, res) => {
     res.status(500).json({ message: 'Error processing extend booking request' });
   }
 };
+
 
 const breakup = async (req, res) => {
   try {
@@ -1847,11 +1860,23 @@ const mergeBooking = async (originalBookingId) => {
     const bookingExtension = await BookingExtension.findOne({ where: { bookingId: originalBookingId } });
 
     if (bookingExtension) {
+      // Fetch the original booking to compare dates
+      const originalBooking = await Booking.findOne({ where: { Bookingid: originalBookingId } });
+
       // Iterate through each extended booking and merge it with the original booking
       for (const extendedBookingId of bookingExtension.extendedBookings) {
         const extendedBooking = await Booking.findOne({ where: { Bookingid: extendedBookingId, status: 5 } });
 
         if (extendedBooking) {
+          // Check for overlapping dates and times
+          if (extendedBooking.startTripDate <= originalBooking.endTripDate &&
+              extendedBooking.endTripDate >= originalBooking.startTripDate &&
+              (extendedBooking.startTripTime < originalBooking.endTripTime ||
+               extendedBooking.endTripTime > originalBooking.startTripTime)) {
+            console.log(`Skipping overlapping extension booking: ${extendedBookingId}`);
+            continue; // Skip this extension due to overlap
+          }
+
           // Update the original booking with the extended details
           await Booking.update(
             {
@@ -1860,7 +1885,7 @@ const mergeBooking = async (originalBookingId) => {
               amount: sequelize.literal(`amount + ${extendedBooking.amount}`),
               GSTAmount: sequelize.literal(`GSTAmount + ${extendedBooking.GSTAmount}`),
               totalUserAmount: sequelize.literal(`totalUserAmount + ${extendedBooking.totalUserAmount}`),
-              tds: sequelize.literal(`tds + ${extendedBooking.tds}`),
+              TDSAmount: sequelize.literal(`TDSAmount + ${extendedBooking.TDSAmount}`),
               totalHostAmount: sequelize.literal(`totalHostAmount + ${extendedBooking.totalHostAmount}`),
             },
             { where: { Bookingid: originalBookingId } }
@@ -2370,7 +2395,6 @@ module.exports = {
   login,
   generateOTP,
   sendOTP,
-  razorpay,
   createIndex,
   verify,
   getprofile,
