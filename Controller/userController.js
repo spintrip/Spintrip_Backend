@@ -5,8 +5,7 @@ const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const Razorpay = require('razorpay');
 const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog,
-  Transaction } = require('../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension, Transaction } = require('../Models');
 const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
@@ -1326,7 +1325,7 @@ const booking = async (req, res) => {
       const tax = await Tax.findOne({ where: { id: 1 } }); // Adjust the condition as necessary
       if (!tax) {
         return res.status(404).json({ message: 'Tax data not found' });
-      }x
+      }
       let spinTripGST = (amount * (tax.GST / 100) * (tax.Commission / 100)).toFixed(2);
       let hostGst = ((amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100)).toFixed(2);
       const tdsRate = tax.TDS / 100;
