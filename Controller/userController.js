@@ -1326,7 +1326,7 @@ const booking = async (req, res) => {
       const tax = await Tax.findOne({ where: { id: 1 } }); // Adjust the condition as necessary
       if (!tax) {
         return res.status(404).json({ message: 'Tax data not found' });
-      }
+      }x
       let spinTripGST = (amount * (tax.GST / 100) * (tax.Commission / 100)).toFixed(2);
       let hostGst = ((amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100)).toFixed(2);
       const tdsRate = tax.TDS / 100;
@@ -1854,75 +1854,103 @@ const breakup = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }
+const { Sequelize, Transaction } = require('sequelize');
+
 const mergeBooking = async (originalBookingId) => {
+  const transaction = await sequelize.transaction();
+
   try {
     // Fetch the booking extension details
-    const bookingExtension = await BookingExtension.findOne({ where: { bookingId: originalBookingId } });
+    const bookingExtension = await BookingExtension.findOne({
+      where: { bookingId: originalBookingId },
+      transaction,
+    });
 
-    if (bookingExtension) {
-      // Fetch the original booking to compare dates
-      const originalBooking = await Booking.findOne({ where: { Bookingid: originalBookingId } });
+    if (!bookingExtension) {
+      throw new Error(`Booking extension not found for booking ID: ${originalBookingId}`);
+    }
 
-      // Iterate through each extended booking and merge it with the original booking
-      for (const extendedBookingId of bookingExtension.extendedBookings) {
-        const extendedBooking = await Booking.findOne({ where: { Bookingid: extendedBookingId, status: 5 } });
+    // Fetch the original booking to compare dates
+    const originalBooking = await Booking.findOne({
+      where: { Bookingid: originalBookingId },
+      transaction,
+    });
 
-        if (extendedBooking) {
-          // Check for overlapping dates and times
-          if (extendedBooking.startTripDate <= originalBooking.endTripDate &&
-              extendedBooking.endTripDate >= originalBooking.startTripDate &&
-              (extendedBooking.startTripTime < originalBooking.endTripTime ||
-               extendedBooking.endTripTime > originalBooking.startTripTime)) {
-            console.log(`Skipping overlapping extension booking: ${extendedBookingId}`);
-            continue; // Skip this extension due to overlap
-          }
+    if (!originalBooking) {
+      throw new Error(`Original booking not found for booking ID: ${originalBookingId}`);
+    }
 
-          // Update the original booking with the extended details
-          await Booking.update(
-            {
-              endTripDate: extendedBooking.endTripDate,
-              endTripTime: extendedBooking.endTripTime,
-              amount: sequelize.literal(`amount + ${extendedBooking.amount}`),
-              GSTAmount: sequelize.literal(`GSTAmount + ${extendedBooking.GSTAmount}`),
-              totalUserAmount: sequelize.literal(`totalUserAmount + ${extendedBooking.totalUserAmount}`),
-              TDSAmount: sequelize.literal(`TDSAmount + ${extendedBooking.TDSAmount}`),
-              totalHostAmount: sequelize.literal(`totalHostAmount + ${extendedBooking.totalHostAmount}`),
-            },
-            { where: { Bookingid: originalBookingId } }
-          );
+    // Iterate through each extended booking and merge it with the original booking
+    for (const extendedBookingId of bookingExtension.extendedBookings) {
+      const extendedBooking = await Booking.findOne({
+        where: { Bookingid: extendedBookingId, status: 5 },
+        transaction,
+      });
 
-          // Remove the extended booking after merging
-          await Booking.destroy({ where: { Bookingid: extendedBookingId } });
-
-          // Update the booking extension entry
-          bookingExtension.extendedBookings = bookingExtension.extendedBookings.filter(
-            (id) => id !== extendedBookingId
-          );
-
-          await bookingExtension.save();
+      if (extendedBooking) {
+        // Check for overlapping dates and times
+        if (
+          (new Date(extendedBooking.startTripDate) <= new Date(originalBooking.endTripDate) &&
+            new Date(extendedBooking.endTripDate) >= new Date(originalBooking.startTripDate)) &&
+          (extendedBooking.startTripTime < originalBooking.endTripTime ||
+            extendedBooking.endTripTime > originalBooking.startTripTime)
+        ) {
+          console.log(`Skipping overlapping extension booking: ${extendedBookingId}`);
+          continue; // Skip this extension due to overlap
         }
+
+        // Update the original booking with the extended details
+        await Booking.update(
+          {
+            endTripDate: extendedBooking.endTripDate,
+            endTripTime: extendedBooking.endTripTime,
+            amount: Sequelize.literal(`amount + ${extendedBooking.amount}`),
+            GSTAmount: Sequelize.literal(`GSTAmount + ${extendedBooking.GSTAmount}`),
+            totalUserAmount: Sequelize.literal(`totalUserAmount + ${extendedBooking.totalUserAmount}`),
+            TDSAmount: Sequelize.literal(`TDSAmount + ${extendedBooking.TDSAmount}`),
+            totalHostAmount: Sequelize.literal(`totalHostAmount + ${extendedBooking.totalHostAmount}`),
+          },
+          { where: { Bookingid: originalBookingId }, transaction }
+        );
+
+        // Remove the extended booking after merging
+        await Booking.destroy({ where: { Bookingid: extendedBookingId }, transaction });
+
+        // Update the booking extension entry
+        bookingExtension.extendedBookings = bookingExtension.extendedBookings.filter(
+          (id) => id !== extendedBookingId
+        );
+
+        await bookingExtension.save({ transaction });
       }
     }
 
-    // After merging, set the status of the current booking to 3
+    // After merging, set the status of the current booking to 3 (completed)
     await Booking.update(
       { status: 3 },
-      { where: { Bookingid: originalBookingId } }
+      { where: { Bookingid: originalBookingId }, transaction }
     );
 
+    // Commit the transaction
+    await transaction.commit();
   } catch (error) {
+    // Rollback transaction in case of an error
+    await transaction.rollback();
     console.error(`Error merging extended bookings for ${originalBookingId}:`, error);
     throw new Error('Failed to merge extended bookings.');
   }
 };
 
 const tripstart = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
     const { bookingId } = req.body;
 
     // Fetch the booking and ensure it is pending trip start
     const booking = await Booking.findOne({
       where: { Bookingid: bookingId, status: 1 },
+      transaction,
     });
 
     if (!booking) {
@@ -1930,7 +1958,10 @@ const tripstart = async (req, res) => {
     }
 
     // Check if the booking is an extended booking
-    const bookingExtension = await BookingExtension.findOne({ where: { bookingId } });
+    const bookingExtension = await BookingExtension.findOne({
+      where: { bookingId },
+      transaction,
+    });
 
     if (bookingExtension) {
       // Call the merge function to handle the merging of bookings
@@ -1939,27 +1970,32 @@ const tripstart = async (req, res) => {
       // For non-extended bookings, set status to 2 (active)
       await Booking.update(
         { status: 2 },
-        { where: { Bookingid: bookingId } }
+        { where: { Bookingid: bookingId }, transaction }
       );
     }
 
     // Update the car listing with the booking ID
     await Listing.update(
       { bookingId: bookingId },
-      { where: { carid: booking.carid } }
+      { where: { carid: booking.carid }, transaction }
     );
 
     // Send trip start email notifications
     const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
     await sendTripStartEmail(userEmail, hostEmail, bookingDetails, "Trip has been started");
 
-    res.status(201).json({ message: 'Trip has started' });
+    // Commit the transaction
+    await transaction.commit();
 
+    res.status(201).json({ message: 'Trip has started' });
   } catch (err) {
+    // Rollback transaction in case of an error
+    await transaction.rollback();
     console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 const autoCancelBooking = async (bookingId) => {
   try {
