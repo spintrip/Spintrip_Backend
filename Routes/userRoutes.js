@@ -38,7 +38,8 @@ const {
   chathistory,
   toprating,
   deleteuser,
-  rating
+  rating,
+  getAllBookingExtensions,
  } = require('../Controller/userController');
 const { getAllBlogs } = require('../Controller/blogController');
 const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
@@ -89,6 +90,8 @@ router.post('/verify-otp', verify);
 
 
 router.get('/profile', authenticate, getprofile);
+
+router.get('/extensions', authenticate, getAllBookingExtensions);
 
 
 //Update Profile

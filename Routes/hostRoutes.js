@@ -1262,7 +1262,7 @@ router.post('/booking-request', authenticate, async (req, res) => {
         cancelDate: cancelDate,
         cancelReason: bk.CancelReason
       });
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bk.bookingId);
       await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails,"The booking has been cancelled");
       return res.status(201).json({ message: 'Booking cancelled by host' });
     }
