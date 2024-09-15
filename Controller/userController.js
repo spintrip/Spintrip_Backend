@@ -1854,7 +1854,6 @@ const breakup = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }
-const { Sequelize, Transaction } = require('sequelize');
 
 const mergeBooking = async (originalBookingId) => {
   const transaction = await sequelize.transaction();
