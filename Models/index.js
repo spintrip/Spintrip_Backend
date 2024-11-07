@@ -11,8 +11,8 @@ const DB_NAME = process.env.DB_NAME;
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
   dialect: 'postgres',
   pool: {
-    max: 200,
-    min: 5,
+    max: 2000,
+    min: 50,
     acquire: 30000,
     idle: 10000
   },

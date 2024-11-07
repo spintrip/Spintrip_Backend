@@ -3,6 +3,8 @@ const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
 const bcrypt = require('bcrypt');
+const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension, Transaction } = require('../Models');
 const {
   signup,
   login,
