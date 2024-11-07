@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     const CarAdditional = sequelize.define("CarAdditional", {
-      carid: { type: DataTypes.STRING(36), primaryKey: true },
+      vehicleid: { type: DataTypes.STRING(36), primaryKey: true },
       HorsePower: DataTypes.INTEGER, 
       AC: DataTypes.BOOLEAN,
       Musicsystem: DataTypes.BOOLEAN,

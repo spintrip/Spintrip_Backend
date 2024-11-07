@@ -6,7 +6,7 @@ const getAllCars = async (req, res) => {
     const cars = await Car.findAll();
     const carsWithAdditionalInfo = await Promise.all(
       cars.map(async (car) => {
-        const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+        const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
         return {
           ...car.toJSON(),
           additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
@@ -29,7 +29,7 @@ const getCarById = async (req, res) => {
       return res.status(404).json({ message: 'Car not found' });
     }
 
-    const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+    const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
     res.status(200).json({
       car: {
         ...car.toJSON(),
@@ -45,23 +45,23 @@ const getCarById = async (req, res) => {
 // Update a car by ID
 const updateCarById = async (req, res) => {
   try {
-    const { carid } = req.params;
+    const { vehicleid } = req.params;
     const { additionalInfo, ...carData } = req.body;
 
-    const [updated] = await Car.update(carData, { where: { carid } });
+    const [updated] = await Car.update(carData, { where: { vehicleid } });
     if (!updated) {
       return res.status(404).json({ message: 'Car not found' });
     }
 
     if (additionalInfo) {
-      let additionalRecord = await CarAdditional.findOne({ where: { carid } });
+      let additionalRecord = await CarAdditional.findOne({ where: { vehicleid } });
       if (additionalRecord) {
         await additionalRecord.update(additionalInfo);
       }
     }
 
-    const updatedCar = await Car.findByPk(carid);
-    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { carid } });
+    const updatedCar = await Car.findByPk(vehicleid);
+    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { vehicleid } });
 
     res.status(200).json({
       message: 'Car updated successfully',
@@ -78,7 +78,7 @@ const updateCarById = async (req, res) => {
 // Delete a car by ID
 const deleteCarById = async (req, res) => {
   try {
-    await Car.destroy({ where: { carid: req.params.id } });
+    await Car.destroy({ where: { vehicleid: req.params.id } });
     res.status(200).json({ message: 'Car deleted successfully' });
   } catch (error) {
     console.log(error);

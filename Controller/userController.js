@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const Razorpay = require('razorpay');
 const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension, Transaction } = require('../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, HostAdditional, BookingExtension, Transaction, Vehicle } = require('../Models');
 const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
@@ -113,7 +113,7 @@ const login = async (req, res) => {
   sendOTP(phone, otp);
   await user.update({ otp: otp })
   // Redirect to verify OTP route
-  return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp' });
+  return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', otp:otp });
 };
 
 //signing a user up
@@ -328,12 +328,12 @@ const getbrand = async (req, res) => {
 const features = async (req, res) => {
 
   try {
-    const { carid } = req.body;
-    const car = await Car.findOne({ where: { carid: carid } });
+    const { vehicleid } = req.body;
+    const car = await Car.findOne({ where: { vehicleid: vehicleid } });
     if (!car) {
       return res.status(400).json({ message: 'Car is not available' });
     }
-    const carFeatures = await carFeature.findAll({ where: { carid }, include: [Feature] });
+    const carFeatures = await carFeature.findAll({ where: { vehicleid }, include: [Feature] });
     if (!carFeatures || carFeatures.length === 0) {
       return res.status(400).json({ message: 'No Car Feature Available' });
     }
@@ -346,12 +346,15 @@ const features = async (req, res) => {
 };
 const cars = async (req, res) => {
   const cars = await Car.findAll();
+  console.log(cars);
   const pricingPromises = cars.map(async (car) => {
-    const carAdditional = await CarAdditional.findOne({ where: { carid: car.carid, verification_status: '2' } });
+    const carAdditional = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid, 
+      //verification_status: '2'
+       } });
     let availableCar;
     if (carAdditional) {
       availableCar = {
-        carId: car.carid,
+        vehicleid: car.vehicleid,
         carModel: car.carmodel,
         type: car.type,
         brand: car.brand,
@@ -370,7 +373,7 @@ const cars = async (req, res) => {
         carImage4: carAdditional.carimage4,
         carImage5: carAdditional.carimage5,
       }
-      const cph = await Pricing.findOne({ where: { carid: car.carid } });
+      const cph = await Pricing.findOne({ where: { vehicleid: car.vehicleid } });
       if (cph) {
         const costperhr = cph.costperhr;
         return { ...availableCar, costPerHr: costperhr };
@@ -385,6 +388,7 @@ const cars = async (req, res) => {
   const carsWithPricing = (await Promise.all(pricingPromises)).filter(cars => cars != null);
   res.status(200).json({ "message": "All available cars", cars: carsWithPricing })
 };
+
 const findcars = async (req, res) => {
   const { startDate, endDate, startTime, endTime, latitude, longitude } = req.body;
   try {
@@ -507,25 +511,25 @@ const findcars = async (req, res) => {
     });
     // Map over the listings to get cars with pricing
     const pricingPromises = availableListings.map(async (listing) => {
-      // Extract carId from listing dataValues
-      const carId = listing.dataValues.carid;
+      // Extract vehicleid from listing dataValues
+      const vehicleid = listing.dataValues.vehicleid;
 
-      // Fetch the Car data based on carId
-      const car = await Car.findOne({ where: { carid: carId } });
+      // Fetch the Car data based on vehicleid
+      const car = await Car.findOne({ where: { vehicleid: vehicleid } });
       if (!car) {
         // Skip or handle the error appropriately if Car data is not found
         return null;
       }
-      const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
+      const carAdditional = await CarAdditional.findOne({ where: { vehicleid: vehicleid } });
       if (!carAdditional) {
         return null;
       }
-      if (carAdditional.verification_status != 2) {
-        return null;
-      }
+      // if (carAdditional.verification_status != 2) {
+      //   return null;
+      // }
       const check_booking = await Booking.findOne({
         where: {
-          carid: carId,
+          vehicleid: vehicleid,
           status: {
             [Op.in]: [1, 2, 5]  // Assuming 1 and 2 are statuses for active bookings
           },
@@ -640,9 +644,9 @@ const findcars = async (req, res) => {
       }
 
       // Fetch the Pricing data for the Car
-      const cph = await Pricing.findOne({ where: { carid: carId } });
+      const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
       let availableCar = {
-        carId: car.carid,
+        vehicleid: car.vehicleid,
         carModel: car.carmodel,
         type: car.type,
         brand: car.brand,
@@ -718,7 +722,7 @@ const findcars = async (req, res) => {
 }
 
 const onecar = async (req, res) => {
-  const { carId, startDate, endDate, startTime, endTime, features } = req.body;
+  const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
   try {
     const availableListings = await Listing.findOne({
       where: {
@@ -835,7 +839,7 @@ const onecar = async (req, res) => {
           },
 
         ],
-        carid: carId,
+        vehicleid: vehicleid,
       },
       include: [Car],
     });
@@ -843,12 +847,12 @@ const onecar = async (req, res) => {
       // Extract car information from the listings
       const availableCars = await Car.findOne({
         where: {
-          carid: availableListings.carid,
+          vehicleid: availableListings.vehicleid,
         }
       });
       const check_booking = await Booking.findOne({
         where: {
-          carid: carId,
+          vehicleid: vehicleid,
           status: {
             [Op.in]: [1, 2, 5]  // Assuming 1 and 2 are statuses for active bookings
           },
@@ -962,9 +966,9 @@ const onecar = async (req, res) => {
         return res.status(400).json({ message: 'Selected car is not available for the specified dates' });
       }
       // Calculate pricing for each available car
-      const cph = await Pricing.findOne({ where: { carid: availableCars.carid } });
+      const cph = await Pricing.findOne({ where: { vehicleid: availableCars.vehicleid } });
       let cars = {
-        carId: availableCars.carid,
+        vehicleid: availableCars.vehicleid,
         carModel: availableCars.carmodel,
         type: availableCars.type,
         brand: availableCars.brand,
@@ -984,7 +988,7 @@ const onecar = async (req, res) => {
         let featureCost = 0;
         if (features) {
           for (const feature of features) {
-            const featureDetail = await carFeature.findOne({ where: { featureid: feature, carid: carId } });
+            const featureDetail = await carFeature.findOne({ where: { featureid: feature, vehicleid: vehicleid } });
             if (featureDetail) {
               featureCost += featureDetail.price;
             }
@@ -1036,13 +1040,13 @@ const getBookingDetails = async (bookingId) => {
     const user = await UserAdditional.findOne({
       where: { id: booking.id }
     });
-    const host = await Car.findOne({
-      where: { carid: booking.carid }
+    const host = await Vehicle.findOne({
+      where: { vehicleid: booking.vehicleid }
     })
 
     const userEmail = user?.Email;
     const hostId = host?.hostId;
-    var hostEmail = await UserAdditional.findOne({
+    var hostEmail = await HostAdditional.findOne({
       where: { id: hostId }
     });
     const bookingDetails = {
@@ -1061,19 +1065,19 @@ const getBookingDetails = async (bookingId) => {
 };
 const booking = async (req, res) => {
   try {
-    const { carId, startDate, endDate, startTime, endTime, features } = req.body;
+    const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
     const userId = req.user.userid;
     const userAdd = await UserAdditional.findOne({
       where: {
         id: userId,
       }
     });
-    if (userAdd.verification_status != 2) {
-      return res.status(400).json({ message: 'Your DL and Aadhar is not Approved' });
-    }
+    // if (userAdd.verification_status != 2) {
+    //   return res.status(400).json({ message: 'Your DL and Aadhar is not Approved' });
+    // }
     const listing = await Listing.findOne({
       where: {
-        carid: carId,
+        vehicleid: vehicleid,
         [Op.and]: [
           {
             [Op.or]: [
@@ -1191,7 +1195,7 @@ const booking = async (req, res) => {
     if (listing) {
       const check_booking = await Booking.findOne({
         where: {
-          carid: carId,
+          vehicleid: vehicleid,
           status: {
             [Op.in]: [1, 2, 5]  // Assuming 1 and 2 are statuses for active bookings
           },
@@ -1309,67 +1313,67 @@ const booking = async (req, res) => {
       return res.status(400).json({ message: 'Selected car is not available for the specified dates' });
     }
     try {
-      let cph = await Pricing.findOne({ where: { carid: carId } })
+      let cph = await Pricing.findOne({ where: { vehicleid: vehicleid } })
       let hours = calculateTripHours(startDate, endDate, startTime, endTime);
       let amount = Math.round(cph.costperhr * hours);
       let featureCost = 0;
       if (features) {
         for (const feature of features) {
-          const featureDetail = await carFeature.findOne({ where: { featureid: feature, carid: carId } });
+          const featureDetail = await carFeature.findOne({ where: { featureid: feature, vehicleid: vehicleid } });
           if (featureDetail) {
             featureCost += featureDetail.price;
           }
         }
       }
       amount += featureCost;
-      const tax = await Tax.findOne({ where: { id: 1 } }); // Adjust the condition as necessary
-      if (!tax) {
-        return res.status(404).json({ message: 'Tax data not found' });
-      }
-      let spinTripGST = (amount * (tax.GST / 100) * (tax.Commission / 100)).toFixed(2);
-      let hostGst = ((amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100)).toFixed(2);
-      const tdsRate = tax.TDS / 100;
-      const HostCommision = 1 - (tax.Commission / 100);
+      // const tax = await Tax.findOne({ where: { id: 1 } }); // Adjust the condition as necessary
+      // if (!tax) {
+      //   return res.status(404).json({ message: 'Tax data not found' });
+      // }
+      // let spinTripGST = (amount * (tax.GST / 100) * (tax.Commission / 100)).toFixed(2);
+      // let hostGst = ((amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100)).toFixed(2);
+      // const tdsRate = tax.TDS / 100;
+      // const HostCommision = 1 - (tax.Commission / 100);
 
       // Update booking amounts using dynamic tax rates
-      let gstAmount = (parseFloat(spinTripGST) + parseFloat(hostGst)).toFixed(2);
-      let insuranceAmount = (amount * tax.insurance) / 100;
-      let totalUserAmount = (amount + parseFloat(gstAmount) + insuranceAmount).toFixed(2);
-      let tds = ((amount * HostCommision) * tdsRate).toFixed(2);
-      let totalHostAmount = ((amount * HostCommision) - parseFloat(tds)).toFixed(2);
+      // let gstAmount = (parseFloat(spinTripGST) + parseFloat(hostGst)).toFixed(2);
+      // let insuranceAmount = (amount * tax.insurance) / 100;
+      // let totalUserAmount = (amount + parseFloat(gstAmount) + insuranceAmount).toFixed(2);
+      // let tds = ((amount * HostCommision) * tdsRate).toFixed(2);
+      // let totalHostAmount = ((amount * HostCommision) - parseFloat(tds)).toFixed(2);
       const bookingid = uuid.v4();
       let booking = await Booking.create({
         Bookingid: bookingid,
-        carid: carId,
+        vehicleid: vehicleid,
         startTripDate: startDate,
         endTripDate: endDate,
         startTripTime: startTime,
         endTripTime: endTime,
         id: userId,
-        status: 5,
+        status: 1,
         amount: amount,
-        GSTAmount: gstAmount,
-        insurance: insuranceAmount,
-        totalUserAmount: totalUserAmount,
-        TDSAmount: tds,
-        totalHostAmount: totalHostAmount,
+        // GSTAmount: gstAmount,
+        // insurance: insuranceAmount,
+        // totalUserAmount: totalUserAmount,
+        // TDSAmount: tds,
+        // totalHostAmount: totalHostAmount,
         features: features
       });
 
       const bookings = {
         bookingId: booking.Bookingid,
-        carId: booking.carid,
+        vehicleid: booking.vehicleid,
         id: booking.id,
         status: booking.status,
         amount: booking.amount,
-        Transactionid: booking.Transactionid,
+        // Transactionid: booking.Transactionid,
         startTripDate: booking.startTripDate,
         endTripDate: booking.endTripDate,
         startTripTime: booking.startTripTime,
         endTripTime: booking.endTripTime,
-        gstAmount: booking.GSTAmount,
-        insurance: booking.insurance,
-        totalUserAmount: booking.totalUserAmount,
+        // gstAmount: booking.GSTAmount,
+        // insurance: booking.insurance,
+        // totalUserAmount: booking.totalUserAmount,
       }
       req.body.bookingId = booking.Bookingid;
       req.body.userId = userId;
@@ -1392,21 +1396,21 @@ const booking = async (req, res) => {
 
 const postwishlist = async (req, res) => {
   try {
-    const { carId } = req.body;
+    const { vehicleid } = req.body;
     const userId = req.user.userid;
-    console.log(carId);
-    const car = await Car.findOne({
+    console.log(vehicleid);
+    const vehicle = await Vehicle.findOne({
       where: {
-        carid: carId,
+        vehicleid: vehicleid,
       }
     });
-    if (!car) {
-      res.status(404).json({ message: 'Car not found' });
+    if (!vehicle) {
+      res.status(404).json({ message: 'Vehicle not found' });
     }
     const wishlist = await Wishlist.findOne({
       where: {
         userid: userId,
-        carid: carId,
+        vehicleid: vehicleid,
       }
     });
     if (wishlist) {
@@ -1415,7 +1419,7 @@ const postwishlist = async (req, res) => {
     else {
       await Wishlist.create({
         userid: userId,
-        carid: carId,
+        vehicleid: vehicleid,
       })
       res.status(201).json({ message: 'Wishlist Added successfully' });
     }
@@ -1426,20 +1430,20 @@ const postwishlist = async (req, res) => {
 }
 const cancelwishlist = async (req, res) => {
   try {
-    const { carId } = req.body;
+    const { vehicleid } = req.body;
     const userId = req.user.userid;
-    const car = await Car.findOne({
+    const vehicle = await Vehicle.findOne({
       where: {
-        carid: carId,
+        vehicleid: vehicleid,
       }
     });
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'vehicle not found' });
     }
     const wishlist = await Wishlist.findOne({
       where: {
         userid: userId,
-        carid: carId,
+        vehicleid: vehicleid,
       }
     });
     if (!wishlist) {
@@ -1449,7 +1453,7 @@ const cancelwishlist = async (req, res) => {
       await Wishlist.destroy({
         where: {
           userid: userId,
-          carid: carId,
+          vehicleid: vehicleid,
         }
       });
       res.status(200).json({ message: 'Wishlist removed successfully' });
@@ -1470,17 +1474,17 @@ const getwishlist = async (req, res) => {
     const userWishlist = wishlist.map(async (wishlists) => {
       const car = await Car.findOne({
         where: {
-          carid: wishlists.carid,
+          vehicleid: wishlists.vehicleid,
         }
       });
       if (!car) {
         return;
       }
       console.log(car);
-      const carAdditional = await CarAdditional.findOne({ where: { carid: wishlists.carid } });
+      const carAdditional = await CarAdditional.findOne({ where: { vehicleid: wishlists.vehicleid } });
       let wl;
       wl = {
-        carId: wishlists.carid,
+        vehicleid: wishlists.vehicleid,
         carModel: car.carmodel,
         type: car.type,
         brand: car.brand,
@@ -1501,7 +1505,7 @@ const getwishlist = async (req, res) => {
         carImage4: carAdditional.carimage4,
         carImage5: carAdditional.carimage5,
       }
-      const cph = await Pricing.findOne({ where: { carid: car.carid } });
+      const cph = await Pricing.findOne({ where: { vehicleid: car.vehicleid } });
       if (cph) {
         const costperhr = cph.costperhr;
         // Include pricing information in the car object
@@ -1519,20 +1523,20 @@ const getwishlist = async (req, res) => {
   }
 }
 const getcaradditional = async (req, res) => {
-  const { carId } = req.body;
+  const { vehicleid } = req.body;
 
   try {
     // Check if the host owns the car
-    const car = await Car.findOne({ where: { carid: carId } });
+    const car = await Car.findOne({ where: { vehicleid: vehicleid } });
     if (!car) {
       return res.status(404).json({ message: 'Car not found or unauthorized access' });
     }
 
-    const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
+    const carAdditional = await CarAdditional.findOne({ where: { vehicleid: vehicleid } });
     if (!carAdditional) {
       return res.status(404).json({ message: 'Car additional information not found' });
     }
-    const features = await carFeature.findAll({ where: { carid: carId } });
+    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });
     if (!carAdditional) {
       return res.status(404).json({ message: 'Car additional information not found' });
     }
@@ -1545,7 +1549,7 @@ const getcaradditional = async (req, res) => {
       featureName: featureMap[f.featureid]
     }));
     let carAdditionals = {
-      carId: carAdditional.carid,
+      vehicleid: carAdditional.vehicleid,
       horsePower: carAdditional.HorsePower,
       ac: carAdditional.AC,
       musicSystem: carAdditional.Musicsystem,
@@ -1657,7 +1661,7 @@ const extend = async (req, res) => {
     // Check car availability
     const listing = await Listing.findOne({
       where: {
-        carid: booking.carid,
+        vehicleid: booking.vehicleid,
         [Op.and]: [
           {
             [Op.or]: [
@@ -1776,7 +1780,7 @@ const extend = async (req, res) => {
 
     // Create the extended booking if all checks pass
     const additionalHours = calculateTripHours(currentEndDate, newEndDate, currentEndTime, newEndTime);
-    const cph = await Pricing.findOne({ where: { carid: booking.carid } });
+    const cph = await Pricing.findOne({ where: { vehicleid: booking.vehicleid } });
     let additionalAmount = Math.round(cph.costperhr * additionalHours);
     additionalAmount += 20 * (additionalAmount)/ 100;
     const tax = await Tax.findOne({ where: { id: 1 } });
@@ -1794,7 +1798,7 @@ const extend = async (req, res) => {
     let totalHostAmount = ((additionalAmount * hostCommission) - parseFloat(tds)).toFixed(2);
     const newBooking = await Booking.create({
       Bookingid: uuid.v4(),
-      carid: booking.carid,
+      vehicleid: booking.vehicleid,
       startTripDate: booking.startTripDate,
       endTripDate: newEndDate,
       startTripTime: booking.startTripTime,
@@ -1829,8 +1833,8 @@ const extend = async (req, res) => {
 
 const breakup = async (req, res) => {
   try {
-    let { carId, startDate, endDate, startTime, endTime, features } = req.body;
-    const cph = await Pricing.findOne({ where: { carid: carId } });
+    let { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
+    const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
     const hours = calculateTripHours(startDate, endDate, startTime, endTime);
     if (!cph) {
       return res.status(404).json({ message: 'Pricing of the car not available' });
@@ -1840,7 +1844,7 @@ const breakup = async (req, res) => {
     let featureCost = 0;
     if (features) {
       for (const feature of features) {
-        const featureDetail = await carFeature.findOne({ where: { featureid: feature, carid: carId } });
+        const featureDetail = await carFeature.findOne({ where: { featureid: feature, vehicleid: vehicleid } });
         if (featureDetail) {
           featureCost += featureDetail.price;
         }
@@ -1987,7 +1991,7 @@ const tripstart = async (req, res) => {
     // Update the car listing with the booking ID
     await Listing.update(
       { bookingId: bookingId },
-      { where: { carid: booking.carid } }
+      { where: { vehicleid: booking.vehicleid } }
     );
 
 
@@ -2071,12 +2075,12 @@ const userbookings = async (req, res) => {
       }, {});
 
       const userBookingPromises = bookings.map(async (booking) => {
-        const car = await Car.findOne({ where: { carid: booking.carid } });
+        const car = await Car.findOne({ where: { vehicleid: booking.vehicleid } });
         if (!car) {
           return null;
         }
 
-        const carAdditional = await CarAdditional.findOne({ where: { carid: booking.carid } });
+        const carAdditional = await CarAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
         const transaction = await Transaction.findOne({ where: { Transactionid: booking.Transactionid } });
 
         const featureDetails = (booking.features || []).map(featureId => ({
@@ -2086,7 +2090,7 @@ const userbookings = async (req, res) => {
 
         return {
           bookingId: booking.Bookingid,
-          carId: booking.carid,
+          vehicleid: booking.vehicleid,
           id: booking.id,
           status: booking.status,
           amount: booking.amount,
@@ -2141,12 +2145,12 @@ const bookingcompleted = async (req, res) => {
     if (booking) {
       const car = await Car.findOne({
         where: {
-          carid: booking.carid,
+          vehicleid: booking.vehicleid,
         }
       });
       await Listing.update(
         { bookingId: null },
-        { where: { carid: car.carid } }
+        { where: { vehicleid: car.vehicleid } }
       );
       await Booking.update(
         { status: 3 },
@@ -2172,9 +2176,9 @@ const bookingcompleted = async (req, res) => {
 
 const getfeedback = async (req, res) => {
   try {
-    const { carId } = req.body;
+    const { vehicleid } = req.body;
     const feedback = await Feedback.findAll(
-      { where: { carId: carId } }
+      { where: { vehicleid: vehicleid } }
     );
     if (feedback) {
       res.status(201).json({ message: feedback });
@@ -2260,7 +2264,7 @@ const toprating = async (req, res) => {
     }
 
     const feedbackList = topRatings.map(feedback => ({
-      carId: feedback.carId,
+      vehicleid: feedback.vehicleid,
       userId: feedback.userId,
       userName: feedback.userName,
       hostId: feedback.hostId,
@@ -2309,7 +2313,7 @@ const deleteuser = async (req, res) => {
     //   const auditBookings = Bookings.map(booking => ({
     //     Bookingid: booking.Bookingid,
     //     Date: booking.Date,
-    //     carid: booking.carid,
+    //     vehicleid: booking.vehicleid,
     //     time: booking.time,
     //     timestamp: booking.timestamp,
     //     id: booking.id,
@@ -2381,7 +2385,7 @@ const rating = async (req, res) => {
 
     const car = await Car.findOne({
       where: {
-        carid: booking.carid,
+        vehicleid: booking.vehicleid,
       }
     });
     if (!car) {
@@ -2390,7 +2394,7 @@ const rating = async (req, res) => {
 
     const bookingCount = await Booking.count({
       where: {
-        carid: booking.carid,
+        vehicleid: booking.vehicleid,
         status: 3,
       }
     });
@@ -2412,7 +2416,7 @@ const rating = async (req, res) => {
 
     if (feedback) {
       await Feedback.create({
-        carId: car.carid,
+        vehicleid: car.vehicleid,
         userId: userId,
         userName: user.FullName,
         hostId: car.hostId,

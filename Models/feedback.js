@@ -5,11 +5,11 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4
     },
-    carId: {
+    vehicleid: {
       type: DataTypes.STRING(36),
       references: {
         model: 'Cars',
-        key: 'carid'
+        key: 'vehicleid'
       },
       allowNull: false
     },

@@ -1,15 +1,13 @@
 module.exports = (sequelize, DataTypes) => {
-  const Car = sequelize.define("Car", {
-    carmodel: DataTypes.STRING,
-    type: DataTypes.STRING,
-    brand: DataTypes.STRING,
-    variant: DataTypes.STRING,
-    color: DataTypes.STRING,
-    bodytype: DataTypes.STRING,
+  const Vehicle = sequelize.define("Vehicle", {
     vehicleid: { type: DataTypes.STRING(36), primaryKey: true },
+    vehicletype: DataTypes.STRING,
+    chassisno: DataTypes.STRING,
+    Rcnumber: DataTypes.STRING,
+    Enginenumber: DataTypes.STRING,
+    Registrationyear: DataTypes.DATEONLY, 
     timestamp: DataTypes.DATE,
     rating: DataTypes.FLOAT,
-    city: DataTypes.STRING,
     hostId: {
       type: DataTypes.STRING(36),
       references: {
@@ -19,5 +17,5 @@ module.exports = (sequelize, DataTypes) => {
     }
   })
 
-  return Car;
+  return Vehicle;
 };

@@ -326,7 +326,7 @@ router.delete('/users/:id', async (req, res) => {
       const auditBookings = bookings.map(booking => ({
         Bookingid: booking.Bookingid,
         Date: booking.Date,
-        carid: booking.carid,
+        vehicleid: booking.vehicleid,
         time: booking.time,
         timestamp: booking.timestamp,
         id: booking.id,
@@ -424,7 +424,7 @@ router.get('/cars', authenticate, async (req, res) => {
     
     const cars = await Car.findAll();
     const carsWithAdditionalInfo = await Promise.all(cars.map(async (car) => {
-      const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+      const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
       return {
         ...car.toJSON(),
         additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
@@ -446,7 +446,7 @@ router.get('/cars/:id', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Car not found' });
     }
 
-    const additionalInfo = await CarAdditional.findOne({ where: { carid: car.carid } });
+    const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
 
     res.status(200).json({
       car: {
@@ -461,9 +461,9 @@ router.get('/cars/:id', authenticate, async (req, res) => {
 });
 
 // Update Car by ID
-router.put('/cars/:carid', authenticate, async (req, res) => {
+router.put('/cars/:vehicleid', authenticate, async (req, res) => {
   try {
-    const { carid } = req.params;
+    const { vehicleid } = req.params;
     const updateFields = {};
     const { additionalInfo, ...carData } = req.body;
 
@@ -474,14 +474,14 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
       }
     }
 
-    const [updated] = await Car.update(updateFields, { where: { carid } });
+    const [updated] = await Car.update(updateFields, { where: { vehicleid } });
 
     // if (!updated) {
     //   return res.status(404).json({ message: 'Car not found' });
     // }
 
     if (additionalInfo) {
-      let additionalRecord = await CarAdditional.findOne({ where: { carid } });
+      let additionalRecord = await CarAdditional.findOne({ where: { vehicleid } });
 
       if (additionalRecord) {
           await additionalRecord.update(additionalInfo);
@@ -489,8 +489,8 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
     }
 
     // Fetch updated car with additional info
-    const updatedCar = await Car.findByPk(carid);
-    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { carid } });
+    const updatedCar = await Car.findByPk(vehicleid);
+    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { vehicleid } });
 
     res.status(200).json({
       message: 'Car updated successfully',
@@ -506,7 +506,7 @@ router.put('/cars/:carid', authenticate, async (req, res) => {
 
 router.delete('/cars/:id', authenticate, async (req, res) => {
   try {
-    await Car.destroy({ where: { carid: req.params.id } });
+    await Car.destroy({ where: { vehicleid: req.params.id } });
     res.status(200).json({ message: 'Car deleted' });
   } catch (error) {
     console.log(error);
@@ -876,7 +876,7 @@ router.get('/pending-carprofile', authenticate, async (req, res) => {
 
     const updatedProfiles = await Promise.all(
       pendingProfiles.map(async (profile) => {
-        const car = await Car.findByPk(profile.carid);
+        const car = await Car.findByPk(profile.vehicleid);
         
         return {
           ...profile.toJSON(),
@@ -916,8 +916,8 @@ router.put('/approve-carprofile', authenticate, async (req, res) => {
     if (!admin){
       return res.status(404).json({ message: 'Admin not found' });
     }
-    const carId = req.body.carId;
-    await CarAdditional.update({ verification_status: 2 }, { where: { carid: carId } });
+    const vehicleid = req.body.vehicleid;
+    await CarAdditional.update({ verification_status: 2 }, { where: { vehicleid: vehicleid } });
     res.status(200).json({ message: 'Car Profile approved successfully' });
   } catch (error) {
     console.log(error);
@@ -949,8 +949,8 @@ router.put('/reject-carprofile', authenticate,  async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
-    const carId = req.body.carId;
-    await CarAdditional.update({ verification_status: null }, { where: { carid: carId } });
+    const vehicleid = req.body.vehicleid;
+    await CarAdditional.update({ verification_status: null }, { where: { vehicleid: vehicleid } });
     res.status(200).json({ message: 'Car Profile rejected successfully' });
   } catch (error) {
     console.log(error);
@@ -1183,14 +1183,14 @@ router.get('/pricing', authenticate, async (req, res) => {
 router.put('/pricing', authenticate, async (req, res) => {
  try {
   const adminId = req.user.id;
-  const { carid, costperhr } = req.body;
+  const { vehicleid, costperhr } = req.body;
 
   const admin = await Admin.findByPk(adminId);
   if (!admin) {
     return res.status(404).json({ message: 'Admin not found' });
   }
 
-  const pricing = await Pricing.findByPk(carid);
+  const pricing = await Pricing.findByPk(vehicleid);
   if (!pricing) {
     return res.status(404).json({ message: 'Pricing record not found' });
   }
@@ -1208,39 +1208,39 @@ router.put('/pricing', authenticate, async (req, res) => {
 router.put('/auto-pricing', authenticate, async (req, res) => {
 try{ 
   const adminId = req.user.id;
-  const { carid } = req.body;
+  const { vehicleid } = req.body;
 
   const admin = await Admin.findByPk(adminId);
   if (!admin) {
     return res.status(404).json({ message: 'Admin not found' });
   }
 
-  const pricing = await Pricing.findByPk(carid);
+  const pricing = await Pricing.findByPk(vehicleid);
   if (!pricing) {
     return res.status(404).json({ message: 'Pricing record not found' });
   }
   const car = await Car.findOne({
     where: {
-      carid: carid,
+      vehicleid: vehicleid,
     }})
   if(!car){
     return res.status(404).json({ message: 'Car record not found' });
   }   
   const carAdditional = await CarAdditional.findOne({
     where: {
-      carid: car.carid,
+      vehicleid: car.vehicleid,
     }
   });
   const costperhr = await pricing1(car, carAdditional);
   console.log(costperhr);
-  const Price = await Pricing.findOne({ where: { carid: car.carid } });
+  const Price = await Pricing.findOne({ where: { vehicleid: car.vehicleid } });
   var price;
   if (Price) {
     price = await Pricing.update(
       { costperhr: costperhr },
       {
         where: {
-          carid: car.carid
+          vehicleid: car.vehicleid
         }
       }
     )
@@ -1248,10 +1248,10 @@ try{
   else {
     price = await Pricing.create({
       costperhr: costperhr,
-      carid: car.carid
+      vehicleid: car.vehicleid
     })
   }
-  res.status(200).json({ message: 'Pricing updated successfully',carid, costperhr });
+  res.status(200).json({ message: 'Pricing updated successfully',vehicleid, costperhr });
 } catch (error) {
   console.log(error);
   res.status(500).json({ message: 'Error adding Pricing', error });
@@ -1357,10 +1357,10 @@ router.get('/device/:id', async (req, res) => {
 
 router.post('/car-device', async (req, res) => {
   try {
-    const { deviceid, carid } = req.body;
+    const { deviceid, vehicleid } = req.body;
     const car = await Car.findOne({
       where: {
-        carid: carid,
+        vehicleid: vehicleid,
       }})
     if(!car){
       return res.status(400).json({ message: 'Car not found' });
@@ -1368,7 +1368,7 @@ router.post('/car-device', async (req, res) => {
     const mapping = await carDevices.findOne({
       where: {
         [Op.or]: [
-          { carid: carid },
+          { vehicleid: vehicleid },
           { deviceid: deviceid }
         ]
       }
@@ -1377,7 +1377,7 @@ router.post('/car-device', async (req, res) => {
     {
       return res.status(400).json({ message: 'Car or device id already mapped' });
     }  
-    const newMapping = await carDevices.create({ deviceid, carid });
+    const newMapping = await carDevices.create({ deviceid, vehicleid });
 
     res.status(201).json({ message: 'Mapping created successfully', newMapping });
   } catch (error) {
@@ -1420,7 +1420,7 @@ router.get('/car-device/:id', async (req, res) => {
 
 router.put('/car-device', async (req, res) => {
 
-  const { deviceid, carid } = req.body;
+  const { deviceid, vehicleid } = req.body;
 
   try {
     const mapping = await carDevices.findByPk(deviceid);
@@ -1430,13 +1430,13 @@ router.put('/car-device', async (req, res) => {
     }
     const car = await Car.findOne({
       where: {
-        carid: carid,
+        vehicleid: vehicleid,
       }})
     if(!car){
       return res.status(400).json({ message: 'Car not found' });
     } 
 
-    mapping.carid = carid !== undefined ? carid : mapping.carid;
+    mapping.vehicleid = vehicleid !== undefined ? vehicleid : mapping.vehicleid;
 
     await mapping.save();
 

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
-const { Host, Car, User, Listing, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction } = require('../Models');
+const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike } = require('../Models');
 const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
@@ -42,10 +42,10 @@ const carImageStorage = multerS3({
   bucket: 'spintrip-bucket',
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
-    const carId = req.body.carId;
+    const vehicleid = req.body.vehicleid;
     const imageNumber = file.fieldname.split('_')[1];
     const fileName = `carImage_${imageNumber}${path.extname(file.originalname)}`;
-    cb(null, `CarAdditional/${carId}/${fileName}`);
+    cb(null, `CarAdditional/${vehicleid}/${fileName}`);
   }
 });
 const uploadCarImages = multer({ storage: carImageStorage }).fields(
@@ -168,7 +168,7 @@ router.post('/login', authenticate, async (req, res) => {
     const otp = generateOTP();
     sendOTP(phone, otp);
     await user.update({ otp: otp })
-    return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp' });
+    return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', otp: otp });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -249,9 +249,8 @@ router.post('/signup', async (req, res) => {
     const user = await User.create({ id: userId, phone, password: hashedPassword, role: 'Host' });
     const host = await Host.create({
       id: user.id,
-      carid: null
     });
-    UserAdditional.create({ id: user.id });
+    HostAdditional.create({ id: user.id });
     let response = {
       id: user.id,
       phone: user.phone,
@@ -272,24 +271,25 @@ router.get('/profile', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Host not found' });
     }
     const user = await User.findOne({ where: { id: hostId } });
-    const cars = await Car.findAll({ where: { hostId: host.id } })
-    let additionalInfo = await UserAdditional.findByPk(hostId);
-    console.log(additionalInfo);
+    const vehicle = await Vehicle.findAll({ where: { hostId: host.id } })
+    let additionalInfo = await HostAdditional.findByPk(hostId);
     let profile = {
       id: additionalInfo.id,
-      dlNumber: additionalInfo.Dlverification,
-      fullName: additionalInfo.FullName,
+      GSTnumber: additionalInfo.GSTnumber,
+      PANnumber: additionalInfo.PANnumber,
+      FullName: additionalInfo.FullName,
       email: additionalInfo.Email,
       aadharNumber: additionalInfo.AadharVfid,
       address: additionalInfo.Address,
       verificationStatus: additionalInfo.verification_status,
       phone: user.phone,
-      profilePic: additionalInfo.profilepic
+      profilePic: additionalInfo.profilepic,   
+      businessName: additionalInfo.businessName,
     }
 
 
     // You can include more fields as per your User model
-    res.json({ hostDetails: host, cars, profile });
+    res.json({ hostDetails: host, vehicle, profile });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -311,7 +311,7 @@ router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCoun
     const { profilePic } = req.files;
     console.log(profilePic);
     if (profilePic) {
-      await UserAdditional.update({
+      await HostAdditional.update({
         profilepic: profilePic ? profilePic[0].location : null,
       }, { where: { id: userId } });
     }
@@ -366,19 +366,22 @@ router.get('/payouts', authenticate, async (req, res) => {
   }
 });
 
-router.post('/car', authenticate, async (req, res) => {
+router.post('/vehicle', authenticate, async (req, res) => {
   const {
-    carModel,
+    vehicleModel,
+    vehicletype,
     type,
+    brand,
     variant,
     color,
-    brand,
+    bodytype,
+    helmet,
     chassisNo,
     rcNumber,
-    mileage,
     engineNumber,
     registrationYear,
-    bodyType,
+    city,
+    costperhr,
     latitude,
     longitude,
     address,
@@ -386,84 +389,98 @@ router.post('/car', authenticate, async (req, res) => {
 
   try {
     const host = await Host.findByPk(req.user.id);
-    const carhostid = req.user.id;
+    const vehiclehostid = req.user.id;
 
     if (!host) {
       return res.status(401).json({ message: 'No Host found' });
     }
-    const carid = uuid.v4();
+    const vehicleid = uuid.v4();
 
 
-    const car = await Car.create({
-      carmodel: carModel,
-      type: type,
-      brand: brand,
-      variant: variant,
-      color: color,
+    const vehicle = await Vehicle.create({
+      vehicletype: vehicletype,
       chassisno: chassisNo,
       Rcnumber: rcNumber,
-      mileage: mileage,
       Enginenumber: engineNumber,
       Registrationyear: registrationYear,
-      //bodytype: bodyType,
-      carid: carid,
-      hostId: carhostid,
+      vehicleid: vehicleid,
+      hostId: vehiclehostid,
       timestamp: timeStamp
-    })
-    await CarAdditional.create({
-      carid: car.carid,
-      latitude: latitude,
-      longitude: longitude,
-      address: address
     });
-    const carAdditional = await CarAdditional.findOne({
-      where: {
-        carid: car.carid,
-      }
-    });
-    const costperhr = await pricing(car, carAdditional);
-    const Price = await Pricing.findOne({ where: { carid: car.carid } });
-    var price;
-    if (Price) {
-      price = await Pricing.update(
-        { costperhr: costperhr },
-        {
-          where: {
-            carid: car.carid
-          }
-        }
-      )
+    if( vehicletype == '1' ){
+      await Bike.create({
+        vehicleid: vehicleid,
+        bikemodel: vehicleModel,
+        type: type,
+        brand: brand,
+        variant: variant,
+        color: color,
+        bodytype: bodytype,
+        city: city
+      });
     }
-    else {
+    if( vehicletype == 2 ){
+      await Car.create({
+        vehicleid: vehicleid,
+        carmodel: vehicleModel,
+        type: type,
+        brand: brand,
+        variant: variant,
+        color: color,
+        bodytype: bodytype,
+        city: city
+      });
+      await CarAdditional.create({
+        vehicleid: vehicle.vehicleid,
+        latitude: latitude,
+        longitude: longitude,
+        address: address
+      });
+    }
+    
+    // const carAdditional = await CarAdditional.findOne({
+    //   where: {
+    //     vehicleid: vehicle.vehicleid,
+    //   }
+    // });
+    // const costperhr = await pricing(car, carAdditional);
+    // const Price = await Pricing.findOne({ where: { vehicleid: vehicle.vehicleid } });
+    // var price;
+    // if (Price) {
+    //   price = await Pricing.update(
+    //     { costperhr: costperhr },
+    //     {
+    //       where: {
+    //         vehicleid: vehicle.vehicleid
+    //       }
+    //     }
+    //   )
+    // }
+    // else {
       price = await Pricing.create({
         costperhr: costperhr,
-        carid: car.carid
+        vehicleid: vehicle.vehicleid
       })
-    }
+    // }
     const listingid = uuid.v4();
     const listing = await Listing.create({
       id: listingid,
-      carid: car.carid,
-      hostid: carhostid,
+      vehicleid: vehicle.vehicleid,
+      hostid: vehiclehostid,
     })
 
-    let postedCar = {
-      carId: car.carid,
-      carModel: car.carmodel,
-      type: car.type,
-      brand: car.brand,
-      variant: car.variant,
-      color: car.color,
-      chassisNo: car.chassisno,
-      engineNumber: car.Enginenumber,
-      rcNumber: car.Rcnumber,
-      mileage: car.mileage,
-      bodyType: car.bodytype,
-      hostId: car.hostId,
-      rating: car.rating,
+    let postedVehicle = {
+      vehicleid: vehicle.vehicleid,
+      carModel: vehicle.carmodel,
+      type: vehicle.type,
+      chassisNo: vehicle.chassisno,
+      engineNumber: vehicle.Enginenumber,
+      rcNumber: vehicle.Rcnumber,
+      hostId: vehicle.hostId,
+      rating: vehicle.rating,
       listingId: listing.id,
     }
-    res.status(201).json({ message: 'Car and listing added successfully for the host', postedCar });
+    res.status(201).json({ message: 'Car and listing added successfully for the host', postedVehicle });
 
   } catch (error) {
     console.error(error);
@@ -495,10 +512,10 @@ router.get('/delete_host', authenticate, async (req, res) => {
 });
 
 router.post('/createListing', authenticate, async (req, res) => {
-  const { carId } = req.body;
+  const { vehicleid } = req.body;
   try {
     const host = await Host.findByPk(req.user.id);
-    const carhostid = req.user.id;
+    const vehiclehostid = req.user.id;
 
     if (!host) {
       return res.status(401).json({ message: 'No Host found' });
@@ -506,13 +523,13 @@ router.post('/createListing', authenticate, async (req, res) => {
     const listingid = uuid.v4();
     const listings = await Listing.create({
       id: listingid,
-      carid: carId,
-      hostid: carhostid,
+      vehicleid: vehicleid,
+      hostid: vehiclehostid,
     });
 
     const listing = {
       id: listings.id,
-      carId: listings.carid,
+      vehicleid: listings.vehicleid,
       hostId: listings.hostid,
       details: listings.details,
       startDate: listings.start_date,
@@ -535,7 +552,7 @@ router.post('/createListing', authenticate, async (req, res) => {
 router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => {
   try {
     const {
-      carId,
+      vehicleid,
       horsePower,
       ac,
       musicSystem,
@@ -566,7 +583,7 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       additionalInfo
     } = req.body;
 
-    const car = await Car.findOne({ where: { carid: carId } });
+    const car = await Car.findOne({ where: { vehicleid: vehicleid } });
     if (!car) {
       return res.status(400).json({ message: 'Car not found' });
     }
@@ -611,7 +628,7 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       carImage_5: 'carimage5'
     };
     
-    const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
+    const carAdditional = await CarAdditional.findOne({ where: { vehicleid: vehicleid } });
 
     for (const [requestField, dbField] of Object.entries(imageFields)) {
       if (req.files[requestField]) {
@@ -626,22 +643,22 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       }
     }
 
-    await CarAdditional.update(updateData, { where: { carid: carId } });
+    await CarAdditional.update(updateData, { where: { vehicleid: vehicleid } });
 
     const updatedCarAdditional = await CarAdditional.findOne({
-      where: { carid: carId }
+      where: { vehicleid: vehicleid }
     });
 
     const costperhr = await pricing(car, updatedCarAdditional);
-    const priceEntry = await Pricing.findOne({ where: { carid: carId } });
+    const priceEntry = await Pricing.findOne({ where: { vehicleid: vehicleid } });
     if (priceEntry) {
-      await Pricing.update({ costperhr }, { where: { carid: carId } });
+      await Pricing.update({ costperhr }, { where: { vehicleid: vehicleid } });
     } else {
-      await Pricing.create({ costperhr, carId });
+      await Pricing.create({ costperhr, vehicleid });
     }
 
     const carAdditionals = {
-      carId: updatedCarAdditional.carid,
+      vehicleid: updatedCarAdditional.vehicleid,
       horsePower: updatedCarAdditional.HorsePower,
       ac: updatedCarAdditional.AC,
       musicSystem: updatedCarAdditional.Musicsystem,
@@ -690,7 +707,7 @@ router.post('/features', authenticate, async (req, res) => {
   try {
     const {
       featureid,
-      carid,
+      vehicleid,
       price
     } = req.body;
     const feature = await Feature.findOne({ where: { id: featureid } });
@@ -698,21 +715,21 @@ router.post('/features', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'Feature not available' });
     }
     else {
-      const car = await Car.findOne({ where: { carid: carid, hostId: req.user.id } });
+      const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
       if (!car) {
         return res.status(400).json({ message: 'Car is not available' });
       }
-      const carfeature = await carFeature.findOne({ where: { featureid: featureid, carid: carid } });
+      const carfeature = await carFeature.findOne({ where: { featureid: featureid, vehicleid: vehicleid } });
       if (carfeature) {
         return res.status(400).json({ message: 'Car feature already added' });
       }
       const updated_feature = await carFeature.create({
         featureid: featureid,
-        carid: carid,
+        vehicleid: vehicleid,
         price: price
       });
       let response = {
-        carid: updated_feature.carid,
+        vehicleid: updated_feature.vehicleid,
         featureid: updated_feature.featureid,
         price: updated_feature.price,
       }
@@ -726,14 +743,14 @@ router.post('/features', authenticate, async (req, res) => {
 // Update Feature
 router.put('/features', authenticate, async (req, res) => {
   try {
-    const { featureid, carid, price } = req.body;
+    const { featureid, vehicleid, price } = req.body;
 
-    const carFeatureRecord = await carFeature.findOne({ where: { featureid, carid } });
+    const carFeatureRecord = await carFeature.findOne({ where: { featureid, vehicleid } });
     if (!carFeatureRecord) {
       return res.status(404).json({ message: 'Feature not found for the car' });
     }
 
-    const car = await Car.findOne({ where: { carid: carid, hostId: req.user.id } });
+    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
     if (!car) {
       return res.status(400).json({ message: 'Car is not available' });
     }
@@ -750,14 +767,14 @@ router.put('/features', authenticate, async (req, res) => {
 // Delete Feature
 router.delete('/features', authenticate, async (req, res) => {
   try {
-    const { featureid, carid } = req.body;
+    const { featureid, vehicleid } = req.body;
 
-    const carFeatureRecord = await carFeature.findOne({ where: { featureid, carid } });
+    const carFeatureRecord = await carFeature.findOne({ where: { featureid, vehicleid } });
     if (!carFeatureRecord) {
       return res.status(404).json({ message: 'Feature not found for the car' });
     }
 
-    const car = await Car.findOne({ where: { carid: carid, hostId: req.user.id } });
+    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
     if (!car) {
       return res.status(400).json({ message: 'Car is not available' });
     }
@@ -803,14 +820,14 @@ router.get('/listing', authenticate, async (req, res) => {
     try {
       const listing = await Listing.findAll({ where: { hostid: hostid } });
       const listings = listing.map(async (lstg) => {
-        let car = await Car.findOne({ where: { carid: lstg.carid, hostId: hostid } });
-        if (!car) {
+        let vehicle = await Vehicle.findOne({ where: { vehicleid: lstg.vehicleid, hostId: hostid } });
+        if (!vehicle) {
           return;
         }
-        let carAdditional = await CarAdditional.findOne({ where: { carid: lstg.carid } });
+        // let carAdditional = await CarAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
         let lk = {
           id: lstg.id,
-          carId: lstg.carid,
+          vehicleid: lstg.vehicleid,
           hostId: lstg.hostid,
           details: lstg.details,
           startDate: lstg.start_date,
@@ -822,14 +839,14 @@ router.get('/listing', authenticate, async (req, res) => {
           pauseTimeStartTime: lstg.pausetime_start_time,
           pauseTimeEndTime: lstg.pausetime_end_time,
           bookingId: lstg.bookingId,
-          rcNumber: car.Rcnumber,
-          type: car.type,
-          carModel: car.carmodel,
-          carImage1: carAdditional.carimage1,
-          carImage2: carAdditional.carimage2,
-          carImage3: carAdditional.carimage3,
-          carImage4: carAdditional.carimage4,
-          carImage5: carAdditional.carimage5,
+          rcNumber: vehicle.Rcnumber,
+          type: vehicle.type,
+          carModel: vehicle.carmodel,
+          // carImage1: carAdditional.carimage1,
+          // carImage2: carAdditional.carimage2,
+          // carImage3: carAdditional.carimage3,
+          // carImage4: carAdditional.carimage4,
+          // carImage5: carAdditional.carimage5,
         }
         return { ...lk };
       });
@@ -872,8 +889,8 @@ router.delete('/listing', authenticate, async (req, res) => {
 
     // Delete the listing
     // const listing1 = await Listing.create({
-    //   carid: listing.carid,
-    //   hostid: listing.carhostid
+    //   vehicleid: listing.vehicleid,
+    //   hostid: listing.vehiclehostid
     // })
     await listing.destroy();
     res.status(201).json({ message: 'Listing reset successfully' });
@@ -927,10 +944,10 @@ router.get('/get-brand', async (req, res) => {
 });
 router.post('/pricing', async (req, res) => {
   try {
-    const { carId } = req.body;
-    const Price = await Pricing.findOne({ where: { carid: carId } })
+    const { vehicleid } = req.body;
+    const Price = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     if (Price) {
-      res.status(201).json({ "message": "price for the car", carId: Price.carid, costPerHr: Price.costperhr });
+      res.status(201).json({ "message": "price for the car", vehicleid: Price.vehicleid, costPerHr: Price.costperhr });
     }
     else {
       res.status(400).json({ "message": "pricing cannot be found" });
@@ -980,7 +997,7 @@ router.put('/listing', authenticate, async (req, res) => {
 
     const listings = {
       id: listing.id,
-      carId: listing.carid,
+      vehicleid: listing.vehicleid,
       hostId: listing.hostid,
       details: listing.details,
       startDate: listing.start_date,
@@ -1020,10 +1037,13 @@ router.put('/profile', authenticate, async (req, res) => {
     }
 
     // Update additional user information
-    const { fullName, aadharId, email, address } = req.body;
-    await UserAdditional.update({
+    const { fullName, aadharId, email, address, businessName, GSTnumber, PANnumber } = req.body;
+    await HostAdditional.update({
       id: hostId,
       FullName: fullName,
+      businessName: businessName,
+      GSTnumber: GSTnumber,
+      PANnumber: PANnumber,
       AadharVfid: aadharId,
       Email: email,
       Address: address,
@@ -1037,7 +1057,7 @@ router.put('/profile', authenticate, async (req, res) => {
 });
 
 router.post('/monthly-data', authenticate, async (req, res) => {
-  const { carId } = req.body;
+  const { vehicleid } = req.body;
   try {
     const monthlyData = await Booking.findAll({
       attributes: [
@@ -1046,7 +1066,7 @@ router.post('/monthly-data', authenticate, async (req, res) => {
         [Sequelize.fn('COUNT', Sequelize.col('Bookingid')), 'numberOfBookings']
       ],
       where: {
-        carid: carId,
+        vehicleid: vehicleid,
         endTripDate: {
           [Op.ne]: null // Ensure the Date is not null
         },
@@ -1076,9 +1096,9 @@ router.get('/host-bookings', authenticate, async (req, res) => {
     let bookings = await Booking.findAll({
       include: [
         {
-          model: Car,
+          model: Vehicle,
           where: { hostId: hostid },
-          attributes: ['carmodel', 'chassisno', 'Rcnumber', 'Enginenumber'],
+          attributes: ['chassisno', 'Rcnumber', 'Enginenumber'],
         },
         {
           model: UserAdditional,
@@ -1094,41 +1114,41 @@ router.get('/host-bookings', authenticate, async (req, res) => {
         return map;
       }, {});
       const hostBooking = bookings.map(async (booking) => {
-        const car = await Car.findOne({
+        const vehicle = await Vehicle.findOne({
           where: {
-            carid: booking.carid,
+            vehicleid: booking.vehicleid,
           }
         });
-        if (!car) {
+        if (!vehicle) {
           return;
         }
         const featureDetails = (booking.features || []).map(featureId => ({
           featureId,
           featureName: featureMap[featureId] || 'Unknown Feature'
         }));
-        const carAdditional = await CarAdditional.findOne({ where: { carid: booking.carid } });
+        //const carAdditional = await CarAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
         let bk = {
           bookingId: booking.Bookingid,
-          carId: booking.carid,
-          carModel: booking.Car.carmodel,
+          vehicleid: booking.vehicleid,
+          // carModel: booking.Car.carmodel,
           id: booking.id,
           bookedBy: booking.UserAdditional ? booking.UserAdditional.FullName : null,
           status: booking.status,
           amount: booking.amount,
-          tdsAmount: booking.TDSAmount,
-          totalHostAmount: booking.totalHostAmount,
-          transactionId: booking.Transactionid,
+          // tdsAmount: booking.TDSAmount,
+          // totalHostAmount: booking.totalHostAmount,
+          // transactionId: booking.Transactionid,
           startTripDate: booking.startTripDate,
           endTripDate: booking.endTripDate,
           startTripTime: booking.startTripTime,
           endTripTime: booking.endTripTime,
-          carImage1: carAdditional.carimage1,
-          carImage2: carAdditional.carimage2,
-          carImage3: carAdditional.carimage3,
-          carImage4: carAdditional.carimage4,
-          carImage5: carAdditional.carimage5,
-          latitude: carAdditional.latitude,
-          longitude: carAdditional.longitude,
+          // carImage1: carAdditional.carimage1,
+          // carImage2: carAdditional.carimage2,
+          // carImage3: carAdditional.carimage3,
+          // carImage4: carAdditional.carimage4,
+          // carImage5: carAdditional.carimage5,
+          // latitude: carAdditional.latitude,
+          // longitude: carAdditional.longitude,
           cancelDate: booking.cancelDate,
           cancelReason: booking.cancelReason,
           features: featureDetails,
@@ -1208,7 +1228,7 @@ const getBookingDetails = async (bookingId) => {
       where: { id: booking.id }
     });
     const host = await Car.findOne({
-      where: { carid: booking.carid }
+      where: { vehicleid: booking.vehicleid }
     })
 
     const userEmail = user?.Email;
@@ -1276,9 +1296,9 @@ router.post('/booking-request', authenticate, async (req, res) => {
 
 router.post('/getFeedback', authenticate, async (req, res) => {
   try {
-    const { carId } = req.body;
+    const { vehicleid } = req.body;
     const feedback = await Feedback.findAll(
-      { where: { carId: carId } }
+      { where: { vehicleid: vehicleid } }
     );
     if (feedback) {
       res.status(201).json({ message: feedback });
@@ -1293,21 +1313,21 @@ router.post('/getFeedback', authenticate, async (req, res) => {
 
 });
 router.post('/getCarAdditional', authenticate, async (req, res) => {
-  const { carId } = req.body;
+  const { vehicleid } = req.body;
   const hostId = req.user.id; // Assuming the host ID is part of the authenticated user details
 
   try {
     // Check if the host owns the car
-    const car = await Car.findOne({ where: { carid: carId, hostId: hostId } });
+    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: hostId } });
     if (!car) {
       return res.status(404).json({ message: 'Car not found or unauthorized access' });
     }
 
-    const carAdditional = await CarAdditional.findOne({ where: { carid: carId } });
+    const carAdditional = await CarAdditional.findOne({ where: { vehicleid: vehicleid } });
     if (!carAdditional) {
       return res.status(404).json({ message: 'Car additional information not found' });
     }
-    const features = await carFeature.findAll({ where: { carid: carId } });
+    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });
     if (!carAdditional) {
       return res.status(404).json({ message: 'Car additional information not found' });
     }
@@ -1322,7 +1342,7 @@ router.post('/getCarAdditional', authenticate, async (req, res) => {
 
 
     let carAdditionals = {
-      carId: carAdditional.carid,
+      vehicleid: carAdditional.vehicleid,
       horsePower: carAdditional.HorsePower,
       ac: carAdditional.AC,
       musicSystem: carAdditional.Musicsystem,
@@ -1453,16 +1473,16 @@ router.post('/getCarReg', async (req, res) => {
   }
 });
 
-router.get('/device/:carid', authenticate, async (req, res) => {
+router.get('/device/:vehicleid', authenticate, async (req, res) => {
   try {
-    const id = req.params.carid;
+    const id = req.params.vehicleid;
     const limit = parseInt(req.query.limit, 10) || 10; 
     const hostId = req.user.id;
-    const car = await Car.findOne({ where: { carid: id, hostId: hostId } });
+    const car = await Car.findOne({ where: { vehicleid: id, hostId: hostId } });
     if (!car) {
       return res.status(404).json({ message: 'Car not found or unauthorized access' });
     }
-    const device = await carDevices.findOne({ where: { carid: id } });
+    const device = await carDevices.findOne({ where: { vehicleid: id } });
     if (!device) {
       return res.status(404).json({ message: 'Car not available for tracking' });
     }
