@@ -22,7 +22,7 @@ const path = require('path');
 const csv = require('csv-parser');
 const router = express.Router();
 const { setTimeout } = require('timers/promises');
-
+const { Sequelize } = require('sequelize');
 
 const {
   sendBookingConfirmationEmail,
@@ -1776,6 +1776,22 @@ const extend = async (req, res) => {
 
     // Create the extended booking if all checks pass
     const additionalHours = calculateTripHours(currentEndDate, newEndDate, currentEndTime, newEndTime);
+    const cph = await Pricing.findOne({ where: { carid: booking.carid } });
+    let additionalAmount = Math.round(cph.costperhr * additionalHours);
+    additionalAmount += 20 * (additionalAmount)/ 100;
+    const tax = await Tax.findOne({ where: { id: 1 } });
+    if (!tax) {
+      return res.status(404).json({ message: 'Tax data not found' });
+    }
+    let spinTripGST = additionalAmount * (tax.GST / 100) * (tax.Commission / 100);
+    let hostGst = (additionalAmount - (additionalAmount * tax.Commission / 100)) * (tax.HostGST / 100);
+    let gstAmount = spinTripGST + hostGst;
+    let insuranceAmount = (additionalAmount * tax.insurance) / 100;
+    const tdsRate = tax.TDS / 100;
+    const hostCommission = 1 - (tax.Commission / 100);
+    let tds = ((additionalAmount * hostCommission) * tdsRate).toFixed(2);
+    let totalUserAmount = additionalAmount + gstAmount + insuranceAmount;
+    let totalHostAmount = ((additionalAmount * hostCommission) - parseFloat(tds)).toFixed(2);
     const newBooking = await Booking.create({
       Bookingid: uuid.v4(),
       carid: booking.carid,
@@ -1784,8 +1800,13 @@ const extend = async (req, res) => {
       startTripTime: booking.startTripTime,
       endTripTime: newEndTime,
       id: userId,
-      status: 5,
-      amount: booking.amount + additionalHours * booking.amount / (await Pricing.findOne({ where: { carid: booking.carid } })).costperhr,
+      status: 1,
+      amount: additionalAmount,
+      GSTAmount: gstAmount,
+      insurance: insuranceAmount,
+      totalUserAmount: totalUserAmount,
+      totalHostAmount: totalHostAmount,
+      TDSAmount: tds,
     });
 
     if (bookingExtension) {
@@ -1855,100 +1876,87 @@ const breakup = async (req, res) => {
 }
 
 const mergeBooking = async (originalBookingId) => {
-  const transaction = await sequelize.transaction();
-
   try {
     // Fetch the booking extension details
     const bookingExtension = await BookingExtension.findOne({
-      where: { bookingId: originalBookingId },
-      transaction,
+      where: { bookingId: originalBookingId }
     });
-
     if (!bookingExtension) {
       throw new Error(`Booking extension not found for booking ID: ${originalBookingId}`);
     }
 
     // Fetch the original booking to compare dates
     const originalBooking = await Booking.findOne({
-      where: { Bookingid: originalBookingId },
-      transaction,
+      where: { Bookingid: originalBookingId }
     });
 
     if (!originalBooking) {
       throw new Error(`Original booking not found for booking ID: ${originalBookingId}`);
     }
 
-    // Iterate through each extended booking and merge it with the original booking
-    for (const extendedBookingId of bookingExtension.extendedBookings) {
-      const extendedBooking = await Booking.findOne({
-        where: { Bookingid: extendedBookingId, status: 5 },
-        transaction,
-      });
-
-      if (extendedBooking) {
-        // Check for overlapping dates and times
-        if (
-          (new Date(extendedBooking.startTripDate) <= new Date(originalBooking.endTripDate) &&
-            new Date(extendedBooking.endTripDate) >= new Date(originalBooking.startTripDate)) &&
-          (extendedBooking.startTripTime < originalBooking.endTripTime ||
-            extendedBooking.endTripTime > originalBooking.startTripTime)
-        ) {
-          console.log(`Skipping overlapping extension booking: ${extendedBookingId}`);
-          continue; // Skip this extension due to overlap
-        }
-
-        // Update the original booking with the extended details
-        await Booking.update(
-          {
-            endTripDate: extendedBooking.endTripDate,
-            endTripTime: extendedBooking.endTripTime,
-            amount: Sequelize.literal(`amount + ${extendedBooking.amount}`),
-            GSTAmount: Sequelize.literal(`GSTAmount + ${extendedBooking.GSTAmount}`),
-            totalUserAmount: Sequelize.literal(`totalUserAmount + ${extendedBooking.totalUserAmount}`),
-            TDSAmount: Sequelize.literal(`TDSAmount + ${extendedBooking.TDSAmount}`),
-            totalHostAmount: Sequelize.literal(`totalHostAmount + ${extendedBooking.totalHostAmount}`),
-          },
-          { where: { Bookingid: originalBookingId }, transaction }
-        );
-
-        // Remove the extended booking after merging
-        await Booking.destroy({ where: { Bookingid: extendedBookingId }, transaction });
-
-        // Update the booking extension entry
-        bookingExtension.extendedBookings = bookingExtension.extendedBookings.filter(
-          (id) => id !== extendedBookingId
-        );
-
-        await bookingExtension.save({ transaction });
-      }
+    // Assuming extendedBookings is an array of Bookingids
+    const extendedBookingIds = bookingExtension.extendedBookings;
+    
+    if (!extendedBookingIds || extendedBookingIds.length === 0) {
+      throw new Error(`No extended bookings found for booking ID: ${originalBookingId}`);
     }
 
-    // After merging, set the status of the current booking to 3 (completed)
-    await Booking.update(
-      { status: 3 },
-      { where: { Bookingid: originalBookingId }, transaction }
-    );
+    // Fetch the extended booking details
+    const extendedBookings = await Booking.findAll({
+      where: {
+        Bookingid: {
+          [Op.in]: extendedBookingIds.map(id => id.toString()), // Ensure IDs are strings
+        },
+      },
+    });
 
-    // Commit the transaction
-    await transaction.commit();
+    if (extendedBookings && extendedBookings.length > 0) {
+      const totalAmount = extendedBookings.reduce((sum, booking) => sum + booking.amount, originalBooking.amount);
+      const insurance = extendedBookings.reduce((sum, booking) => sum + booking.insurance, originalBooking.insurance);
+      const totalGSTAmount = extendedBookings.reduce((sum, booking) => sum + booking.GSTAmount, originalBooking.GSTAmount);
+      const totalUserAmount = extendedBookings.reduce((sum, booking) => sum + booking.totalUserAmount, originalBooking.totalUserAmount);
+      const totalTDSAmount = extendedBookings.reduce((sum, booking) => sum + booking.TDSAmount, originalBooking.TDSAmount);
+      const totalHostAmount = extendedBookings.reduce((sum, booking) => sum + booking.totalHostAmount, originalBooking.totalHostAmount);
+
+      // Update the original booking with the aggregated details
+      await Booking.update(
+        {
+          endTripDate: extendedBookings[extendedBookings.length - 1].endTripDate, // Assuming the last booking's date is the latest
+          endTripTime: extendedBookings[extendedBookings.length - 1].endTripTime,
+          amount: totalAmount,
+          insurance: insurance,
+          GSTAmount: totalGSTAmount,
+          totalUserAmount: totalUserAmount,
+          TDSAmount: totalTDSAmount,
+          totalHostAmount: totalHostAmount,
+        },
+        { where: { Bookingid: originalBookingId } }
+      );
+
+      // Remove the extended bookings after merging
+      await Booking.destroy({
+        where: {
+          Bookingid: {
+            [Op.in]: extendedBookingIds.map(id => id.toString()), // Use the array directly
+          },
+        },
+      });
+    }
   } catch (error) {
-    // Rollback transaction in case of an error
-    await transaction.rollback();
     console.error(`Error merging extended bookings for ${originalBookingId}:`, error);
     throw new Error('Failed to merge extended bookings.');
   }
 };
+
 
 const tripstart = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { bookingId } = req.body;
-
     // Fetch the booking and ensure it is pending trip start
     const booking = await Booking.findOne({
-      where: { Bookingid: bookingId, status: 1 },
-      transaction,
+      where: { Bookingid: bookingId, status: 1 }
     });
 
     if (!booking) {
@@ -1957,33 +1965,31 @@ const tripstart = async (req, res) => {
 
     // Check if the booking is an extended booking
     const bookingExtension = await BookingExtension.findOne({
-      where: { bookingId },
-      transaction,
+      where: {
+        extendedBookings: {
+          [Op.contains]: [bookingId],
+        },
+      },
     });
 
     if (bookingExtension) {
       // Call the merge function to handle the merging of bookings
-      await mergeBooking(bookingId);
+      await mergeBooking(bookingExtension.bookingId);
+
     } else {
       // For non-extended bookings, set status to 2 (active)
       await Booking.update(
         { status: 2 },
-        { where: { Bookingid: bookingId }, transaction }
+        { where: { Bookingid: bookingId } }
       );
     }
 
     // Update the car listing with the booking ID
     await Listing.update(
       { bookingId: bookingId },
-      { where: { carid: booking.carid }, transaction }
+      { where: { carid: booking.carid } }
     );
 
-    // Send trip start email notifications
-    const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-    await sendTripStartEmail(userEmail, hostEmail, bookingDetails, "Trip has been started");
-
-    // Commit the transaction
-    await transaction.commit();
 
     res.status(201).json({ message: 'Trip has started' });
   } catch (err) {
@@ -2277,71 +2283,71 @@ const deleteuser = async (req, res) => {
     }
 
     // Fetch all bookings related to the user with status 1, 2, or 5
-    const pendingBookings = await Booking.findAll({
-      where: {
-        id: req.user.id,
-        status: [1, 2, 5],
-      },
-      include: [{ 
-        model: Transaction, 
-        where: { Bookingid: Sequelize.col('Booking.Bookingid') }, 
-        required: false 
-      }],
-      raw: true
-    });
+    // const pendingBookings = await Booking.findAll({
+    //   where: {
+    //     id: req.user.id,
+    //     status: [1, 2, 5],
+    //   },
+    //   include: [{
+    //     model: Transaction,
+    //     where: { Bookingid: Sequelize.col('Booking.Bookingid') },
+    //     required: false
+    //   }],
+    //   raw: true
+    // });
 
     // If there are pending bookings, prevent account deletion
-    if (pendingBookings && pendingBookings.length > 0) {
-      return res.status(400).json({ 
-        message: 'Cannot delete account with pending bookings', 
-        bookings: pendingBookings 
-      });
-    }
+    // if (pendingBookings && pendingBookings.length > 0) {
+    //   return res.status(400).json({
+    //     message: 'Cannot delete account with pending bookings',
+    //     bookings: pendingBookings
+    //   });
+    // }
 
     // Audit bookings and transactions if there are any bookings
-    if (Bookings.length > 0) {
-      const auditBookings = Bookings.map(booking => ({
-        Bookingid: booking.Bookingid,
-        Date: booking.Date,
-        carid: booking.carid,
-        time: booking.time,
-        timestamp: booking.timestamp,
-        id: booking.id,
-        status: booking.status,
-        amount: booking.amount,
-        GSTAmount: booking.GSTAmount,
-        insurance: booking.insurance,
-        totalUserAmount: booking.totalUserAmount,
-        TDSAmount: booking.TDSAmount,
-        totalHostAmount: booking.totalHostAmount,
-        Transactionid: booking.Transactionid,
-        startTripDate: booking.startTripDate,
-        endTripDate: booking.endTripDate,
-        startTripTime: booking.startTripTime,
-        endTripTime: booking.endTripTime,
-        cancelDate: booking.cancelDate,
-        cancelReason: booking.cancelReason,
-        features: booking.features
-      }));
+    // if (Bookings.length > 0) {
+    //   const auditBookings = Bookings.map(booking => ({
+    //     Bookingid: booking.Bookingid,
+    //     Date: booking.Date,
+    //     carid: booking.carid,
+    //     time: booking.time,
+    //     timestamp: booking.timestamp,
+    //     id: booking.id,
+    //     status: booking.status,
+    //     amount: booking.amount,
+    //     GSTAmount: booking.GSTAmount,
+    //     insurance: booking.insurance,
+    //     totalUserAmount: booking.totalUserAmount,
+    //     TDSAmount: booking.TDSAmount,
+    //     totalHostAmount: booking.totalHostAmount,
+    //     Transactionid: booking.Transactionid,
+    //     startTripDate: booking.startTripDate,
+    //     endTripDate: booking.endTripDate,
+    //     startTripTime: booking.startTripTime,
+    //     endTripTime: booking.endTripTime,
+    //     cancelDate: booking.cancelDate,
+    //     cancelReason: booking.cancelReason,
+    //     features: booking.features
+    //   }));
 
-      const auditTransactions = Bookings
-        .filter(booking => booking['Transactions.Transactionid'])
-        .map(booking => ({
-          Transactionid: booking['Transactions.Transactionid'],
-          Bookingid: booking.Bookingid,
-          Date: booking['Transactions.Date'],
-          time: booking['Transactions.time'],
-          timestamp: booking['Transactions.timestamp'],
-          id: booking['Transactions.id'],
-          status: booking['Transactions.status'],
-          amount: booking['Transactions.amount'],
-          GSTAmount: booking['Transactions.GSTAmount'],
-          totalAmount: booking['Transactions.totalAmount']
-        }));
+    //   const auditTransactions = Bookings
+    //     .filter(booking => booking['Transactions.Transactionid'])
+    //     .map(booking => ({
+    //       Transactionid: booking['Transactions.Transactionid'],
+    //       Bookingid: booking.Bookingid,
+    //       Date: booking['Transactions.Date'],
+    //       time: booking['Transactions.time'],
+    //       timestamp: booking['Transactions.timestamp'],
+    //       id: booking['Transactions.id'],
+    //       status: booking['Transactions.status'],
+    //       amount: booking['Transactions.amount'],
+    //       GSTAmount: booking['Transactions.GSTAmount'],
+    //       totalAmount: booking['Transactions.totalAmount']
+    //     }));
 
-      await auditBooking.bulkCreate(auditBookings);
-      await auditTransaction.bulkCreate(auditTransactions);
-    }
+    //   await auditBooking.bulkCreate(auditBookings);
+    //   await auditTransaction.bulkCreate(auditTransactions);
+    // }
 
     // Delete the user
     await user.destroy();
