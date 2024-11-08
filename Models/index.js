@@ -50,7 +50,7 @@ db.Tax = require('./TaxModel')(sequelize, DataTypes);
 db.Support = require('./supportModel')(sequelize, DataTypes);
 db.SupportChat = require('./supportChatModel')(sequelize, DataTypes);
 db.Wishlist = require('./wishlistModel')(sequelize, DataTypes);
-db.Transaction = require('./TransactionModel')(sequelize, DataTypes);
+db.Transaction = require('./TransactionModel')(sequelize, DataTypes); // Ensure Transaction model is imported
 db.Blog = require('./blogModel')(sequelize, DataTypes);
 db.BlogComment = require('./blogCommentModel')(sequelize, DataTypes);
 db.Device = require('./deviceModel')(sequelize, DataTypes);
@@ -59,12 +59,12 @@ db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.Payout = require('./payoutModel')(sequelize, DataTypes);
 db.BookingExtension = require('./bookingExtension')(sequelize, DataTypes);
-db.auditBooking = require('./auditbookingModel')(sequelize, DataTypes);
+db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
-    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, auditBooking, auditTransaction, Vehicle, Bike, HostAdditional } = sequelize.models;
+    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, HostPayment, auditTransaction, Vehicle, Bike, HostAdditional, Transaction } = sequelize.models;
 
   carDevices.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
@@ -87,8 +87,8 @@ const associateModels = () => {
   UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
   HostAdditional.belongsTo(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
   CarAdditional.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
-  Vehicle.belongsTo(Host, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
-  
+  Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'SET NULL' }); // Corrected foreign key
+
   // Explicitly specify onDelete action:
   Booking.hasOne(User, { foreignKey: 'userId', onDelete: 'SET NULL' });
   Booking.hasOne(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
@@ -102,9 +102,14 @@ const associateModels = () => {
   Car.hasOne(carDevices, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Listing.hasOne(Car, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Listing.hasOne(Host, { foreignKey: 'id', sourceKey: 'hostid', onDelete: 'SET NULL' });
-  Host.hasMany(Vehicle, { foreignKey: 'vehiclehostid', sourceKey: 'id', onDelete: 'SET NULL' });
+  Host.hasMany(Vehicle, { foreignKey: 'hostId', sourceKey: 'id', onDelete: 'SET NULL' }); // Corrected foreign key
   Car.hasMany(Feedback, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Feedback.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
+
+  // Associations for HostPayment
+  HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });
+  HostPayment.belongsTo(Vehicle, { foreignKey: 'VehicleId', onDelete: 'CASCADE' });
+  HostPayment.belongsTo(Transaction, { foreignKey: 'TransactionId', targetKey: 'Transactionid', onDelete: 'CASCADE' });
 };
 
 associateModels();

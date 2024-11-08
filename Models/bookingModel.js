@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     features: { type: DataTypes.JSON, allowNull: true } 
   });
 
+  Booking.associate = (models) => {
+    Booking.belongsTo(models.Vehicle, { foreignKey: 'vehicleid' });
+  };
 
   return Booking;
 };

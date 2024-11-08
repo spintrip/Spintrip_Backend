@@ -4,8 +4,8 @@ const db = require("../Models");
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const Razorpay = require('razorpay');
-const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, HostAdditional, BookingExtension, Transaction, Vehicle } = require('../Models');
+const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, HostAdditional, BookingExtension, Transaction } = require('../Models');
 const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
@@ -256,24 +256,31 @@ const getprofile = async (req, res) => {
 }
 const putprofile = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const hostId = req.user.id;
+    const host = await Host.findByPk(hostId);
+    if (!host) {
+      return res.status(404).json({ message: 'Host not found' });
     }
 
     // Update additional user information
-    const { dlNumber, fullName, aadharId, email, address, currentAddressVfId, mlData } = req.body;
-    await UserAdditional.update({
-      id: userId,
-      Dlverification: dlNumber,
-      FullName: fullName,
-      AadharVfid: aadharId,
-      Email: email,
-      Address: address,
-      CurrentAddressVfid: currentAddressVfId,
-      ml_data: mlData
-    }, { where: { id: userId } });
+    const { fullName, aadharId, email, address, businessName, GSTnumber, PANnumber, onlyVerifiedUsers } = req.body;
+
+    if (fullName || aadharId || email || address || businessName || GSTnumber || PANnumber) {
+      await HostAdditional.update({
+        FullName: fullName,
+        businessName: businessName,
+        GSTnumber: GSTnumber,
+        PANnumber: PANnumber,
+        AadharVfid: aadharId,
+        Email: email,
+        Address: address,
+      }, { where: { id: hostId } });
+    }
+
+    // Update host's preference for only verified users
+    if (onlyVerifiedUsers !== undefined) {
+      await host.update({ onlyVerifiedUsers });
+    }
 
     res.status(200).json({ message: 'Profile Updated successfully' });
   } catch (error) {
@@ -1066,334 +1073,91 @@ const getBookingDetails = async (bookingId) => {
 const booking = async (req, res) => {
   try {
     const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
-    const userId = req.user.userid;
-    const userAdd = await UserAdditional.findOne({
-      where: {
-        id: userId,
+    const userId = req.user.id;
+
+    // Fetch vehicle and host details
+    const vehicle = await Vehicle.findByPk(vehicleid);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    const host = await Host.findByPk(vehicle.hostId);
+    if (!host) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+
+    // Check if host requires verified users
+    if (host.onlyVerifiedUsers) {
+      const userAdditional = await UserAdditional.findOne({ where: { id: userId } });
+      if (!userAdditional || userAdditional.verification_status !== 1) {
+        return res.status(403).json({ message: 'Only verified users can book this vehicle' });
       }
-    });
-    // if (userAdd.verification_status != 2) {
-    //   return res.status(400).json({ message: 'Your DL and Aadhar is not Approved' });
-    // }
+    }
+
+    // Ensure the vehicle is not paused in the listing
     const listing = await Listing.findOne({
       where: {
         vehicleid: vehicleid,
-        [Op.and]: [
-          {
-            [Op.or]: [
-              {
-                [Op.or]: [
-                  {
-                    pausetime_start_date: {
-                      [Op.gt]: endDate,
-                    },
-                  },
-                  {
-                    pausetime_end_date: {
-                      [Op.lt]: startDate,
-                    },
-                  },
-                ],
-              },
-              {
-                [Op.or]: [
-                  {
-                    [Op.and]: [
-                      {
-                        [Op.or]: [
-                          { pausetime_start_date: endDate },
-                          { pausetime_start_date: null },
-                        ],
-                      },
-                      {
-
-                        [Op.or]: [
-                          { pausetime_start_time: { [Op.gte]: endTime } },
-                          { pausetime_start_time: null },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    [Op.and]: [
-                      {
-                        [Op.or]: [
-                          { pausetime_end_date: startDate },
-                          { pausetime_end_date: null },
-                        ],
-                      },
-                      {
-                        [Op.or]: [
-                          { pausetime_end_time: { [Op.lte]: startTime } },
-                          { pausetime_end_time: null },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            [Op.or]: [
-              {
-                [Op.and]: [
-                  {
-                    start_date: {
-                      [Op.lt]: startDate,
-                    },
-                  },
-                  {
-                    end_date: {
-                      [Op.gt]: endDate,
-                    },
-                  },
-                ],
-              },
-              {
-                [Op.or]: [
-                  {
-                    [Op.and]: [
-                      {
-                        [Op.or]: [
-                          { start_date: startDate },
-                          { start_date: null },
-                        ],
-                      },
-                      {
-
-                        [Op.or]: [
-                          { start_time: { [Op.lte]: startTime } },
-                          { start_time: null },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    [Op.and]: [
-                      {
-                        [Op.or]: [
-                          { end_date: endDate },
-                          { end_date: null },
-                        ],
-                      },
-                      {
-                        [Op.or]: [
-                          { end_time: { [Op.gte]: endTime } },
-                          { end_time: null },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+        pausetime_start_date: null,
+        pausetime_end_date: null
+      }
     });
-    if (listing) {
-      const check_booking = await Booking.findOne({
-        where: {
-          vehicleid: vehicleid,
-          status: {
-            [Op.in]: [1, 2, 5]  // Assuming 1 and 2 are statuses for active bookings
-          },
-          [Op.or]: [
-            // Case 1: The existing booking starts during the requested period
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.eq]: startDate } },
-                { startTripTime: { [Op.between]: [startTime, endTime] } }
-              ]
-            },
-            // Case 2: The existing booking ends during the requested period
-            {
-              [Op.and]: [
-                { endTripDate: { [Op.eq]: endDate } },
-                { endTripTime: { [Op.between]: [startTime, endTime] } }
-              ]
-            },
-            // Case 3: The existing booking starts before the requested period and ends after it starts
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.lte]: startDate } },
-                { endTripDate: { [Op.gte]: startDate } },
-                {
-                  [Op.or]: [
-                    {
-                      [Op.and]: [
-                        { startTripDate: { [Op.eq]: startDate } },
-                        { startTripTime: { [Op.lte]: startTime } }
-                      ]
-                    },
-                    {
-                      [Op.and]: [
-                        { endTripDate: { [Op.eq]: startDate } },
-                        { endTripTime: { [Op.gte]: startTime } }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            // Case 4: The requested period starts during an existing booking
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.lte]: endDate } },
-                { endTripDate: { [Op.gte]: startDate } },
-                {
-                  [Op.or]: [
-                    {
-                      [Op.and]: [
-                        { startTripDate: { [Op.eq]: endDate } },
-                        { startTripTime: { [Op.lte]: endTime } }
-                      ]
-                    },
-                    {
-                      [Op.and]: [
-                        { endTripDate: { [Op.eq]: startDate } },
-                        { endTripTime: { [Op.gte]: startTime } }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            // Case 5: The existing booking completely overlaps the requested period
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.lte]: startDate } },
-                { endTripDate: { [Op.gte]: endDate } },
-                {
-                  [Op.or]: [
-                    {
-                      [Op.and]: [
-                        { startTripDate: { [Op.eq]: startDate } },
-                        { startTripTime: { [Op.lte]: startTime } }
-                      ]
-                    },
-                    {
-                      [Op.and]: [
-                        { endTripDate: { [Op.eq]: endDate } },
-                        { endTripTime: { [Op.gte]: endTime } }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.lt]: startDate } },
-                { endTripDate: { [Op.gt]: startDate } },
-                { endTripDate: { [Op.lt]: endDate } }
-              ]
-            },
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.gte]: startDate } },
-                { endTripDate: { [Op.lte]: endDate } },
-              ],
-            },
-            {
-              [Op.and]: [
-                { startTripDate: { [Op.lt]: startDate } },
-                { endTripDate: { [Op.gt]: endDate } }
-              ]
-            }
-          ]
-        }
-      });
-      if (check_booking) {
-        return res.status(400).json({ message: 'Selected car is not available for the specified dates' });
-      }
+
+    if (!listing) {
+      return res.status(400).json({ message: 'Selected vehicle is not available for the specified dates' });
     }
-    else {
-      return res.status(400).json({ message: 'Selected car is not available for the specified dates' });
-    }
-    try {
-      let cph = await Pricing.findOne({ where: { vehicleid: vehicleid } })
-      let hours = calculateTripHours(startDate, endDate, startTime, endTime);
-      let amount = Math.round(cph.costperhr * hours);
-      let featureCost = 0;
-      if (features) {
-        for (const feature of features) {
-          const featureDetail = await carFeature.findOne({ where: { featureid: feature, vehicleid: vehicleid } });
-          if (featureDetail) {
-            featureCost += featureDetail.price;
-          }
+
+    // Calculate booking amount
+    let cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
+    let hours = calculateTripHours(startDate, endDate, startTime, endTime);
+    let amount = Math.round(cph.costperhr * hours);
+    let featureCost = 0;
+    if (features) {
+      for (const feature of features) {
+        const featureDetail = await carFeature.findOne({ where: { featureid: feature, vehicleid: vehicleid } });
+        if (featureDetail) {
+          featureCost += featureDetail.price;
         }
       }
-      amount += featureCost;
-      // const tax = await Tax.findOne({ where: { id: 1 } }); // Adjust the condition as necessary
-      // if (!tax) {
-      //   return res.status(404).json({ message: 'Tax data not found' });
-      // }
-      // let spinTripGST = (amount * (tax.GST / 100) * (tax.Commission / 100)).toFixed(2);
-      // let hostGst = ((amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100)).toFixed(2);
-      // const tdsRate = tax.TDS / 100;
-      // const HostCommision = 1 - (tax.Commission / 100);
-
-      // Update booking amounts using dynamic tax rates
-      // let gstAmount = (parseFloat(spinTripGST) + parseFloat(hostGst)).toFixed(2);
-      // let insuranceAmount = (amount * tax.insurance) / 100;
-      // let totalUserAmount = (amount + parseFloat(gstAmount) + insuranceAmount).toFixed(2);
-      // let tds = ((amount * HostCommision) * tdsRate).toFixed(2);
-      // let totalHostAmount = ((amount * HostCommision) - parseFloat(tds)).toFixed(2);
-      const bookingid = uuid.v4();
-      let booking = await Booking.create({
-        Bookingid: bookingid,
-        vehicleid: vehicleid,
-        startTripDate: startDate,
-        endTripDate: endDate,
-        startTripTime: startTime,
-        endTripTime: endTime,
-        id: userId,
-        status: 1,
-        amount: amount,
-        // GSTAmount: gstAmount,
-        // insurance: insuranceAmount,
-        // totalUserAmount: totalUserAmount,
-        // TDSAmount: tds,
-        // totalHostAmount: totalHostAmount,
-        features: features
-      });
-
-      const bookings = {
-        bookingId: booking.Bookingid,
-        vehicleid: booking.vehicleid,
-        id: booking.id,
-        status: booking.status,
-        amount: booking.amount,
-        // Transactionid: booking.Transactionid,
-        startTripDate: booking.startTripDate,
-        endTripDate: booking.endTripDate,
-        startTripTime: booking.startTripTime,
-        endTripTime: booking.endTripTime,
-        // gstAmount: booking.GSTAmount,
-        // insurance: booking.insurance,
-        // totalUserAmount: booking.totalUserAmount,
-      }
-      req.body.bookingId = booking.Bookingid;
-      req.body.userId = userId;
-      req.body.amount = amount;
-      //const paymentUrl = await initiatePayment(req);
-      //res.status(201).json({ message: 'Booking successful', booking, paymentUrl });
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
-      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
-      autoCancelBooking(booking.Bookingid);
-      res.status(201).json({ message: 'Booking successful', bookings });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error processing booking' });
     }
+    amount += featureCost;
+
+    // Create booking
+    const bookingid = uuid.v4();
+    let booking = await Booking.create({
+      Bookingid: bookingid,
+      vehicleid: vehicleid,
+      startTripDate: startDate,
+      endTripDate: endDate,
+      startTripTime: startTime,
+      endTripTime: endTime,
+      id: userId,
+      status: 1,
+      amount: amount,
+      features: features
+    });
+
+    const bookings = {
+      bookingId: booking.Bookingid,
+      vehicleid: booking.vehicleid,
+      id: booking.id,
+      status: booking.status,
+      amount: booking.amount,
+      startTripDate: booking.startTripDate,
+      endTripDate: booking.endTripDate,
+      startTripTime: booking.startTripTime,
+      endTripTime: booking.endTripTime,
+    };
+
+    const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
+    await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
+
+    res.status(201).json({ message: 'Booking successful', bookings });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Error processing booking' });
   }
-}
-
+};
 const postwishlist = async (req, res) => {
   try {
     const { vehicleid } = req.body;
@@ -2005,29 +1769,6 @@ const tripstart = async (req, res) => {
 };
 
 
-const autoCancelBooking = async (bookingId) => {
-  try {
-    // Wait for 30 minutes (1800000 milliseconds)
-    await setTimeout(1800000);
-    // Fetch the booking again to check if it's still in the pending status
-    const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
-
-    // If the booking is still pending approval (status 5), cancel it
-    if (booking && booking.status === 5) {
-      await Booking.update(
-        { status: 4, cancelDate: new Date(), cancelReason: 'Auto-cancelled due to no approval from host within 30 minutes.' },
-        { where: { Bookingid: bookingId } }
-      );
-
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-      await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'Booking auto-cancelled due to no approval from host within 30 minutes.');
-
-      console.log(`Booking ${bookingId} auto-cancelled after 30 minutes of no host approval.`);
-    }
-  } catch (error) {
-    console.error(`Error in auto-cancelling booking ${bookingId}:`, error);
-  }
-};
 const cancelbooking = async (req, res) => {
   try {
     const { bookingId, CancelReason } = req.body;
@@ -2286,74 +2027,6 @@ const deleteuser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Fetch all bookings related to the user with status 1, 2, or 5
-    // const pendingBookings = await Booking.findAll({
-    //   where: {
-    //     id: req.user.id,
-    //     status: [1, 2, 5],
-    //   },
-    //   include: [{
-    //     model: Transaction,
-    //     where: { Bookingid: Sequelize.col('Booking.Bookingid') },
-    //     required: false
-    //   }],
-    //   raw: true
-    // });
-
-    // If there are pending bookings, prevent account deletion
-    // if (pendingBookings && pendingBookings.length > 0) {
-    //   return res.status(400).json({
-    //     message: 'Cannot delete account with pending bookings',
-    //     bookings: pendingBookings
-    //   });
-    // }
-
-    // Audit bookings and transactions if there are any bookings
-    // if (Bookings.length > 0) {
-    //   const auditBookings = Bookings.map(booking => ({
-    //     Bookingid: booking.Bookingid,
-    //     Date: booking.Date,
-    //     vehicleid: booking.vehicleid,
-    //     time: booking.time,
-    //     timestamp: booking.timestamp,
-    //     id: booking.id,
-    //     status: booking.status,
-    //     amount: booking.amount,
-    //     GSTAmount: booking.GSTAmount,
-    //     insurance: booking.insurance,
-    //     totalUserAmount: booking.totalUserAmount,
-    //     TDSAmount: booking.TDSAmount,
-    //     totalHostAmount: booking.totalHostAmount,
-    //     Transactionid: booking.Transactionid,
-    //     startTripDate: booking.startTripDate,
-    //     endTripDate: booking.endTripDate,
-    //     startTripTime: booking.startTripTime,
-    //     endTripTime: booking.endTripTime,
-    //     cancelDate: booking.cancelDate,
-    //     cancelReason: booking.cancelReason,
-    //     features: booking.features
-    //   }));
-
-    //   const auditTransactions = Bookings
-    //     .filter(booking => booking['Transactions.Transactionid'])
-    //     .map(booking => ({
-    //       Transactionid: booking['Transactions.Transactionid'],
-    //       Bookingid: booking.Bookingid,
-    //       Date: booking['Transactions.Date'],
-    //       time: booking['Transactions.time'],
-    //       timestamp: booking['Transactions.timestamp'],
-    //       id: booking['Transactions.id'],
-    //       status: booking['Transactions.status'],
-    //       amount: booking['Transactions.amount'],
-    //       GSTAmount: booking['Transactions.GSTAmount'],
-    //       totalAmount: booking['Transactions.totalAmount']
-    //     }));
-
-    //   await auditBooking.bulkCreate(auditBookings);
-    //   await auditTransaction.bulkCreate(auditTransactions);
-    // }
-
-    // Delete the user
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {

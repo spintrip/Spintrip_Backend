@@ -375,7 +375,6 @@ router.post('/vehicle', authenticate, async (req, res) => {
     variant,
     color,
     bodytype,
-    helmet,
     chassisNo,
     rcNumber,
     engineNumber,
@@ -385,7 +384,8 @@ router.post('/vehicle', authenticate, async (req, res) => {
     latitude,
     longitude,
     address,
-    timeStamp } = req.body;
+    timeStamp
+  } = req.body;
 
   try {
     const host = await Host.findByPk(req.user.id);
@@ -396,7 +396,6 @@ router.post('/vehicle', authenticate, async (req, res) => {
     }
     const vehicleid = uuid.v4();
 
-
     const vehicle = await Vehicle.create({
       vehicletype: vehicletype,
       chassisno: chassisNo,
@@ -405,9 +404,11 @@ router.post('/vehicle', authenticate, async (req, res) => {
       Registrationyear: registrationYear,
       vehicleid: vehicleid,
       hostId: vehiclehostid,
-      timestamp: timeStamp
+      timestamp: timeStamp,
+      activated: false // Add activated field
     });
-    if( vehicletype == '1' ){
+
+    if (vehicletype == '1') {
       await Bike.create({
         vehicleid: vehicleid,
         bikemodel: vehicleModel,
@@ -419,7 +420,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
         city: city
       });
     }
-    if( vehicletype == 2 ){
+    if (vehicletype == 2) {
       await Car.create({
         vehicleid: vehicleid,
         carmodel: vehicleModel,
@@ -437,37 +438,18 @@ router.post('/vehicle', authenticate, async (req, res) => {
         address: address
       });
     }
-    
-    // const carAdditional = await CarAdditional.findOne({
-    //   where: {
-    //     vehicleid: vehicle.vehicleid,
-    //   }
-    // });
-    // const costperhr = await pricing(car, carAdditional);
-    // const Price = await Pricing.findOne({ where: { vehicleid: vehicle.vehicleid } });
-    // var price;
-    // if (Price) {
-    //   price = await Pricing.update(
-    //     { costperhr: costperhr },
-    //     {
-    //       where: {
-    //         vehicleid: vehicle.vehicleid
-    //       }
-    //     }
-    //   )
-    // }
-    // else {
-      price = await Pricing.create({
-        costperhr: costperhr,
-        vehicleid: vehicle.vehicleid
-      })
-    // }
+
+    await Pricing.create({
+      costperhr: costperhr,
+      vehicleid: vehicle.vehicleid
+    });
+
     const listingid = uuid.v4();
     const listing = await Listing.create({
       id: listingid,
       vehicleid: vehicle.vehicleid,
       hostid: vehiclehostid,
-    })
+    });
 
     let postedVehicle = {
       vehicleid: vehicle.vehicleid,
@@ -479,7 +461,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
       hostId: vehicle.hostId,
       rating: vehicle.rating,
       listingId: listing.id,
-    }
+    };
     res.status(201).json({ message: 'Car and listing added successfully for the host', postedVehicle });
 
   } catch (error) {
@@ -1102,11 +1084,10 @@ router.get('/host-bookings', authenticate, async (req, res) => {
         },
         {
           model: UserAdditional,
-          attributes: ['FullName'] // Assuming 'fullName' is the column name in 'UserAdditional'
+          attributes: ['FullName'] // Assuming 'FullName' is the column name in 'UserAdditional'
         }
       ],
     });
-    console.log(bookings);
     if (bookings) {
       const featureList = await Feature.findAll();
       const featureMap = featureList.reduce((map, feature) => {
@@ -1126,29 +1107,17 @@ router.get('/host-bookings', authenticate, async (req, res) => {
           featureId,
           featureName: featureMap[featureId] || 'Unknown Feature'
         }));
-        //const carAdditional = await CarAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
         let bk = {
           bookingId: booking.Bookingid,
           vehicleid: booking.vehicleid,
-          // carModel: booking.Car.carmodel,
           id: booking.id,
           bookedBy: booking.UserAdditional ? booking.UserAdditional.FullName : null,
           status: booking.status,
           amount: booking.amount,
-          // tdsAmount: booking.TDSAmount,
-          // totalHostAmount: booking.totalHostAmount,
-          // transactionId: booking.Transactionid,
           startTripDate: booking.startTripDate,
           endTripDate: booking.endTripDate,
           startTripTime: booking.startTripTime,
           endTripTime: booking.endTripTime,
-          // carImage1: carAdditional.carimage1,
-          // carImage2: carAdditional.carimage2,
-          // carImage3: carAdditional.carimage3,
-          // carImage4: carAdditional.carimage4,
-          // carImage5: carAdditional.carimage5,
-          // latitude: carAdditional.latitude,
-          // longitude: carAdditional.longitude,
           cancelDate: booking.cancelDate,
           cancelReason: booking.cancelReason,
           features: featureDetails,
@@ -1252,47 +1221,6 @@ const getBookingDetails = async (bookingId) => {
 };
 
 
-router.post('/booking-request', authenticate, async (req, res) => {
-  try {
-    let bk = req.body;
-    console.log(bk.bookingId);
-    const booking = await Booking.findOne({
-      where: {
-        Bookingid: bk.bookingId,
-        status: 5,
-      }
-    });
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found or already processed' });
-    }
-    if (bk.status == '1') {
-      await booking.update({
-        status: 1,
-      });
-      const { userEmail, hostEmail,bookingDetails } = await getBookingDetails(bk.bookingId);
-      await sendBookingApprovalEmail(userEmail, hostEmail, bookingDetails,'Booking Approved by host');
-      autoCancelBooking(booking.Bookingid);
-      return res.status(201).json({ message: 'Booking confirmed by host' });
-    }
-    if (bk.status == '4') {
-      const today = new Date();
-      const cancelDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      await booking.update({
-        status: 4,  
-        cancelDate: cancelDate,
-        cancelReason: bk.CancelReason
-      });
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-      await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails,"The booking has been cancelled");
-      return res.status(201).json({ message: 'Booking cancelled by host' });
-    }
-    return res.status(404).json({ message: 'No Action performed' });
-  }
-  catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 router.post('/getFeedback', authenticate, async (req, res) => {
   try {
@@ -1517,6 +1445,48 @@ router.post('/support/supportChat', authenticate, viewSupportChats);
 router.get('/support', authenticate, viewUserSupportTickets);
 
 router.get('/view-blog',authenticate, getAllBlogs );
+
+router.post('/activate-vehicle', authenticate, async (req, res) => {
+  const { vehicleid, paymentMethod } = req.body;
+
+  try {
+    const host = await Host.findByPk(req.user.id);
+    if (!host) {
+      return res.status(401).json({ message: 'No Host found' });
+    }
+
+    const vehicle = await Vehicle.findOne({ where: { vehicleid, hostId: req.user.id } });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    // Process payment (this is a placeholder, replace with actual payment processing logic)
+    const paymentId = uuid.v4();
+    const amount = 100; // Example amount, replace with actual amount
+
+    await HostPayment.create({
+      PaymentId: paymentId,
+      HostId: req.user.id,
+      VehicleId: vehicleid,
+      PaymentDate: new Date(),
+      Amount: amount,
+      GSTAmount: amount * 0.18,
+      TotalAmount: amount * 1.18,
+      PaymentStatus: 1, // Assuming 1 means successful
+      PaymentMethod: paymentMethod,
+      TransactionId: uuid.v4(),
+      Remarks: 'Vehicle activation payment'
+    });
+
+    await vehicle.update({ activated: true });
+
+    res.status(200).json({ message: 'Vehicle activated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error activating vehicle' });
+  }
+});
+
 module.exports = router;
 
 

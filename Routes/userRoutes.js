@@ -3,7 +3,7 @@ const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
 const bcrypt = require('bcrypt');
-const { User, Car, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
+const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension, Transaction } = require('../Models');
 const {
   signup,
@@ -17,20 +17,19 @@ const {
   putprofile,
   getbrand,
   features,
-  cars,
-  findcars,
-  onecar,
+  vehicles,
+  findvehicles,
+  onevehicle,
   calculateTripHours,
   getBookingDetails,
   booking,
   postwishlist,
   cancelwishlist,
   getwishlist,
-  getcaradditional,
+  getvehicleadditional,
   extend,
   breakup, 
   tripstart,
-  autoCancelBooking,
   cancelbooking,
   userbookings,
   bookingcompleted,
@@ -43,7 +42,6 @@ const {
   rating
  } = require('../Controller/userController');
 const { getAllBlogs } = require('../Controller/blogController');
-const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { Op } = require('sequelize');
@@ -55,7 +53,6 @@ const axios = require('axios');
 const path = require('path');
 const csv = require('csv-parser');
 const router = express.Router();
-const { setTimeout } = require('timers/promises');
 
 const {
   sendBookingConfirmationEmail,
@@ -88,13 +85,9 @@ router.post('/login', login)
 router.post('/verify-otp', verify);
 
 //Profile
-
-
 router.get('/profile', authenticate, getprofile);
 
-
 //Update Profile
-
 router.put('/profile', authenticate, putprofile);
 
 // Verify route with image resizing
@@ -147,27 +140,81 @@ router.get('/get-brand', getbrand);
 
 router.post('/features', authenticate,);
 
-//Get All Cars
-router.get('/cars', cars);
+//Get All Vehicles
+router.get('/vehicles', async (req, res) => {
+  try {
+    const vehicles = await Vehicle.findAll({ where: { activated: true } });
+    res.status(200).json(vehicles);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching vehicles' });
+  }
+});
+
 //chat
 router.post('/chat/send', chatController.sendMessage);
 router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
-//Find Cars
-router.post('/findcars', authenticate, findcars);
-router.post('/onecar', onecar);
-router.post('/booking', authenticate, booking);
+
+//Find Vehicles
+router.post('/findvehicles', authenticate, findvehicles);
+router.post('/onevehicle', onevehicle);
+
+// Booking Route
+router.post('/booking', authenticate, async (req, res) => {
+  try {
+    const { vehicleid, startTripDate, endTripDate, startTripTime, endTripTime } = req.body;
+    const userId = req.user.id;
+
+    // Fetch vehicle and host details
+    const vehicle = await Vehicle.findByPk(vehicleid);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    const host = await Host.findByPk(vehicle.hostId);
+    if (!host) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+
+    // Check if host requires verified users
+    if (host.onlyVerifiedUsers) {
+      const userAdditional = await UserAdditional.findOne({ where: { id: userId } });
+      if (!userAdditional || userAdditional.verification_status !== 1) {
+        return res.status(403).json({ message: 'Only verified users can book this vehicle' });
+      }
+    }
+
+    // Create booking
+    const bookingId = uuid.v4();
+    const booking = await Booking.create({
+      Bookingid: bookingId,
+      vehicleid: vehicleid,
+      id: userId,
+      startTripDate: startTripDate,
+      endTripDate: endTripDate,
+      startTripTime: startTripTime,
+      endTripTime: endTripTime,
+      status: 1 // Assuming 1 means booked
+    });
+
+    res.status(201).json({ message: 'Booking created successfully', booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error creating booking', error });
+  }
+});
+
 router.post('/wishlist', authenticate, postwishlist);
 router.post('/cancelwishlist', authenticate, cancelwishlist);
 
 router.get('/wishlist', authenticate, getwishlist);
-router.post('/getCarAdditional', getcaradditional);
+router.post('/getVehicleAdditional', getvehicleadditional);
 
 router.post('/extend-booking', authenticate, extend);
 //Trip-Started
 router.post('/view-breakup', authenticate, breakup);
 
 router.post('/Trip-Started', authenticate, tripstart);
-
 
 //Cancel-Booking
 router.post('/Cancel-Booking', authenticate, cancelbooking);
@@ -177,7 +224,7 @@ router.post('/getFeedback', authenticate, getfeedback);
 router.get('/User-Bookings', authenticate, userbookings);
 
 //Booking-Completed
-router.post('/booking-completed', authenticate, bookingcompleted); ``
+router.post('/booking-completed', authenticate, bookingcompleted);
 
 //Rating
 router.post('/rating', authenticate, rating);
@@ -185,23 +232,11 @@ router.post('/rating', authenticate, rating);
 router.get('/delete_user', authenticate, deleteuser);
 router.get('/top-rating', toprating);
 
-router.post('/webhook/phonepe', webhook);
-//Payment
-
-// Initiate Payment Route
-router.post('/payment', authenticate, initiatePayment);
-
-router.post('/phonepayment', authenticate, phonePayment);
-
-// Payment Status Check Route
-router.post('/webhook/cashfree', checkPaymentStatus);
-
 //chat
 router.get('/chat/history', authenticate, chathistory);
 
 // Create a new chat message from user to host
-router.post('/chat', authenticate,chat);
-
+router.post('/chat', authenticate, chat);
 
 //Support system for user
 // Create a support ticket

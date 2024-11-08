@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     Registrationyear: DataTypes.DATEONLY, 
     timestamp: DataTypes.DATE,
     rating: DataTypes.FLOAT,
+    activated: { type: DataTypes.BOOLEAN, defaultValue: false }, // New field to indicate activation status
     hostId: {
       type: DataTypes.STRING(36),
       references: {
@@ -15,7 +16,11 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id'
       }
     }
-  })
+  });
+
+  Vehicle.associate = (models) => {
+    Vehicle.belongsTo(models.Host, { foreignKey: 'hostId' });
+  };
 
   return Vehicle;
 };
