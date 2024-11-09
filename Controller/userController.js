@@ -329,19 +329,19 @@ const features = async (req, res) => {
 
   try {
     const { vehicleid } = req.body;
-    const car = await Car.findOne({ where: { vehicleid: vehicleid } });
-    if (!car) {
-      return res.status(400).json({ message: 'Car is not available' });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
+    if (!vehicle) {
+      return res.status(400).json({ message: 'vehicle is not available' });
     }
     const carFeatures = await carFeature.findAll({ where: { vehicleid }, include: [Feature] });
     if (!carFeatures || carFeatures.length === 0) {
-      return res.status(400).json({ message: 'No Car Feature Available' });
+      return res.status(400).json({ message: 'No vehicle Feature Available' });
     }
     res.status(201).json({ message: 'Feature with Price', carFeatures });
   }
   catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching car feature Details' });
+    res.status(500).json({ message: 'Error fetching vehicle feature Details' });
   }
 };
 
@@ -1171,43 +1171,34 @@ const getwishlist = async (req, res) => {
     }
     console.log(wishlist);
     const userWishlist = wishlist.map(async (wishlists) => {
-      const car = await Car.findOne({
+      const vehicle = await Vehicle.findOne({
         where: {
           vehicleid: wishlists.vehicleid,
         }
       });
-      if (!car) {
+      if (!vehicle) {
         return;
       }
-      console.log(car);
-      const carAdditional = await CarAdditional.findOne({ where: { vehicleid: wishlists.vehicleid } });
+      const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: wishlists.vehicleid } });
       let wl;
       wl = {
         vehicleid: wishlists.vehicleid,
-        carModel: car.carmodel,
-        type: car.type,
-        brand: car.brand,
-        variant: car.variant,
-        color: car.color,
-        chassisNo: car.chassisno,
-        mileage: car.mileage,
-        registrationYear: car.Registrationyear,
-        rcNumber: car.Rcnumber,
-        bodyType: car.bodytype,
-        rating: car.rating,
-        horsePower: carAdditional.HorsePower,
-        latitude: carAdditional.latitude,
-        longitude: carAdditional.longitude,
-        carImage1: carAdditional.carimage1,
-        carImage2: carAdditional.carimage2,
-        carImage3: carAdditional.carimage3,
-        carImage4: carAdditional.carimage4,
-        carImage5: carAdditional.carimage5,
+        registrationYear: vehicle.Registrationyear,
+        rcNumber: vehicle.Rcnumber,
+        vehicleType: vehicle.vehicletype,
+        rating: vehicle.rating,
+        latitude: vehicleAdditional.latitude,
+        longitude: vehicleAdditional.longitude,
+        vehicleImage1: vehicleAdditional.vehicleimage1,
+        vehicleImage2: vehicleAdditional.vehicleimage2,
+        vehicleImage3: vehicleAdditional.vehicleimage3,
+        vehicleImage4: vehicleAdditional.vehicleimage4,
+        vehicleImage5: vehicleAdditional.vehicleimage5,
       }
-      const cph = await Pricing.findOne({ where: { vehicleid: car.vehicleid } });
+      const cph = await Pricing.findOne({ where: { vehicleid: vehicle.vehicleid } });
       if (cph) {
         const costperhr = cph.costperhr;
-        // Include pricing information in the car object
+        // Include pricing information in the vehicle object
         return { ...wl, costPerHr: costperhr };
       } else {
         return { ...wl, costPerHr: null };
@@ -1225,80 +1216,66 @@ const getvehicleadditional = async (req, res) => {
   const { vehicleid } = req.body;
 
   try {
-    // Check if the host owns the car
+    // Check if the host owns the vehicle
     const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
-    if (!vehicle ) {
+    if (!vehicle) {
       return res.status(404).json({ message: 'vehicle not found or unauthorized access' });
     }
-
     const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
-    if (!vehicleAdditional ) {
+    if (!vehicleAdditional) {
       return res.status(404).json({ message: 'vehicle additional information not found' });
     }
-    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });
-
+    let Additional, vehicleAdditionals;
+    if( vehicle.vehicletype == 1 ){
+       Additional = await Bike.findOne({ where: { vehicleid: vehicleid } });
+       
+    }
+    if( vehicle.vehicletype == 2 ){
+      Additional = await Car.findOne({ where: { vehicleid: vehicleid } });
+    }
+    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });  
     const featureList = await Feature.findAll();
     const featureMap = featureList.reduce((map, f) => (map[f.id] = f.featureName, map), {});
-
+    
     const updatedFeatures = features.map(f => ({
       ...f.dataValues,
       featureName: featureMap[f.featureid]
-    }));
-    let carAdditionals = {
-      vehicleid: carAdditional.vehicleid,
-      horsePower: carAdditional.HorsePower,
-      ac: carAdditional.AC,
-      musicSystem: carAdditional.Musicsystem,
-      autoWindow: carAdditional.Autowindow,
-      sunroof: carAdditional.Sunroof,
-      touchScreen: carAdditional.Touchscreen,
-      sevenSeater: carAdditional.Sevenseater,
-      reverseCamera: carAdditional.Reversecamera,
-      transmission: carAdditional.Transmission,
-      airBags: carAdditional.Airbags,
-      fuelType: carAdditional.FuelType,
-      petFriendly: carAdditional.PetFriendly,
-      powerSteering: carAdditional.PowerSteering,
-      abs: carAdditional.ABS,
-      tractionControl: carAdditional.tractionControl,
-      fullBootSpace: carAdditional.fullBootSpace,
-      keylessEntry: carAdditional.KeylessEntry,
-      airPurifier: carAdditional.airPurifier,
-      cruiseControl: carAdditional.cruiseControl,
-      voiceControl: carAdditional.voiceControl,
-      usbCharger: carAdditional.usbCharger,
-      bluetooth: carAdditional.bluetooth,
-      airFreshner: carAdditional.airFreshner,
-      ventelatedFrontSeat: carAdditional.ventelatedFrontSeat,
-      carImage1: carAdditional.carimage1,
-      carImage2: carAdditional.carimage2,
-      carImage3: carAdditional.carimage3,
-      carImage4: carAdditional.carimage4,
-      carImage5: carAdditional.carimage5,
-      verificationStatus: carAdditional.verification_status,
-      latitude: carAdditional.latitude,
-      longitude: carAdditional.longitude,
-      registrationYear: car.Registrationyear
-    }
-    // Path to the car's folder in the uploads directory
-    const carImages = [];
-    if (carAdditional.carimage1) carImages.push(carAdditional.carimage1);
-    if (carAdditional.carimage2) carImages.push(carAdditional.carimage2);
-    if (carAdditional.carimage3) carImages.push(carAdditional.carimage3);
-    if (carAdditional.carimage4) carImages.push(carAdditional.carimage4);
-    if (carAdditional.carimage5) carImages.push(carAdditional.carimage5);
-    if (carImages) {
+    }));    
+
+
+     vehicleAdditionals= {
+      vehicleid: vehicle.vehicleid,
+      vehicleImage1: vehicleAdditional.vehicleimage1,
+      vehicleImage2: vehicleAdditional.vehicleimage2,
+      vehicleImage3: vehicleAdditional.vehicleimage3,
+      vehicleImage4: vehicleAdditional.vehicleimage4,
+      vehicleImage5: vehicleAdditional.vehicleimage5,
+      verificationStatus: vehicleAdditional.verification_status,
+      latitude: vehicleAdditional.latitude,
+      longitude: vehicleAdditional.longitude,
+      rcNumber: vehicle.Rcnumber,
+      registrationYear: vehicle.Registrationyear
+    };
+    const vehicleImages = [];
+    if (vehicleAdditional.vehicleimage1) vehicleImages.push(vehicleAdditional.vehicleimage1);
+    if (vehicleAdditional.vehicleimage2) vehicleImages.push(vehicleAdditional.vehicleimage2);
+    if (vehicleAdditional.vehicleimage3) vehicleImages.push(vehicleAdditional.vehicleimage3);
+    if (vehicleAdditional.vehicleimage4) vehicleImages.push(vehicleAdditional.vehicleimage4);
+    if (vehicleAdditional.vehicleimage5) vehicleImages.push(vehicleAdditional.vehicleimage5);
+    if (vehicleImages) {
       res.status(200).json({
-        message: "Car Additional data",
-        carAdditionals,
-        carImages,
+        message: "vehicle Additional data",
+        vehicleAdditionals,
+        Additional,
+        vehicleImages,
         updatedFeatures
       });
     }
     else {
       res.status(200).json({
-        message: "Car Additional data, no image found",
-        carAdditionals,
+        message: "vehicle Additional data, no image found",
+        vehicleAdditionals,
+        Additional,
         updatedFeatures
       });
     }
@@ -1471,7 +1448,7 @@ const extend = async (req, res) => {
       },
     });
     if (!listing) {
-      return res.status(400).json({ message: 'Car is not available' });
+      return res.status(400).json({ message: 'vehicle is not available' });
     }
 
     // Create the extended booking if all checks pass
@@ -1533,7 +1510,7 @@ const breakup = async (req, res) => {
     const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
     const hours = calculateTripHours(startDate, endDate, startTime, endTime);
     if (!cph) {
-      return res.status(404).json({ message: 'Pricing of the car not available' });
+      return res.status(404).json({ message: 'Pricing of the vehicle not available' });
     }
     let amount = Math.round(cph.costperhr * hours);
 
@@ -1549,157 +1526,16 @@ const breakup = async (req, res) => {
 
     amount += featureCost;
     const costperhr = cph.costperhr;
-    const tax = await Tax.findOne({ where: { id: 1 } });
-    if (!tax) {
-      return res.status(404).json({ message: 'Tax data not found' });
-    }
-    let spinTripGST = amount * (tax.GST / 100) * (tax.Commission / 100);
-    let insuranceAmount = (amount * tax.insurance) / 100;
-    let hostGst = (amount - (amount * tax.Commission / 100)) * (tax.HostGST / 100);
-    let gstAmount = spinTripGST + hostGst;
-    let totalUserAmount = amount + gstAmount + insuranceAmount;
-
     return res.status(200).json({
       totalHours: hours,
       costPerHr: costperhr,
       baseAmount: amount,
-      spinTripGST: spinTripGST,
-      hostGst: hostGst,
-      gstAmount: gstAmount,
-      insurance: insuranceAmount,
-      grossAmount: totalUserAmount,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 }
-
-const mergeBooking = async (originalBookingId) => {
-  try {
-    // Fetch the booking extension details
-    const bookingExtension = await BookingExtension.findOne({
-      where: { bookingId: originalBookingId }
-    });
-    if (!bookingExtension) {
-      throw new Error(`Booking extension not found for booking ID: ${originalBookingId}`);
-    }
-
-    // Fetch the original booking to compare dates
-    const originalBooking = await Booking.findOne({
-      where: { Bookingid: originalBookingId }
-    });
-
-    if (!originalBooking) {
-      throw new Error(`Original booking not found for booking ID: ${originalBookingId}`);
-    }
-
-    // Assuming extendedBookings is an array of Bookingids
-    const extendedBookingIds = bookingExtension.extendedBookings;
-    
-    if (!extendedBookingIds || extendedBookingIds.length === 0) {
-      throw new Error(`No extended bookings found for booking ID: ${originalBookingId}`);
-    }
-
-    // Fetch the extended booking details
-    const extendedBookings = await Booking.findAll({
-      where: {
-        Bookingid: {
-          [Op.in]: extendedBookingIds.map(id => id.toString()), // Ensure IDs are strings
-        },
-      },
-    });
-
-    if (extendedBookings && extendedBookings.length > 0) {
-      const totalAmount = extendedBookings.reduce((sum, booking) => sum + booking.amount, originalBooking.amount);
-      const insurance = extendedBookings.reduce((sum, booking) => sum + booking.insurance, originalBooking.insurance);
-      const totalGSTAmount = extendedBookings.reduce((sum, booking) => sum + booking.GSTAmount, originalBooking.GSTAmount);
-      const totalUserAmount = extendedBookings.reduce((sum, booking) => sum + booking.totalUserAmount, originalBooking.totalUserAmount);
-      const totalTDSAmount = extendedBookings.reduce((sum, booking) => sum + booking.TDSAmount, originalBooking.TDSAmount);
-      const totalHostAmount = extendedBookings.reduce((sum, booking) => sum + booking.totalHostAmount, originalBooking.totalHostAmount);
-
-      // Update the original booking with the aggregated details
-      await Booking.update(
-        {
-          endTripDate: extendedBookings[extendedBookings.length - 1].endTripDate, // Assuming the last booking's date is the latest
-          endTripTime: extendedBookings[extendedBookings.length - 1].endTripTime,
-          amount: totalAmount,
-          insurance: insurance,
-          GSTAmount: totalGSTAmount,
-          totalUserAmount: totalUserAmount,
-          TDSAmount: totalTDSAmount,
-          totalHostAmount: totalHostAmount,
-        },
-        { where: { Bookingid: originalBookingId } }
-      );
-
-      // Remove the extended bookings after merging
-      await Booking.destroy({
-        where: {
-          Bookingid: {
-            [Op.in]: extendedBookingIds.map(id => id.toString()), // Use the array directly
-          },
-        },
-      });
-    }
-  } catch (error) {
-    console.error(`Error merging extended bookings for ${originalBookingId}:`, error);
-    throw new Error('Failed to merge extended bookings.');
-  }
-};
-
-
-const tripstart = async (req, res) => {
-  const transaction = await sequelize.transaction();
-
-  try {
-    const { bookingId } = req.body;
-    // Fetch the booking and ensure it is pending trip start
-    const booking = await Booking.findOne({
-      where: { Bookingid: bookingId, status: 1 }
-    });
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Trip already started or not present' });
-    }
-
-    // Check if the booking is an extended booking
-    const bookingExtension = await BookingExtension.findOne({
-      where: {
-        extendedBookings: {
-          [Op.contains]: [bookingId],
-        },
-      },
-    });
-
-    if (bookingExtension) {
-      // Call the merge function to handle the merging of bookings
-      await mergeBooking(bookingExtension.bookingId);
-
-    } else {
-      // For non-extended bookings, set status to 2 (active)
-      await Booking.update(
-        { status: 2 },
-        { where: { Bookingid: bookingId } }
-      );
-    }
-
-    // Update the car listing with the booking ID
-    await Listing.update(
-      { bookingId: bookingId },
-      { where: { vehicleid: booking.vehicleid } }
-    );
-
-
-    res.status(201).json({ message: 'Trip has started' });
-  } catch (err) {
-    // Rollback transaction in case of an error
-    await transaction.rollback();
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
 
 const cancelbooking = async (req, res) => {
   try {
@@ -1748,12 +1584,12 @@ const userbookings = async (req, res) => {
       }, {});
 
       const userBookingPromises = bookings.map(async (booking) => {
-        const car = await Car.findOne({ where: { vehicleid: booking.vehicleid } });
-        if (!car) {
+        const vehicle = await Vehicle.findOne({ where: { vehicleid: booking.vehicleid } });
+        if (!vehicle) {
           return null;
         }
 
-        const carAdditional = await CarAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
+        const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
         const transaction = await Transaction.findOne({ where: { Transactionid: booking.Transactionid } });
 
         const featureDetails = (booking.features || []).map(featureId => ({
@@ -1767,27 +1603,18 @@ const userbookings = async (req, res) => {
           id: booking.id,
           status: booking.status,
           amount: booking.amount,
-          gstAmount: booking.GSTAmount,
-          insurance: booking.insurance,
-          totalUserAmount: booking.totalUserAmount,
-          transactionId: booking.Transactionid,
-          transaction: transaction ? {
-            transactionId: transaction.Transactionid,
-            status: transaction.status,
-          } : null,
           startTripDate: booking.startTripDate,
           endTripDate: booking.endTripDate,
           startTripTime: booking.startTripTime,
           endTripTime: booking.endTripTime,
-          carModel: car.carmodel,
-          hostId: car.hostId,
-          carImage1: carAdditional.carimage1,
-          carImage2: carAdditional.carimage2,
-          carImage3: carAdditional.carimage3,
-          carImage4: carAdditional.carimage4,
-          carImage5: carAdditional.carimage5,
-          latitude: carAdditional.latitude,
-          longitude: carAdditional.longitude,
+          hostId: vehicle.hostId,
+          vehicleImage1: vehicleAdditional.vehicleimage1,
+          vehicleImage2: vehicleAdditional.vehicleimage2,
+          vehicleImage3: vehicleAdditional.vehicleimage3,
+          vehicleImage4: vehicleAdditional.vehicleimage4,
+          vehicleImage5: vehicleAdditional.vehicleimage5,
+          latitude: vehicleAdditional.latitude,
+          longitude: vehicleAdditional.longitude,
           cancelDate: booking.cancelDate,
           cancelReason: booking.cancelReason,
           features: featureDetails,
@@ -1801,48 +1628,6 @@ const userbookings = async (req, res) => {
       res.status(404).json({ message: 'Booking Not found' });
     }
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-}
-const bookingcompleted = async (req, res) => {
-  try {
-    const { bookingId } = req.body;
-    // if (payment.status === 'captured') {
-    const booking = await Booking.findOne({
-      where: {
-        Bookingid: bookingId,
-        status: 2,
-        //id: userId,
-      }
-    });
-    if (booking) {
-      const car = await Car.findOne({
-        where: {
-          vehicleid: booking.vehicleid,
-        }
-      });
-      await Listing.update(
-        { bookingId: null },
-        { where: { vehicleid: car.vehicleid } }
-      );
-      await Booking.update(
-        { status: 3 },
-        { where: { Bookingid: bookingId } }
-      );
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-      await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
-      return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
-    }
-    else {
-      return res.status(404).json({ message: 'Start the ride to Complete Booking' });
-    }
-    // }
-    // else {
-    // Payment not successful
-    // return res.status(400).json({ message: 'Payment failed' });
-    // }
-  } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 }
@@ -1988,13 +1773,13 @@ const rating = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    const car = await Car.findOne({
+    const vehicle = await Vehicle.findOne({
       where: {
         vehicleid: booking.vehicleid,
       }
     });
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'vehicle not found' });
     }
 
     const bookingCount = await Booking.count({
@@ -2008,23 +1793,23 @@ const rating = async (req, res) => {
     if (bookingCount == 1) {
       new_rating = parseFloat(rating);
     } else {
-      new_rating = (parseFloat(rating) + parseFloat(car.rating * (bookingCount - 1))) / bookingCount;
+      new_rating = (parseFloat(rating) + parseFloat(vehicle.rating * (bookingCount - 1))) / bookingCount;
     }
 
-    await car.update({ rating: new_rating });
+    await vehicle.update({ rating: new_rating });
 
-    const car_ratings = await Car.sum('rating', {
+    const vehicle_ratings = await vehicle.sum('rating', {
       where: {
-        hostId: car.hostId,
+        hostId: vehicle.hostId,
       }
     });
 
     if (feedback) {
       await Feedback.create({
-        vehicleid: car.vehicleid,
+        vehicleid: vehicle.vehicleid,
         userId: userId,
         userName: user.FullName,
-        hostId: car.hostId,
+        hostId: vehicle.hostId,
         rating: rating,
         comment: feedback
       });
@@ -2061,11 +1846,9 @@ module.exports = {
   getvehicleadditional,
   extend,
   breakup,
-  tripstart,
  // autoCancelBooking,
   cancelbooking,
   userbookings,
-  bookingcompleted,
   getfeedback,
   transactions,
   chat,

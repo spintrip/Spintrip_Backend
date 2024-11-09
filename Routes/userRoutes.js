@@ -3,7 +3,7 @@ const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
 const bcrypt = require('bcrypt');
-const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing, CarAdditional,
+const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, BookingExtension, Transaction } = require('../Models');
 const {
   signup,
@@ -17,7 +17,6 @@ const {
   putprofile,
   getbrand,
   features,
-  vehicles,
   findvehicles,
   onevehicle,
   calculateTripHours,
@@ -29,10 +28,8 @@ const {
   getvehicleadditional,
   extend,
   breakup, 
-  tripstart,
   cancelbooking,
   userbookings,
-  bookingcompleted,
   getfeedback,
   transactions,
   chat,
@@ -160,61 +157,19 @@ router.post('/findvehicles', authenticate, findvehicles);
 router.post('/onevehicle', onevehicle);
 
 // Booking Route
-router.post('/booking', authenticate, async (req, res) => {
-  try {
-    const { vehicleid, startTripDate, endTripDate, startTripTime, endTripTime } = req.body;
-    const userId = req.user.id;
-
-    // Fetch vehicle and host details
-    const vehicle = await Vehicle.findByPk(vehicleid);
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-
-    const host = await Host.findByPk(vehicle.hostId);
-    if (!host) {
-      return res.status(404).json({ message: 'Host not found' });
-    }
-
-    // Check if host requires verified users
-    if (host.onlyVerifiedUsers) {
-      const userAdditional = await UserAdditional.findOne({ where: { id: userId } });
-      if (!userAdditional || userAdditional.verification_status !== 1) {
-        return res.status(403).json({ message: 'Only verified users can book this vehicle' });
-      }
-    }
-
-    // Create booking
-    const bookingId = uuid.v4();
-    const booking = await Booking.create({
-      Bookingid: bookingId,
-      vehicleid: vehicleid,
-      id: userId,
-      startTripDate: startTripDate,
-      endTripDate: endTripDate,
-      startTripTime: startTripTime,
-      endTripTime: endTripTime,
-      status: 1 // Assuming 1 means booked
-    });
-
-    res.status(201).json({ message: 'Booking created successfully', booking });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating booking', error });
-  }
-});
+router.post('/booking', authenticate, booking);
 
 router.post('/wishlist', authenticate, postwishlist);
 router.post('/cancelwishlist', authenticate, cancelwishlist);
 
 router.get('/wishlist', authenticate, getwishlist);
-router.post('/getVehicleAdditional', getvehicleadditional);
+router.post('/getVehicleAdditional', authenticate, getvehicleadditional);
 
 router.post('/extend-booking', authenticate, extend);
 //Trip-Started
 router.post('/view-breakup', authenticate, breakup);
 
-router.post('/Trip-Started', authenticate, tripstart);
+
 
 //Cancel-Booking
 router.post('/Cancel-Booking', authenticate, cancelbooking);
@@ -222,9 +177,6 @@ router.post('/Cancel-Booking', authenticate, cancelbooking);
 router.post('/getFeedback', authenticate, getfeedback);
 //User-Bookings
 router.get('/User-Bookings', authenticate, userbookings);
-
-//Booking-Completed
-router.post('/booking-completed', authenticate, bookingcompleted);
 
 //Rating
 router.post('/rating', authenticate, rating);

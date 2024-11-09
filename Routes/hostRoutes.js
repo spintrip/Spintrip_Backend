@@ -8,7 +8,7 @@ const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
 const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional } = require('../Models');
 const { and, TIME } = require('sequelize');
-const { sendOTP, generateOTP } = require('../Controller/hostController');
+const { sendOTP, generateOTP, tripstart, bookingcompleted } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
 const { setTimeout } = require('timers/promises');
 const { Payout } = require('../Models');
@@ -404,7 +404,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error Adding car' });
+    res.status(500).json({ message: 'Error Adding Vehicle' });
   }
 });
 
@@ -620,13 +620,13 @@ router.post('/features', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'Feature not available' });
     }
     else {
-      const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
-      if (!car) {
-        return res.status(400).json({ message: 'Car is not available' });
+      const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
+      if (!vehicle) {
+        return res.status(400).json({ message: 'vehicle is not available' });
       }
       const carfeature = await carFeature.findOne({ where: { featureid: featureid, vehicleid: vehicleid } });
       if (carfeature) {
-        return res.status(400).json({ message: 'Car feature already added' });
+        return res.status(400).json({ message: 'vehicle feature already added' });
       }
       const updated_feature = await carFeature.create({
         featureid: featureid,
@@ -655,9 +655,9 @@ router.put('/features', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Feature not found for the car' });
     }
 
-    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
-    if (!car) {
-      return res.status(400).json({ message: 'Car is not available' });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
+    if (!vehicle) {
+      return res.status(400).json({ message: 'vehicle is not available' });
     }
 
     await carFeatureRecord.update({ price });
@@ -679,9 +679,9 @@ router.delete('/features', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Feature not found for the car' });
     }
 
-    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
-    if (!car) {
-      return res.status(400).json({ message: 'Car is not available' });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: req.user.id } });
+    if (!vehicle) {
+      return res.status(400).json({ message: 'vehicle is not available' });
     }
 
     await carFeatureRecord.destroy();
@@ -689,7 +689,7 @@ router.delete('/features', authenticate, async (req, res) => {
     res.status(200).json({ message: 'Feature deleted successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error deleting car feature' });
+    res.status(500).json({ message: 'Error deleting vehicle feature' });
   }
 });
 
@@ -822,7 +822,7 @@ router.post('/pricing', async (req, res) => {
     const { vehicleid } = req.body;
     const Price = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     if (Price) {
-      res.status(201).json({ "message": "price for the car", vehicleid: Price.vehicleid, costPerHr: Price.costperhr });
+      res.status(201).json({ "message": "price for the vehicle", vehicleid: Price.vehicleid, costPerHr: Price.costperhr });
     }
     else {
       res.status(400).json({ "message": "pricing cannot be found" });
@@ -1092,11 +1092,11 @@ const getBookingDetails = async (bookingId) => {
       throw new Error('Booking not found');
     }
 
-    // Fetch the host's user details using the hostId from the car model
+    // Fetch the host's user details using the hostId from the vehicle model
     const user = await UserAdditional.findOne({
       where: { id: booking.id }
     });
-    const host = await Car.findOne({
+    const host = await Vehicle.findOne({
       where: { vehicleid: booking.vehicleid }
     })
 
@@ -1148,11 +1148,11 @@ router.post('/getVehicleAdditional', authenticate, async (req, res) => {
     // Check if the host owns the car
     const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: hostId } });
     if (!vehicle) {
-      return res.status(404).json({ message: 'Car not found or unauthorized access' });
+      return res.status(404).json({ message: 'vehicle not found or unauthorized access' });
     }
     const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
     if (!vehicleAdditional) {
-      return res.status(404).json({ message: 'Car additional information not found' });
+      return res.status(404).json({ message: 'vehicle additional information not found' });
     }
     let Additional, vehicleAdditionals;
     if( vehicle.vehicletype == 1 ){
@@ -1283,13 +1283,13 @@ router.get('/device/:vehicleid', authenticate, async (req, res) => {
     const id = req.params.vehicleid;
     const limit = parseInt(req.query.limit, 10) || 10; 
     const hostId = req.user.id;
-    const car = await Car.findOne({ where: { vehicleid: id, hostId: hostId } });
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found or unauthorized access' });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: id, hostId: hostId } });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'vehicle not found or unauthorized access' });
     }
     const device = await carDevices.findOne({ where: { vehicleid: id } });
     if (!device) {
-      return res.status(404).json({ message: 'Car not available for tracking' });
+      return res.status(404).json({ message: 'vehicle not available for tracking' });
     }
     const results = await Device.findAll({
       where: {
@@ -1363,5 +1363,9 @@ router.post('/activate-vehicle', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error activating vehicle' });
   }
 });
+
+router.post('/Trip-Started', authenticate, tripstart);
+
+router.post('/booking-completed', authenticate, bookingcompleted);
 
 module.exports = router;

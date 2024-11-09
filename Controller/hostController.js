@@ -1,4 +1,6 @@
 const axios = require('axios');
+const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../Models');
 const generateOTP = () => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     return otp;
@@ -17,7 +19,114 @@ const generateOTP = () => {
     }
   };
 
+  const getBookingDetails = async (bookingId) => {
+    try {
+      const booking = await Booking.findOne({
+        where: { Bookingid: bookingId }
+      });
+  
+      if (!booking) {
+        throw new Error('Booking not found');
+      }
+  
+      // Fetch the host's user details using the hostId from the car model
+      const user = await UserAdditional.findOne({
+        where: { id: booking.id }
+      });
+      const host = await Vehicle.findOne({
+        where: { vehicleid: booking.vehicleid }
+      })
+  
+      const userEmail = user?.Email;
+      const hostId = host?.hostId;
+      var hostEmail = await HostAdditional.findOne({
+        where: { id: hostId }
+      });
+      const bookingDetails = {
+        carModel: host.carmodel,
+        startDate: booking.startTripDate,
+        startTime: booking.startTripTime,
+        endDate: booking.endTripDate,
+        endTime: booking.endTripTime,
+      };
+      hostEmail = hostEmail.Email;
+      return { userEmail, hostEmail, bookingDetails };
+    } catch (error) {
+      console.error('Error in getBookingDetails:', error);
+      throw error;
+    }
+  };
+
+  const tripstart = async (req, res) => {
+    try {
+      const { bookingId } = req.body;
+      // Fetch the booking and ensure it is pending trip start
+      const booking = await Booking.findOne({
+        where: { Bookingid: bookingId, status: 1 }
+      });
+  
+      if (!booking) {
+        return res.status(404).json({ message: 'Trip already started or not present' });
+      }
+  
+      await Booking.update(
+          { status: 2 },
+          { where: { Bookingid: bookingId } }
+        )
+  
+      await Listing.update(
+        { bookingId: bookingId },
+        { where: { vehicleid: booking.vehicleid } }
+      );
+  
+  
+      res.status(201).json({ message: 'Trip has started' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+  const bookingcompleted = async (req, res) => {
+    try {
+      const { bookingId } = req.body;
+      // if (payment.status === 'captured') {
+      const booking = await Booking.findOne({
+        where: {
+          Bookingid: bookingId,
+          status: 2,
+          //id: userId,
+        }
+      });
+      if (booking) {
+        const vehicle = await Vehicle.findOne({
+          where: {
+            vehicleid: booking.vehicleid,
+          }
+        });
+        await Listing.update(
+          { bookingId: null },
+          { where: { vehicleid: vehicle.vehicleid } }
+        );
+        await Booking.update(
+          { status: 3 },
+          { where: { Bookingid: bookingId } }
+        );
+        const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+        await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
+        return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
+      }
+      else {
+        return res.status(404).json({ message: 'Start the ride to Complete Booking' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
   module.exports = {
     generateOTP,
     sendOTP,
+    tripstart,
+    bookingcompleted
    }
