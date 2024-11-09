@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, CarAdditional, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional } = require('../Models');
+const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional } = require('../Models');
 const { and, TIME } = require('sequelize');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
@@ -37,20 +37,20 @@ const router = express.Router();
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const csv = require('csv-parser');
-const vehicleAdditional = require('../Models/vehicleAdditional');
-const carImageStorage = multerS3({
+
+const vehicleImageStorage = multerS3({
   s3: s3,
   bucket: 'spintrip-bucket',
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
     const vehicleid = req.body.vehicleid;
     const imageNumber = file.fieldname.split('_')[1];
-    const fileName = `carImage_${imageNumber}${path.extname(file.originalname)}`;
-    cb(null, `CarAdditional/${vehicleid}/${fileName}`);
+    const fileName = `vehicleImage_${imageNumber}${path.extname(file.originalname)}`;
+    cb(null, `vehicleAdditional/${vehicleid}/${fileName}`);
   }
 });
-const uploadCarImages = multer({ storage: carImageStorage }).fields(
-  Array.from({ length: 5 }, (_, i) => ({ name: `carImage_${i + 1}` }))
+const uploadvehicleImages = multer({ storage: vehicleImageStorage }).fields(
+  Array.from({ length: 5 }, (_, i) => ({ name: `vehicleImage_${i + 1}` }))
 );
 const profileImageStorage = multerS3({
   s3: s3,
@@ -90,7 +90,6 @@ async function resizeImage(filePath) {
 }
 
 const upload = multer({ storage: profileImageStorage });
-
 
 // Host Login
 router.post('/login', authenticate, async (req, res) => {
@@ -314,13 +313,12 @@ router.post('/vehicle', authenticate, async (req, res) => {
     brand,
     variant,
     color,
-    bodytype,
+    bodyType,
     chassisNo,
     rcNumber,
     engineNumber,
     registrationYear,
     city,
-    costperhr,
     latitude,
     longitude,
     address,
@@ -348,6 +346,13 @@ router.post('/vehicle', authenticate, async (req, res) => {
       activated: false // Add activated field
     });
 
+    await VehicleAdditional.create({
+      vehicleid: vehicle.vehicleid,
+      latitude: latitude,
+      longitude: longitude,
+      address: address,
+    });
+
     if (vehicletype == '1') {
       await Bike.create({
         vehicleid: vehicleid,
@@ -356,7 +361,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
         brand: brand,
         variant: variant,
         color: color,
-        bodytype: bodytype,
+        bodytype: bodyType,
         city: city
       });
     }
@@ -368,19 +373,12 @@ router.post('/vehicle', authenticate, async (req, res) => {
         brand: brand,
         variant: variant,
         color: color,
-        bodytype: bodytype,
+        bodytype: bodyType,
         city: city
-      });
-      await VehicleAdditional.create({
-        vehicleid: vehicle.vehicleid,
-        latitude: latitude,
-        longitude: longitude,
-        address: address
       });
     }
 
     await Pricing.create({
-      costperhr: costperhr,
       vehicleid: vehicle.vehicleid
     });
 
@@ -393,7 +391,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
 
     let postedVehicle = {
       vehicleid: vehicle.vehicleid,
-      carModel: vehicle.carmodel,
+      vehicletype: vehicle.vehicletype,
       type: vehicle.type,
       chassisNo: vehicle.chassisno,
       engineNumber: vehicle.Enginenumber,
@@ -402,7 +400,7 @@ router.post('/vehicle', authenticate, async (req, res) => {
       rating: vehicle.rating,
       listingId: listing.id,
     };
-    res.status(201).json({ message: 'Car and listing added successfully for the host', postedVehicle });
+    res.status(201).json({ message: 'Vehicle and listing added successfully for the host', postedVehicle });
 
   } catch (error) {
     console.error(error);
@@ -471,12 +469,14 @@ router.post('/createListing', authenticate, async (req, res) => {
   }
 });
 
-router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => {
+router.put('/vehicleAdditional', authenticate, uploadvehicleImages, async (req, res) => {
   try {
     const {
       vehicleid,
       horsePower,
-      costPerHr,
+      latitude,
+      longitude,
+      address,
       ac,
       musicSystem,
       autoWindow,
@@ -500,67 +500,41 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       bluetooth,
       airFreshner,
       ventelatedFrontSeat,
-      latitude,
-      longitude,
-      address,
+      helmet,
+      helmetSpace,
+      costperhr,
       additionalInfo
     } = req.body;
 
-    // Check if the vehicle exists in the Vehicle table
-    const car = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
-    if (!car) {
-      return res.status(400).json({ message: 'Car not found' });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
+    if (!vehicle) {
+      return res.status(400).json({ message: 'Vehicle not found' });
     }
 
-    // Prepare the data to update or create
     const updateData = {
-      HorsePower: horsePower,
-      AC: ac,
-      Musicsystem: musicSystem,
-      Autowindow: autoWindow,
-      Sunroof: sunroof,
-      Touchscreen: touchScreen,
-      Sevenseater: sevenSeater,
-      Reversecamera: reverseCamera,
-      Transmission: transmission,
-      Airbags: airBags,
-      FuelType: fuelType,
-      PetFriendly: petFriendly,
-      PowerSteering: powerSteering,
-      ABS: abs,
-      tractionControl: tractionControl,
-      fullBootSpace: fullBootSpace,
-      KeylessEntry: keylessEntry,
-      airPurifier: airPurifier,
-      cruiseControl: cruiseControl,
-      voiceControl: voiceControl,
-      usbCharger: usbCharger,
-      bluetooth: bluetooth,
-      airFreshner: airFreshner,
-      ventelatedFrontSeat: ventelatedFrontSeat,
       latitude: latitude,
       longitude: longitude,
       address: address,
       Additionalinfo: additionalInfo,
-      costPerHr: costPerHr
+      verification_status: 1,
     };
 
-    // Handle image fields
     const imageFields = {
-      carImage_1: 'carimage1',
-      carImage_2: 'carimage2',
-      carImage_3: 'carimage3',
-      carImage_4: 'carimage4',
-      carImage_5: 'carimage5'
+      vehicleImage_1: 'vehicleimage1',
+      vehicleImage_2: 'vehicleimage2',
+      vehicleImage_3: 'vehicleimage3',
+      vehicleImage_4: 'vehicleimage4',
+      vehicleImage_5: 'vehicleimage5'
     };
+    
+    const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
 
-    const carAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
-
+    
     for (const [requestField, dbField] of Object.entries(imageFields)) {
       if (req.files[requestField]) {
         updateData[dbField] = req.files[requestField][0].location;
-      } else if (req.body[requestField] === '' && carAdditional) {
-        const imageKey = carAdditional[dbField];
+      } else if (req.body[requestField] == '') {
+        const imageKey = vehicleAdditional[dbField];
         if (imageKey) {
           await deleteFromS3(imageKey);
           updateData[dbField] = null;
@@ -568,37 +542,67 @@ router.put('/carAdditional', authenticate, uploadCarImages, async (req, res) => 
       }
     }
 
-    console.log(updateData);
-
-    // If no entry in VehicleAdditional, create a new one
-    if (!carAdditional) {
-      await VehicleAdditional.create({ vehicleid, ...updateData });
-    } else {
-      // Update the existing entry
-      await VehicleAdditional.update(updateData, { where: { vehicleid: vehicleid } });
+    const updatedvehicleAdditional = await vehicleAdditional.update(updateData, { where: { vehicleid: vehicleid } });
+    if (costperhr) {
+      const Price = await Pricing.findOne({ where: { vehicleid: vehicleid } })
+      if(Price){
+        await Price.update( { costperhr : costperhr });
+      }
+    }
+    let Additional;
+    if( vehicle.vehicletype == 1 ){
+       Additional = await Bike.findOne({ where: { vehicleid: vehicleid } });
+      await Additional.update( { 
+        HorsePower: horsePower, helmet: helmet, helmetSpace:helmetSpace, FuelType: fuelType })
+    }
+    if( vehicle.vehicletype == 2 ){
+      Additional = await Car.findOne({ where: { vehicleid: vehicleid } });
+      await Additional.update( { 
+        HorsePower: horsePower,
+        AC: ac,
+        FuelType: fuelType,
+        Musicsystem: musicSystem,
+        Autowindow: autoWindow,
+        Sunroof: sunroof,
+        Touchscreen: touchScreen,
+        Sevenseater: sevenSeater,
+        Reversecamera: reverseCamera,
+        Transmission: transmission,
+        Airbags: airBags,
+        FuelType: fuelType,
+        PetFriendly: petFriendly,
+        PowerSteering: powerSteering,
+        ABS: abs,
+        tractionControl: tractionControl,
+        fullBootSpace: fullBootSpace,
+        KeylessEntry: keylessEntry,
+        airPurifier: airPurifier,
+        cruiseControl: cruiseControl,
+        voiceControl: voiceControl,
+        usbCharger: usbCharger,
+        bluetooth: bluetooth,
+        airFreshner: airFreshner,
+        ventelatedFrontSeat: ventelatedFrontSeat 
+      })
     }
 
-    // Fetch the updated additional information
-    const updatedCarAdditional = await VehicleAdditional.findOne({
-      where: { vehicleid: vehicleid }
-    });
-
-    // Fetch the main vehicle data
-    const vehicleData = await Vehicle.findOne({
-      where: { vehicleid: vehicleid }
-    });
-
-    // Merge data if both records are found
-    const combinedCarData = {
-      ...vehicleData.get({ plain: true }),
-      ...updatedCarAdditional.get({ plain: true })
+    const vehicleAdditionals = {
+      vehicleid: updatedvehicleAdditional.vehicleid,
+      vehicleImage1: updatedvehicleAdditional.vehicleimage1,
+      vehicleImage2: updatedvehicleAdditional.vehicleimage2,
+      vehicleImage3: updatedvehicleAdditional.vehicleimage3,
+      vehicleImage4: updatedvehicleAdditional.vehicleimage4,
+      vehicleImage5: updatedvehicleAdditional.vehicleimage5,
+      latitude: updatedvehicleAdditional.latitude,
+      longitude: updatedvehicleAdditional.longitude,
+      address: updatedvehicleAdditional.address,
+      verificationStatus: updatedvehicleAdditional.verification_status,
     };
 
-    // Send response
-    res.status(201).json({ message: 'Car Additional added', combinedCarData });
+    res.status(201).json({ message: 'Vehicle Additional added', vehicleAdditionals, Additional});
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error Adding car Additional Details' });
+    res.status(500).json({ message: 'Error Adding Vehicle Additional Details' });
   }
 });
 
@@ -688,30 +692,6 @@ router.delete('/features', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error deleting car feature' });
   }
 });
-const autoCancelBooking = async (bookingId) => {
-  try {
-      // Wait for 30 minutes (1800000 milliseconds)
-      await setTimeout(1800000);
-
-      // Fetch the booking again to check if it's still in the pending status
-      const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
-      const transaction = await Transaction.findOne({where: { Bookingid: booking.Bookingid }});
-      // If the booking is still pending approval (status 5), cancel it
-      if (booking && booking.status === 1 && transaction && transaction.status!=2) {
-          await Booking.update(
-              { status: 4, cancelDate: new Date(), cancelReason: 'Auto-cancelled due to no approval from host within 30 minutes.' },
-              { where: { Bookingid: bookingId } }
-          );
-
-          const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-          await sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'Booking auto-cancelled due to no payment from user within 30 minutes.');
-
-          console.log(`Booking ${bookingId} auto-cancelled after 30 minutes of no host approval.`);
-      }
-  } catch (error) {
-      console.error(`Error in auto-cancelling booking ${bookingId}:`, error);
-  }
-};
 
 //Listing
 router.get('/listing', authenticate, async (req, res) => {
@@ -725,7 +705,7 @@ router.get('/listing', authenticate, async (req, res) => {
         if (!vehicle) {
           return;
         }
-        // let carAdditional = await CarAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
+         let vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
         let lk = {
           id: lstg.id,
           vehicleid: lstg.vehicleid,
@@ -741,13 +721,12 @@ router.get('/listing', authenticate, async (req, res) => {
           pauseTimeEndTime: lstg.pausetime_end_time,
           bookingId: lstg.bookingId,
           rcNumber: vehicle.Rcnumber,
-          type: vehicle.type,
-          carModel: vehicle.carmodel,
-          // carImage1: carAdditional.carimage1,
-          // carImage2: carAdditional.carimage2,
-          // carImage3: carAdditional.carimage3,
-          // carImage4: carAdditional.carimage4,
-          // carImage5: carAdditional.carimage5,
+          vehicletype: vehicle.vehicletype,
+          vehicleImage1: vehicleAdditional.vehicleimage1,
+          vehicleImage2: vehicleAdditional.vehicleimage2,
+          vehicleImage3: vehicleAdditional.vehicleimage3,
+          vehicleImage4: vehicleAdditional.vehicleimage4,
+          vehicleImage5: vehicleAdditional.vehicleimage5,
         }
         return { ...lk };
       });
@@ -788,11 +767,6 @@ router.delete('/listing', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Delete the listing
-    // const listing1 = await Listing.create({
-    //   vehicleid: listing.vehicleid,
-    //   hostid: listing.vehiclehostid
-    // })
     await listing.destroy();
     res.status(201).json({ message: 'Listing reset successfully' });
   } catch (error) {
@@ -938,17 +912,24 @@ router.put('/profile', authenticate, async (req, res) => {
     }
 
     // Update additional user information
-    const { fullName, aadharId, email, address, businessName, GSTnumber, PANnumber } = req.body;
-    await HostAdditional.update({
-      id: hostId,
-      FullName: fullName,
-      businessName: businessName,
-      GSTnumber: GSTnumber,
-      PANnumber: PANnumber,
-      AadharVfid: aadharId,
-      Email: email,
-      Address: address,
-    }, { where: { id: hostId } });
+    const { fullName, aadharId, email, address, businessName, GSTnumber, PANnumber, onlyVerifiedUsers } = req.body;
+
+    if (fullName || aadharId || email || address || businessName || GSTnumber || PANnumber) {
+      await HostAdditional.update({
+        FullName: fullName,
+        businessName: businessName,
+        GSTnumber: GSTnumber,
+        PANnumber: PANnumber,
+        AadharVfid: aadharId,
+        Email: email,
+        Address: address,
+      }, { where: { id: hostId } });
+    }
+
+    // Update host's preference for only verified users
+    if (onlyVerifiedUsers !== undefined) {
+      await host.update({ onlyVerifiedUsers });
+    }
 
     res.status(200).json({ message: 'Profile Updated successfully' });
   } catch (error) {
@@ -1159,26 +1140,29 @@ router.post('/getFeedback', authenticate, async (req, res) => {
   }
 
 });
-router.post('/getCarAdditional', authenticate, async (req, res) => {
+router.post('/getVehicleAdditional', authenticate, async (req, res) => {
   const { vehicleid } = req.body;
   const hostId = req.user.id; // Assuming the host ID is part of the authenticated user details
 
   try {
     // Check if the host owns the car
-    const car = await Car.findOne({ where: { vehicleid: vehicleid, hostId: hostId } });
-    if (!car) {
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: hostId } });
+    if (!vehicle) {
       return res.status(404).json({ message: 'Car not found or unauthorized access' });
     }
-
-    const carAdditional = await CarAdditional.findOne({ where: { vehicleid: vehicleid } });
-    if (!carAdditional) {
+    const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
+    if (!vehicleAdditional) {
       return res.status(404).json({ message: 'Car additional information not found' });
     }
-    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });
-    if (!carAdditional) {
-      return res.status(404).json({ message: 'Car additional information not found' });
+    let Additional, vehicleAdditionals;
+    if( vehicle.vehicletype == 1 ){
+       Additional = await Bike.findOne({ where: { vehicleid: vehicleid } });
+       
     }
-    
+    if( vehicle.vehicletype == 2 ){
+      Additional = await Car.findOne({ where: { vehicleid: vehicleid } });
+    }
+    const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });  
     const featureList = await Feature.findAll();
     const featureMap = featureList.reduce((map, f) => (map[f.id] = f.featureName, map), {});
     
@@ -1188,65 +1172,39 @@ router.post('/getCarAdditional', authenticate, async (req, res) => {
     }));    
 
 
-    let carAdditionals = {
-      vehicleid: carAdditional.vehicleid,
-      horsePower: carAdditional.HorsePower,
-      ac: carAdditional.AC,
-      musicSystem: carAdditional.Musicsystem,
-      autoWindow: carAdditional.Autowindow,
-      sunroof: carAdditional.Sunroof,
-      touchScreen: carAdditional.Touchscreen,
-      sevenSeater: carAdditional.Sevenseater,
-      reverseCamera: carAdditional.Reversecamera,
-      transmission: carAdditional.Transmission,
-      airBags: carAdditional.Airbags,
-      petFriendly: carAdditional.PetFriendly,
-      powerSteering: carAdditional.PowerSteering,
-      abs: carAdditional.ABS,
-      tractionControl: carAdditional.tractionControl,
-      fullBootSpace: carAdditional.fullBootSpace,
-      keylessEntry: carAdditional.KeylessEntry,
-      airPurifier: carAdditional.airPurifier,
-      cruiseControl: carAdditional.cruiseControl,
-      voiceControl: carAdditional.voiceControl,
-      usbCharger: carAdditional.usbCharger,
-      bluetooth: carAdditional.bluetooth,
-      airFreshner: carAdditional.airFreshner,
-      ventelatedFrontSeat: carAdditional.ventelatedFrontSeat,
-      carImage1: carAdditional.carimage1,
-      carImage2: carAdditional.carimage2,
-      carImage3: carAdditional.carimage3,
-      carImage4: carAdditional.carimage4,
-      carImage5: carAdditional.carimage5,
-      verificationStatus: carAdditional.verification_status,
-      latitude: carAdditional.latitude,
-      longitude: carAdditional.longitude,
-      rcNumber: car.Rcnumber,
-      fuelType: carAdditional.FuelType,
-      type: car.type,
-      carModel: car.carmodel,
-      brand: car.brand,
-      mileage: car.mileage,
-      registrationYear: car.Registrationyear
+     vehicleAdditionals= {
+      vehicleid: vehicle.vehicleid,
+      vehicleImage1: vehicleAdditional.vehicleimage1,
+      vehicleImage2: vehicleAdditional.vehicleimage2,
+      vehicleImage3: vehicleAdditional.vehicleimage3,
+      vehicleImage4: vehicleAdditional.vehicleimage4,
+      vehicleImage5: vehicleAdditional.vehicleimage5,
+      verificationStatus: vehicleAdditional.verification_status,
+      latitude: vehicleAdditional.latitude,
+      longitude: vehicleAdditional.longitude,
+      rcNumber: vehicle.Rcnumber,
+      registrationYear: vehicle.Registrationyear
     };
-    const carImages = [];
-    if (carAdditional.carimage1) carImages.push(carAdditional.carimage1);
-    if (carAdditional.carimage2) carImages.push(carAdditional.carimage2);
-    if (carAdditional.carimage3) carImages.push(carAdditional.carimage3);
-    if (carAdditional.carimage4) carImages.push(carAdditional.carimage4);
-    if (carAdditional.carimage5) carImages.push(carAdditional.carimage5);
-    if (carImages) {
+    const vehicleImages = [];
+    if (vehicleAdditional.vehicleimage1) vehicleImages.push(vehicleAdditional.vehicleimage1);
+    if (vehicleAdditional.vehicleimage2) vehicleImages.push(vehicleAdditional.vehicleimage2);
+    if (vehicleAdditional.vehicleimage3) vehicleImages.push(vehicleAdditional.vehicleimage3);
+    if (vehicleAdditional.vehicleimage4) vehicleImages.push(vehicleAdditional.vehicleimage4);
+    if (vehicleAdditional.vehicleimage5) vehicleImages.push(vehicleAdditional.vehicleimage5);
+    if (vehicleImages) {
       res.status(200).json({
-        message: "Car Additional data",
-        carAdditionals,
-        carImages,
+        message: "vehicle Additional data",
+        vehicleAdditionals,
+        Additional,
+        vehicleImages,
         updatedFeatures
       });
     }
     else {
       res.status(200).json({
-        message: "Car Additional data, no image found",
-        carAdditionals,
+        message: "vehicle Additional data, no image found",
+        vehicleAdditionals,
+        Additional,
         updatedFeatures
       });
     }
@@ -1407,5 +1365,3 @@ router.post('/activate-vehicle', authenticate, async (req, res) => {
 });
 
 module.exports = router;
-
-
