@@ -39,7 +39,7 @@ db.Vehicle = require('./vehicleModel')(sequelize, DataTypes);
 db.Bike = require('./bikeModel')(sequelize, DataTypes);
 db.UserAdditional = require('./userAdditionalModel')(sequelize, DataTypes);
 db.HostAdditional = require('./hostAdditionalModel')(sequelize, DataTypes);
-db.CarAdditional = require('./carAdditionalModel')(sequelize, DataTypes);
+db.VehicleAdditional = require('./vehicleAdditional')(sequelize, DataTypes);
 db.Booking = require('./bookingModel')(sequelize, DataTypes);
 db.Brand = require('./brandModel')(sequelize, DataTypes);
 db.Listing = require('./listingModel')(sequelize, DataTypes);
@@ -63,8 +63,8 @@ db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
 
 const associateModels = () => {
-  const { User, Admin, Car, Host, UserAdditional, Booking, Listing, CarAdditional, 
-    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, HostPayment, auditTransaction, Vehicle, Bike, HostAdditional, Transaction } = sequelize.models;
+  const { User, Admin, Car, Host, UserAdditional, Booking, Listing,
+    Feedback, Support, SupportChat, Tax, Wishlist, Device, Feature, carFeature, Blog, BlogComment, carDevices, HostPayment, auditTransaction, Vehicle, Bike, HostAdditional, Transaction, VehicleAdditional } = sequelize.models;
 
   carDevices.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
@@ -86,7 +86,8 @@ const associateModels = () => {
   Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
   UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
   HostAdditional.belongsTo(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
-  CarAdditional.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
+  VehicleAdditional.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
+  Listing.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'SET NULL' }); // Corrected foreign key
 
   // Explicitly specify onDelete action:
