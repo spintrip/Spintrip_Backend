@@ -344,49 +344,6 @@ const features = async (req, res) => {
     res.status(500).json({ message: 'Error fetching car feature Details' });
   }
 };
-const vehicles = async (req, res) => {
-  const vhcle = await Vehicle.findAll();
-  const pricingPromises = vhcle.map(async (vehicle) => {
-    const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid, 
-      //verification_status: '2'
-       } });
-    let availableVehicles;
-    if (vehicleAdditional) {
-      availableVehicles = {
-        vehicleid: vehicle.vehicleid,
-        vehicletype: vehicle.vehicletype,
-        // carModel: car.carmodel,
-        // type: car.type,
-        // brand: car.brand,
-        // variant: car.variant,
-        // color: car.color,
-        // chassisNo: car.chassisno,
-        // mileage: car.mileage,
-        registrationYear: vehicle.Registrationyear,
-        rcNumber: vehicle.Rcnumber,
-        hostId: vehicle.hostId,
-        rating: vehicle.rating,
-        vehicleImage1: vehicleAdditional.vehicleimage1,
-        vehicleImage2: vehicleAdditional.vehicleimage2,
-        vehicleImage3: vehicleAdditional.vehicleimage3,
-        vehicleImage4: vehicleAdditional.vehicleimage4,
-        vehicleImage5: vehicleAdditional.vehicleimage5,
-      }
-      const cph = await Pricing.findOne({ where: { vehicleid: vehicle.vehicleid } });
-      if (cph) {
-        const costperhr = cph.costperhr;
-        return { ...availableVehicles, costPerHr: costperhr };
-      }
-      else {
-        return { ...availableVehicles, costPerHr: null };
-      }
-    }
-  });
-
-  // Wait for all pricing calculations to complete
-  const carsWithPricing = (await Promise.all(pricingPromises)).filter(vehicles => vehicles != null);
-  res.status(200).json({ "message": "All available cars", cars: carsWithPricing })
-};
 
 const findvehicles = async (req, res) => {
   const { vehicletype, startDate, endDate, startTime, endTime, latitude, longitude, distance  } = req.body;
@@ -2093,7 +2050,6 @@ module.exports = {
   putprofile,
   getbrand,
   features,
-  vehicles,
   findvehicles,
   onevehicle,
   calculateTripHours,

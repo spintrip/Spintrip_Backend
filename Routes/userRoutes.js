@@ -140,12 +140,10 @@ router.get('/get-brand', getbrand);
 
 router.post('/features', authenticate,);
 
-router.get('/allvehicles', vehicles);
-
 //Get All Vehicles
 router.get('/vehicles', async (req, res) => {
   try {
-    const vehicles = await Vehicle.findAll({ where: { activated: true } });
+    const vehicles = await Vehicle.findAll();
     res.status(200).json(vehicles);
   } catch (error) {
     console.error(error);

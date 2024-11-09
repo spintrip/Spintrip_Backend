@@ -1688,5 +1688,855 @@
     "body": {
       "message": "{\"message\":\"Booking created successfully\",\"booking\":{\"Bookingid\":\"a003829b-2ea2-40e9-978f-cb4e21907b07\",\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"id\":\"0f7e4a83-4bcc-4cbe-92a8-5507a7a486d1\",\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"status\":1,\"updatedAt\":\"2024-11-09T02:22:34.972Z\",\"createdAt\":\"2024-11-09T02:22:34.972Z\",\"Date\":null,\"time\":null,\"timestamp\":null,\"amount\":null,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"userId\":null}}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:27:46.056Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"4919\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:27:55.807Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkyNzRmZWVlLTVlYTYtNGRkNS04MDYyLTFjZjAzN2ZkNGJmYyIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMxMTMzNjc1fQ.Do91hrQ4g97OpRYD3asuRyMid-9cqQdKhTebc1ITxcw\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:28:03.721Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-08T09:57:27.931Z\",\"updatedAt\":\"2024-11-08T09:57:27.931Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"427ae4e9-353a-4b63-b494-267089c71ab6\",\"vehicletype\":\"2\",\"chassisno\":\"812536369785390\",\"Rcnumber\":null,\"Enginenumber\":\"6678\",\"Registrationyear\":\"2014-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T09:57:28.138Z\",\"updatedAt\":\"2024-11-08T09:57:28.138Z\"},{\"vehicleid\":\"694710f0-d2aa-4eec-b49e-b5312319810a\",\"vehicletype\":\"1\",\"chassisno\":\"262317873199931\",\"Rcnumber\":null,\"Enginenumber\":\"2558\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:13:08.565Z\",\"updatedAt\":\"2024-11-08T10:13:08.565Z\"},{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:41:11.657Z\",\"updatedAt\":\"2024-11-08T10:41:11.657Z\"},{\"vehicleid\":\"d3df369a-a3e5-4e9d-9d27-4a7445078c10\",\"vehicletype\":\"2\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:50:27.472Z\",\"updatedAt\":\"2024-11-08T10:50:27.472Z\"},{\"vehicleid\":\"ffa6029a-bbbf-4cd2-8c49-44d6085f50b9\",\"vehicletype\":\"6\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:14.179Z\",\"updatedAt\":\"2024-11-08T10:55:14.179Z\"},{\"vehicleid\":\"9639eafc-46b2-41b9-9854-966737a9def0\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:49.854Z\",\"updatedAt\":\"2024-11-08T10:55:49.854Z\"},{\"vehicleid\":\"005c093d-5a80-4001-a506-b57e3848a016\",\"vehicletype\":\"9\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.065Z\",\"updatedAt\":\"2024-11-08T10:55:51.065Z\"},{\"vehicleid\":\"8cb6abf5-b4d2-444e-977e-9d19f199c16e\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.758Z\",\"updatedAt\":\"2024-11-08T10:55:51.758Z\"},{\"vehicleid\":\"bc5a0548-6087-4f10-b54c-47a240d85d10\",\"vehicletype\":\"5\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:52.237Z\",\"updatedAt\":\"2024-11-08T10:55:52.237Z\"},{\"vehicleid\":\"ce3cc2f8-35fe-48ab-b9a2-94c31070f7fb\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:56:05.823Z\",\"updatedAt\":\"2024-11-08T10:56:05.823Z\"},{\"vehicleid\":\"142afa86-93f2-4500-96d4-84d58f273334\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:58:43.935Z\",\"updatedAt\":\"2024-11-08T10:58:43.935Z\"},{\"vehicleid\":\"11f6fe1c-76f0-4dee-97dd-2787721054b5\",\"vehicletype\":\"1\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:02:58.010Z\",\"updatedAt\":\"2024-11-08T11:02:58.010Z\"},{\"vehicleid\":\"05174e1f-7023-4cc0-85f9-b0393819e69b\",\"vehicletype\":\"4\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:07:05.587Z\",\"updatedAt\":\"2024-11-08T11:07:05.587Z\"}],\"profile\":{\"id\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"GSTnumber\":\"7933166248\",\"PANnumber\":\"JTOIM4653\",\"FullName\":\"SveXzJXA NHHyN\",\"email\":\"pgtzd@gmail.com\",\"aadharNumber\":\"537870277731\",\"address\":\"mwIopQRTUvGuSIv\",\"verificationStatus\":null,\"phone\":\"917000000000\",\"profilePic\":null,\"businessName\":\"uFOKYTfkME Pvt Limited\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:37:26.350Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:39:09.462Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/pricing",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T06:40:07.612Z",
+    "body": {
+      "message": "{\"message\":\"price for the car\",\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"costPerHr\":200}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/getVehicleAdditional",
+    "status": 404,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:40:21.623Z",
+    "body": {
+      "message": "{\"message\":\"Car additional information not found\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:43:32.421Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:43:36.929Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T06:46:11.764Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"5438c257-f111-4720-a462-b3106f49348c\",\"phone\":\"+918477384440\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:46:24.216Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"7515\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:46:37.156Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"5438c257-f111-4720-a462-b3106f49348c\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU0MzhjMjU3LWYxMTEtNDcyMC1hNDYyLWIzMTA2ZjQ5MzQ4YyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMxMTM0Nzk3fQ.K5Ni--4vy9P_cfxhwPXbEPPoKYQKQyij9BQMD-jLISI\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "5438c257-f111-4720-a462-b3106f49348c",
+    "timestamp": "2024-11-09T06:46:42.035Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"5438c257-f111-4720-a462-b3106f49348c\",\"phone\":\"+918477384440\",\"role\":\"user\",\"createdAt\":\"2024-11-09T06:46:11.761Z\",\"updatedAt\":\"2024-11-09T06:46:24.213Z\"},\"profile\":{\"id\":\"5438c257-f111-4720-a462-b3106f49348c\",\"dlNumber\":null,\"fullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "5438c257-f111-4720-a462-b3106f49348c",
+    "timestamp": "2024-11-09T06:47:37.336Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:48:48.937Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:49:15.643Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[]}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:55:28.918Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T06:59:06.770Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[]}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:59:11.701Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/vehicleAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T06:59:49.179Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding Vehicle Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:01:37.982Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:03:05.122Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:04:05.593Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:05:05.511Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:10:12.819Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:11:00.188Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:13:36.322Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:16:06.604Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:16:25.535Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car Additional Details\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 404,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:18:54.594Z",
+    "body": {
+      "message": "{\"message\":\"Additional data for vehicle ID 79f1eb62-6dbb-47bd-a6fd-8644a7718e0b not found\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:22:39.828Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-09T07:22:39.819Z\",\"updatedAt\":\"2024-11-09T07:22:39.819Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:23:27.490Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"registrationYear\":\"2020-01-01\",\"rcNumber\":null,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"rating\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"costPerHr\":200}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:24:44.040Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"registrationYear\":\"2020-01-01\",\"rcNumber\":null,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"rating\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"costPerHr\":200}]}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "5438c257-f111-4720-a462-b3106f49348c",
+    "timestamp": "2024-11-09T07:24:51.441Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "5438c257-f111-4720-a462-b3106f49348c",
+    "timestamp": "2024-11-09T07:24:59.865Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:25:21.460Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-09T07:22:39.819Z\",\"updatedAt\":\"2024-11-09T07:25:21.453Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:25:33.927Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-09T07:22:39.819Z\",\"updatedAt\":\"2024-11-09T07:25:33.918Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":0,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:25:51.311Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-09T07:22:39.819Z\",\"updatedAt\":\"2024-11-09T07:25:33.918Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":0,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9274feee-5ea6-4dd5-8062-1cf037fd4bfc",
+    "timestamp": "2024-11-09T07:25:52.748Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-09T07:22:39.819Z\",\"updatedAt\":\"2024-11-09T07:25:33.918Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":0,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:25:58.475Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"registrationYear\":\"2020-01-01\",\"rcNumber\":null,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"rating\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"costPerHr\":200}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:26:00.309Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"registrationYear\":\"2020-01-01\",\"rcNumber\":null,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"rating\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"costPerHr\":200}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/allvehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:32:01.779Z",
+    "body": {
+      "message": "{\"message\":\"All available cars\",\"cars\":[{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"registrationYear\":\"2020-01-01\",\"rcNumber\":null,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"rating\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"costPerHr\":200}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:34:48.475Z",
+    "body": {
+      "message": "[]"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:35:11.724Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"dbe70bf5-8ffd-496c-84fc-628f57294ce3\",\"vehicletype\":null,\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:28:17.881Z\",\"updatedAt\":\"2024-11-08T07:28:17.881Z\"},{\"vehicleid\":\"6ea8c29f-6072-475a-a04e-75a9683fa82b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:29:48.622Z\",\"updatedAt\":\"2024-11-08T07:29:48.622Z\"},{\"vehicleid\":\"350cee33-409d-435c-ae10-d6aa031eb6f5\",\"vehicletype\":\"7\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:37:25.847Z\",\"updatedAt\":\"2024-11-08T07:37:25.847Z\"},{\"vehicleid\":\"2504ce78-c0ef-4f5d-abc0-ac08876b40fe\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T08:01:00.873Z\",\"updatedAt\":\"2024-11-08T08:01:00.873Z\"},{\"vehicleid\":\"dec89f3e-1fe4-4e90-9a0f-4ff452111430\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c3a8ecce-22ca-4d89-bf68-3610888ed8d4\",\"createdAt\":\"2024-11-08T09:36:02.406Z\",\"updatedAt\":\"2024-11-08T09:36:02.406Z\"},{\"vehicleid\":\"76bb2e71-4f01-437c-90ee-ad9791463288\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"575c3bfb-ef92-4b42-a525-175e08e91ea0\",\"createdAt\":\"2024-11-08T09:37:12.475Z\",\"updatedAt\":\"2024-11-08T09:37:12.475Z\"},{\"vehicleid\":\"f2902064-d896-40f4-a574-f1aea9d32fb2\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"3bc0f58a-4515-47a8-8c2a-b78a54ad60f6\",\"createdAt\":\"2024-11-08T09:40:41.123Z\",\"updatedAt\":\"2024-11-08T09:40:41.123Z\"},{\"vehicleid\":\"5552460a-e7f9-45d6-8fd8-a1f8cedf9451\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"2d7319c7-4103-494c-8097-78dc442e0cf7\",\"createdAt\":\"2024-11-08T09:40:41.124Z\",\"updatedAt\":\"2024-11-08T09:40:41.124Z\"},{\"vehicleid\":\"779f0fd7-b88f-4fe5-9342-31375ac91e78\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"54ff4e6f-6eb0-49fe-8ac6-d7611b8c78b7\",\"createdAt\":\"2024-11-08T09:40:41.486Z\",\"updatedAt\":\"2024-11-08T09:40:41.486Z\"},{\"vehicleid\":\"f05bb496-daf0-4944-90ee-0794ab6f048d\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"98c0d43b-f3e2-42b2-9db7-c617b985b230\",\"createdAt\":\"2024-11-08T09:43:38.940Z\",\"updatedAt\":\"2024-11-08T09:43:38.940Z\"},{\"vehicleid\":\"a37ec637-677c-4197-86ad-2993ac262db6\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"d36aa82c-11e2-4a3a-ae05-4b9e5cb34255\",\"createdAt\":\"2024-11-08T09:43:38.941Z\",\"updatedAt\":\"2024-11-08T09:43:38.941Z\"},{\"vehicleid\":\"24d24534-683a-401b-bea5-69455dbae088\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"dd13ee49-82b4-4f4a-9524-5e79605f0a35\",\"createdAt\":\"2024-11-08T09:43:39.338Z\",\"updatedAt\":\"2024-11-08T09:43:39.338Z\"},{\"vehicleid\":\"c6abcd9a-3e44-4c6b-89d6-98c4151f9016\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"35223180-d24d-4f1d-ae34-8ee846717a37\",\"createdAt\":\"2024-11-08T09:47:55.980Z\",\"updatedAt\":\"2024-11-08T09:47:55.980Z\"},{\"vehicleid\":\"5a86e275-4f8d-4348-8700-e0644f0dd217\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"591a5983-1288-452c-b177-53ab3272ada2\",\"createdAt\":\"2024-11-08T09:47:56.334Z\",\"updatedAt\":\"2024-11-08T09:47:56.334Z\"},{\"vehicleid\":\"5f3a3819-34ce-4e6f-9635-25908b4b6bd8\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"ed2bceeb-46ff-4ec1-98f3-7f935cbcf8fe\",\"createdAt\":\"2024-11-08T09:49:55.603Z\",\"updatedAt\":\"2024-11-08T09:49:55.603Z\"},{\"vehicleid\":\"e8b0330f-1227-4e8f-bdee-063c09878ded\",\"vehicletype\":\"7\",\"chassisno\":\"415334053699021\",\"Rcnumber\":null,\"Enginenumber\":\"9688\",\"Registrationyear\":\"2012-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"47fc31c0-7348-47c2-a450-5c6796cc7805\",\"createdAt\":\"2024-11-08T09:49:55.604Z\",\"updatedAt\":\"2024-11-08T09:49:55.604Z\"},{\"vehicleid\":\"cee73433-6b23-4a2d-a8d3-7e7d6d96fea8\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"350ff783-7c5a-4ee2-9567-d10a00c09283\",\"createdAt\":\"2024-11-08T09:49:55.946Z\",\"updatedAt\":\"2024-11-08T09:49:55.946Z\"},{\"vehicleid\":\"427ae4e9-353a-4b63-b494-267089c71ab6\",\"vehicletype\":\"2\",\"chassisno\":\"812536369785390\",\"Rcnumber\":null,\"Enginenumber\":\"6678\",\"Registrationyear\":\"2014-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T09:57:28.138Z\",\"updatedAt\":\"2024-11-08T09:57:28.138Z\"},{\"vehicleid\":\"c7a03afd-50af-4e1e-8c81-b118cd1a8dbc\",\"vehicletype\":\"2\",\"chassisno\":\"609443076737638\",\"Rcnumber\":null,\"Enginenumber\":\"1544\",\"Registrationyear\":\"2019-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c29f8639-2d04-4b9f-b3a9-04867f3cf4cd\",\"createdAt\":\"2024-11-08T10:02:52.034Z\",\"updatedAt\":\"2024-11-08T10:02:52.034Z\"},{\"vehicleid\":\"a5788fbc-2406-41a2-94f7-0db81ffac96c\",\"vehicletype\":\"5\",\"chassisno\":\"566506733394895\",\"Rcnumber\":null,\"Enginenumber\":\"5971\",\"Registrationyear\":\"2010-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"bd39a955-c471-41c1-a9db-7542a2884cfc\",\"createdAt\":\"2024-11-08T10:02:52.259Z\",\"updatedAt\":\"2024-11-08T10:02:52.259Z\"},{\"vehicleid\":\"519dabb1-1088-4deb-9558-9abd6983bbdf\",\"vehicletype\":\"9\",\"chassisno\":\"413444083505958\",\"Rcnumber\":null,\"Enginenumber\":\"3605\",\"Registrationyear\":\"2007-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"40c16db1-63e3-4a88-95e3-437a1931cdc5\",\"createdAt\":\"2024-11-08T10:02:52.347Z\",\"updatedAt\":\"2024-11-08T10:02:52.347Z\"},{\"vehicleid\":\"694710f0-d2aa-4eec-b49e-b5312319810a\",\"vehicletype\":\"1\",\"chassisno\":\"262317873199931\",\"Rcnumber\":null,\"Enginenumber\":\"2558\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:13:08.565Z\",\"updatedAt\":\"2024-11-08T10:13:08.565Z\"},{\"vehicleid\":\"57169c67-8847-45a6-a7a8-44619b008732\",\"vehicletype\":\"6\",\"chassisno\":\"950979786887819\",\"Rcnumber\":null,\"Enginenumber\":\"6610\",\"Registrationyear\":\"2017-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"e0146ba0-ad49-4a22-a96f-1db3685cfe48\",\"createdAt\":\"2024-11-08T10:13:09.042Z\",\"updatedAt\":\"2024-11-08T10:13:09.042Z\"},{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:41:11.657Z\",\"updatedAt\":\"2024-11-08T10:41:11.657Z\"},{\"vehicleid\":\"a3943f6b-c8fa-4e90-87fa-25de105862b2\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:46:21.431Z\",\"updatedAt\":\"2024-11-08T10:46:21.431Z\"},{\"vehicleid\":\"a322c917-00e4-4341-8532-152301e60a94\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:47:20.981Z\",\"updatedAt\":\"2024-11-08T10:47:20.981Z\"},{\"vehicleid\":\"47640b98-8225-4eaf-9421-987bbab2708e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:47:41.612Z\",\"updatedAt\":\"2024-11-08T10:47:41.612Z\"},{\"vehicleid\":\"f0e0c397-ddb9-41cc-a0b7-0493d6e71d1b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:48:24.731Z\",\"updatedAt\":\"2024-11-08T10:48:24.731Z\"},{\"vehicleid\":\"d3df369a-a3e5-4e9d-9d27-4a7445078c10\",\"vehicletype\":\"2\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:50:27.472Z\",\"updatedAt\":\"2024-11-08T10:50:27.472Z\"},{\"vehicleid\":\"ffa6029a-bbbf-4cd2-8c49-44d6085f50b9\",\"vehicletype\":\"6\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:14.179Z\",\"updatedAt\":\"2024-11-08T10:55:14.179Z\"},{\"vehicleid\":\"9639eafc-46b2-41b9-9854-966737a9def0\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:49.854Z\",\"updatedAt\":\"2024-11-08T10:55:49.854Z\"},{\"vehicleid\":\"005c093d-5a80-4001-a506-b57e3848a016\",\"vehicletype\":\"9\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.065Z\",\"updatedAt\":\"2024-11-08T10:55:51.065Z\"},{\"vehicleid\":\"8cb6abf5-b4d2-444e-977e-9d19f199c16e\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.758Z\",\"updatedAt\":\"2024-11-08T10:55:51.758Z\"},{\"vehicleid\":\"bc5a0548-6087-4f10-b54c-47a240d85d10\",\"vehicletype\":\"5\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:52.237Z\",\"updatedAt\":\"2024-11-08T10:55:52.237Z\"},{\"vehicleid\":\"ce3cc2f8-35fe-48ab-b9a2-94c31070f7fb\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:56:05.823Z\",\"updatedAt\":\"2024-11-08T10:56:05.823Z\"},{\"vehicleid\":\"142afa86-93f2-4500-96d4-84d58f273334\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:58:43.935Z\",\"updatedAt\":\"2024-11-08T10:58:43.935Z\"},{\"vehicleid\":\"11f6fe1c-76f0-4dee-97dd-2787721054b5\",\"vehicletype\":\"1\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:02:58.010Z\",\"updatedAt\":\"2024-11-08T11:02:58.010Z\"},{\"vehicleid\":\"febceb49-8143-4d69-ab89-0bddbc97a941\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"670e92dc-00a2-4601-a0ea-d2a1b442a3b2\",\"createdAt\":\"2024-11-08T11:06:32.116Z\",\"updatedAt\":\"2024-11-08T11:06:32.116Z\"},{\"vehicleid\":\"e564cf66-e8bd-4f94-8013-62c7946d2eba\",\"vehicletype\":\"8\",\"chassisno\":\"CHS123456790\",\"Rcnumber\":\"RC987654322\",\"Enginenumber\":\"ENG123456790\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"78280646-c8e5-4bb1-9dfa-10fec18ca6f9\",\"createdAt\":\"2024-11-08T11:06:32.626Z\",\"updatedAt\":\"2024-11-08T11:06:32.626Z\"},{\"vehicleid\":\"05174e1f-7023-4cc0-85f9-b0393819e69b\",\"vehicletype\":\"4\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:07:05.587Z\",\"updatedAt\":\"2024-11-08T11:07:05.587Z\"},{\"vehicleid\":\"8b4c5901-2d04-435c-8062-94f5ef3013a7\",\"vehicletype\":\"6\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"670e92dc-00a2-4601-a0ea-d2a1b442a3b2\",\"createdAt\":\"2024-11-08T11:07:05.709Z\",\"updatedAt\":\"2024-11-08T11:07:05.709Z\"},{\"vehicleid\":\"af7a4447-ca09-456c-8f92-a0c6de40d556\",\"vehicletype\":\"8\",\"chassisno\":\"CHS123456790\",\"Rcnumber\":\"RC987654322\",\"Enginenumber\":\"ENG123456790\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"78280646-c8e5-4bb1-9dfa-10fec18ca6f9\",\"createdAt\":\"2024-11-08T11:07:06.087Z\",\"updatedAt\":\"2024-11-08T11:07:06.087Z\"},{\"vehicleid\":\"5b27152f-78e3-4d73-b897-bd968f34b27d\",\"vehicletype\":\"5\",\"chassisno\":\"5DK6Z0FJ83YN\",\"Rcnumber\":\"DA9XTFY3E3\",\"Enginenumber\":\"DAJQBCB5AY\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"050d0aba-8636-4d3f-9d25-69d897087f19\",\"createdAt\":\"2024-11-08T11:07:06.158Z\",\"updatedAt\":\"2024-11-08T11:07:06.158Z\"},{\"vehicleid\":\"dde0494d-60cf-4121-a466-3318f84455bd\",\"vehicletype\":\"2\",\"chassisno\":\"CHS123456791\",\"Rcnumber\":\"RC987654323\",\"Enginenumber\":\"ENG123456791\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"4712c55b-d512-49fb-9b5b-dfe341a09ed0\",\"createdAt\":\"2024-11-08T11:07:06.248Z\",\"updatedAt\":\"2024-11-08T11:07:06.248Z\"},{\"vehicleid\":\"0df79c50-c165-42fe-8faf-c2003e675e3d\",\"vehicletype\":\"9\",\"chassisno\":\"9DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E4\",\"Enginenumber\":\"DAJQBCB5AZ\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"e0146ba0-ad49-4a22-a96f-1db3685cfe48\",\"createdAt\":\"2024-11-08T11:07:06.266Z\",\"updatedAt\":\"2024-11-08T11:07:06.266Z\"},{\"vehicleid\":\"675fce32-7723-4569-b353-e1aab598ec25\",\"vehicletype\":\"5\",\"chassisno\":\"1DK6Z0FJ83YT\",\"Rcnumber\":\"DA9XTFY3E5\",\"Enginenumber\":\"DAJQBCB5AA\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"b10003df-e324-4d6d-ad31-19b3ec0561bf\",\"createdAt\":\"2024-11-08T11:07:06.371Z\",\"updatedAt\":\"2024-11-08T11:07:06.371Z\"},{\"vehicleid\":\"5bf70361-0f58-4abc-9d12-91ca0c2f3950\",\"vehicletype\":\"3\",\"chassisno\":\"CHS123456792\",\"Rcnumber\":\"RC987654324\",\"Enginenumber\":\"ENG123456792\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6c7159a-ea85-418d-aedb-d20b32b19ca6\",\"createdAt\":\"2024-11-08T11:07:06.397Z\",\"updatedAt\":\"2024-11-08T11:07:06.397Z\"},{\"vehicleid\":\"566ff3d8-141b-41b0-a107-b06d7a4d43e7\",\"vehicletype\":\"5\",\"chassisno\":\"CHS123456793\",\"Rcnumber\":\"RC987654325\",\"Enginenumber\":\"ENG123456793\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"7168e0d6-1541-42fe-acca-797c582dab02\",\"createdAt\":\"2024-11-08T11:07:06.430Z\",\"updatedAt\":\"2024-11-08T11:07:06.430Z\"},{\"vehicleid\":\"b47c3c13-72d0-418d-92f5-0dd918c6e0a0\",\"vehicletype\":\"9\",\"chassisno\":\"2DK6Z0FJ83YU\",\"Rcnumber\":\"DA9XTFY3E6\",\"Enginenumber\":\"DAJQBCB5AB\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c29f8639-2d04-4b9f-b3a9-04867f3cf4cd\",\"createdAt\":\"2024-11-08T11:07:06.432Z\",\"updatedAt\":\"2024-11-08T11:07:06.432Z\"}]"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:36:18.642Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"dbe70bf5-8ffd-496c-84fc-628f57294ce3\",\"vehicletype\":null,\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:28:17.881Z\",\"updatedAt\":\"2024-11-08T07:28:17.881Z\"},{\"vehicleid\":\"6ea8c29f-6072-475a-a04e-75a9683fa82b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:29:48.622Z\",\"updatedAt\":\"2024-11-08T07:29:48.622Z\"},{\"vehicleid\":\"350cee33-409d-435c-ae10-d6aa031eb6f5\",\"vehicletype\":\"7\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T07:37:25.847Z\",\"updatedAt\":\"2024-11-08T07:37:25.847Z\"},{\"vehicleid\":\"2504ce78-c0ef-4f5d-abc0-ac08876b40fe\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T08:01:00.873Z\",\"updatedAt\":\"2024-11-08T08:01:00.873Z\"},{\"vehicleid\":\"dec89f3e-1fe4-4e90-9a0f-4ff452111430\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c3a8ecce-22ca-4d89-bf68-3610888ed8d4\",\"createdAt\":\"2024-11-08T09:36:02.406Z\",\"updatedAt\":\"2024-11-08T09:36:02.406Z\"},{\"vehicleid\":\"76bb2e71-4f01-437c-90ee-ad9791463288\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"575c3bfb-ef92-4b42-a525-175e08e91ea0\",\"createdAt\":\"2024-11-08T09:37:12.475Z\",\"updatedAt\":\"2024-11-08T09:37:12.475Z\"},{\"vehicleid\":\"f2902064-d896-40f4-a574-f1aea9d32fb2\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"3bc0f58a-4515-47a8-8c2a-b78a54ad60f6\",\"createdAt\":\"2024-11-08T09:40:41.123Z\",\"updatedAt\":\"2024-11-08T09:40:41.123Z\"},{\"vehicleid\":\"5552460a-e7f9-45d6-8fd8-a1f8cedf9451\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"2d7319c7-4103-494c-8097-78dc442e0cf7\",\"createdAt\":\"2024-11-08T09:40:41.124Z\",\"updatedAt\":\"2024-11-08T09:40:41.124Z\"},{\"vehicleid\":\"779f0fd7-b88f-4fe5-9342-31375ac91e78\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"54ff4e6f-6eb0-49fe-8ac6-d7611b8c78b7\",\"createdAt\":\"2024-11-08T09:40:41.486Z\",\"updatedAt\":\"2024-11-08T09:40:41.486Z\"},{\"vehicleid\":\"f05bb496-daf0-4944-90ee-0794ab6f048d\",\"vehicletype\":\"2\",\"chassisno\":\"897389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"98c0d43b-f3e2-42b2-9db7-c617b985b230\",\"createdAt\":\"2024-11-08T09:43:38.940Z\",\"updatedAt\":\"2024-11-08T09:43:38.940Z\"},{\"vehicleid\":\"a37ec637-677c-4197-86ad-2993ac262db6\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"d36aa82c-11e2-4a3a-ae05-4b9e5cb34255\",\"createdAt\":\"2024-11-08T09:43:38.941Z\",\"updatedAt\":\"2024-11-08T09:43:38.941Z\"},{\"vehicleid\":\"24d24534-683a-401b-bea5-69455dbae088\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"dd13ee49-82b4-4f4a-9524-5e79605f0a35\",\"createdAt\":\"2024-11-08T09:43:39.338Z\",\"updatedAt\":\"2024-11-08T09:43:39.338Z\"},{\"vehicleid\":\"c6abcd9a-3e44-4c6b-89d6-98c4151f9016\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"35223180-d24d-4f1d-ae34-8ee846717a37\",\"createdAt\":\"2024-11-08T09:47:55.980Z\",\"updatedAt\":\"2024-11-08T09:47:55.980Z\"},{\"vehicleid\":\"5a86e275-4f8d-4348-8700-e0644f0dd217\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"591a5983-1288-452c-b177-53ab3272ada2\",\"createdAt\":\"2024-11-08T09:47:56.334Z\",\"updatedAt\":\"2024-11-08T09:47:56.334Z\"},{\"vehicleid\":\"5f3a3819-34ce-4e6f-9635-25908b4b6bd8\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"ed2bceeb-46ff-4ec1-98f3-7f935cbcf8fe\",\"createdAt\":\"2024-11-08T09:49:55.603Z\",\"updatedAt\":\"2024-11-08T09:49:55.603Z\"},{\"vehicleid\":\"e8b0330f-1227-4e8f-bdee-063c09878ded\",\"vehicletype\":\"7\",\"chassisno\":\"415334053699021\",\"Rcnumber\":null,\"Enginenumber\":\"9688\",\"Registrationyear\":\"2012-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"47fc31c0-7348-47c2-a450-5c6796cc7805\",\"createdAt\":\"2024-11-08T09:49:55.604Z\",\"updatedAt\":\"2024-11-08T09:49:55.604Z\"},{\"vehicleid\":\"cee73433-6b23-4a2d-a8d3-7e7d6d96fea8\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":\"2024-10-12T14:30:00.000Z\",\"rating\":null,\"activated\":false,\"hostId\":\"350ff783-7c5a-4ee2-9567-d10a00c09283\",\"createdAt\":\"2024-11-08T09:49:55.946Z\",\"updatedAt\":\"2024-11-08T09:49:55.946Z\"},{\"vehicleid\":\"427ae4e9-353a-4b63-b494-267089c71ab6\",\"vehicletype\":\"2\",\"chassisno\":\"812536369785390\",\"Rcnumber\":null,\"Enginenumber\":\"6678\",\"Registrationyear\":\"2014-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T09:57:28.138Z\",\"updatedAt\":\"2024-11-08T09:57:28.138Z\"},{\"vehicleid\":\"c7a03afd-50af-4e1e-8c81-b118cd1a8dbc\",\"vehicletype\":\"2\",\"chassisno\":\"609443076737638\",\"Rcnumber\":null,\"Enginenumber\":\"1544\",\"Registrationyear\":\"2019-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c29f8639-2d04-4b9f-b3a9-04867f3cf4cd\",\"createdAt\":\"2024-11-08T10:02:52.034Z\",\"updatedAt\":\"2024-11-08T10:02:52.034Z\"},{\"vehicleid\":\"a5788fbc-2406-41a2-94f7-0db81ffac96c\",\"vehicletype\":\"5\",\"chassisno\":\"566506733394895\",\"Rcnumber\":null,\"Enginenumber\":\"5971\",\"Registrationyear\":\"2010-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"bd39a955-c471-41c1-a9db-7542a2884cfc\",\"createdAt\":\"2024-11-08T10:02:52.259Z\",\"updatedAt\":\"2024-11-08T10:02:52.259Z\"},{\"vehicleid\":\"519dabb1-1088-4deb-9558-9abd6983bbdf\",\"vehicletype\":\"9\",\"chassisno\":\"413444083505958\",\"Rcnumber\":null,\"Enginenumber\":\"3605\",\"Registrationyear\":\"2007-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"40c16db1-63e3-4a88-95e3-437a1931cdc5\",\"createdAt\":\"2024-11-08T10:02:52.347Z\",\"updatedAt\":\"2024-11-08T10:02:52.347Z\"},{\"vehicleid\":\"694710f0-d2aa-4eec-b49e-b5312319810a\",\"vehicletype\":\"1\",\"chassisno\":\"262317873199931\",\"Rcnumber\":null,\"Enginenumber\":\"2558\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:13:08.565Z\",\"updatedAt\":\"2024-11-08T10:13:08.565Z\"},{\"vehicleid\":\"57169c67-8847-45a6-a7a8-44619b008732\",\"vehicletype\":\"6\",\"chassisno\":\"950979786887819\",\"Rcnumber\":null,\"Enginenumber\":\"6610\",\"Registrationyear\":\"2017-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"e0146ba0-ad49-4a22-a96f-1db3685cfe48\",\"createdAt\":\"2024-11-08T10:13:09.042Z\",\"updatedAt\":\"2024-11-08T10:13:09.042Z\"},{\"vehicleid\":\"79f1eb62-6dbb-47bd-a6fd-8644a7718e0b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:41:11.657Z\",\"updatedAt\":\"2024-11-08T10:41:11.657Z\"},{\"vehicleid\":\"a3943f6b-c8fa-4e90-87fa-25de105862b2\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:46:21.431Z\",\"updatedAt\":\"2024-11-08T10:46:21.431Z\"},{\"vehicleid\":\"a322c917-00e4-4341-8532-152301e60a94\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":null,\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:47:20.981Z\",\"updatedAt\":\"2024-11-08T10:47:20.981Z\"},{\"vehicleid\":\"47640b98-8225-4eaf-9421-987bbab2708e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:47:41.612Z\",\"updatedAt\":\"2024-11-08T10:47:41.612Z\"},{\"vehicleid\":\"f0e0c397-ddb9-41cc-a0b7-0493d6e71d1b\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"673ASAGFSG9\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6e95552-45c9-4533-9afd-ba5752bf86e0\",\"createdAt\":\"2024-11-08T10:48:24.731Z\",\"updatedAt\":\"2024-11-08T10:48:24.731Z\"},{\"vehicleid\":\"d3df369a-a3e5-4e9d-9d27-4a7445078c10\",\"vehicletype\":\"2\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:50:27.472Z\",\"updatedAt\":\"2024-11-08T10:50:27.472Z\"},{\"vehicleid\":\"ffa6029a-bbbf-4cd2-8c49-44d6085f50b9\",\"vehicletype\":\"6\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:14.179Z\",\"updatedAt\":\"2024-11-08T10:55:14.179Z\"},{\"vehicleid\":\"9639eafc-46b2-41b9-9854-966737a9def0\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:49.854Z\",\"updatedAt\":\"2024-11-08T10:55:49.854Z\"},{\"vehicleid\":\"005c093d-5a80-4001-a506-b57e3848a016\",\"vehicletype\":\"9\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.065Z\",\"updatedAt\":\"2024-11-08T10:55:51.065Z\"},{\"vehicleid\":\"8cb6abf5-b4d2-444e-977e-9d19f199c16e\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:51.758Z\",\"updatedAt\":\"2024-11-08T10:55:51.758Z\"},{\"vehicleid\":\"bc5a0548-6087-4f10-b54c-47a240d85d10\",\"vehicletype\":\"5\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:55:52.237Z\",\"updatedAt\":\"2024-11-08T10:55:52.237Z\"},{\"vehicleid\":\"ce3cc2f8-35fe-48ab-b9a2-94c31070f7fb\",\"vehicletype\":\"3\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:56:05.823Z\",\"updatedAt\":\"2024-11-08T10:56:05.823Z\"},{\"vehicleid\":\"142afa86-93f2-4500-96d4-84d58f273334\",\"vehicletype\":\"8\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T10:58:43.935Z\",\"updatedAt\":\"2024-11-08T10:58:43.935Z\"},{\"vehicleid\":\"11f6fe1c-76f0-4dee-97dd-2787721054b5\",\"vehicletype\":\"1\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:02:58.010Z\",\"updatedAt\":\"2024-11-08T11:02:58.010Z\"},{\"vehicleid\":\"febceb49-8143-4d69-ab89-0bddbc97a941\",\"vehicletype\":\"1\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"670e92dc-00a2-4601-a0ea-d2a1b442a3b2\",\"createdAt\":\"2024-11-08T11:06:32.116Z\",\"updatedAt\":\"2024-11-08T11:06:32.116Z\"},{\"vehicleid\":\"e564cf66-e8bd-4f94-8013-62c7946d2eba\",\"vehicletype\":\"8\",\"chassisno\":\"CHS123456790\",\"Rcnumber\":\"RC987654322\",\"Enginenumber\":\"ENG123456790\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"78280646-c8e5-4bb1-9dfa-10fec18ca6f9\",\"createdAt\":\"2024-11-08T11:06:32.626Z\",\"updatedAt\":\"2024-11-08T11:06:32.626Z\"},{\"vehicleid\":\"05174e1f-7023-4cc0-85f9-b0393819e69b\",\"vehicletype\":\"4\",\"chassisno\":\"8DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E2\",\"Enginenumber\":\"DAJQBCB5AV\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9274feee-5ea6-4dd5-8062-1cf037fd4bfc\",\"createdAt\":\"2024-11-08T11:07:05.587Z\",\"updatedAt\":\"2024-11-08T11:07:05.587Z\"},{\"vehicleid\":\"8b4c5901-2d04-435c-8062-94f5ef3013a7\",\"vehicletype\":\"6\",\"chassisno\":\"CHS123456789\",\"Rcnumber\":\"RC987654321\",\"Enginenumber\":\"ENG123456789\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"670e92dc-00a2-4601-a0ea-d2a1b442a3b2\",\"createdAt\":\"2024-11-08T11:07:05.709Z\",\"updatedAt\":\"2024-11-08T11:07:05.709Z\"},{\"vehicleid\":\"af7a4447-ca09-456c-8f92-a0c6de40d556\",\"vehicletype\":\"8\",\"chassisno\":\"CHS123456790\",\"Rcnumber\":\"RC987654322\",\"Enginenumber\":\"ENG123456790\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"78280646-c8e5-4bb1-9dfa-10fec18ca6f9\",\"createdAt\":\"2024-11-08T11:07:06.087Z\",\"updatedAt\":\"2024-11-08T11:07:06.087Z\"},{\"vehicleid\":\"5b27152f-78e3-4d73-b897-bd968f34b27d\",\"vehicletype\":\"5\",\"chassisno\":\"5DK6Z0FJ83YN\",\"Rcnumber\":\"DA9XTFY3E3\",\"Enginenumber\":\"DAJQBCB5AY\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"050d0aba-8636-4d3f-9d25-69d897087f19\",\"createdAt\":\"2024-11-08T11:07:06.158Z\",\"updatedAt\":\"2024-11-08T11:07:06.158Z\"},{\"vehicleid\":\"dde0494d-60cf-4121-a466-3318f84455bd\",\"vehicletype\":\"2\",\"chassisno\":\"CHS123456791\",\"Rcnumber\":\"RC987654323\",\"Enginenumber\":\"ENG123456791\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"4712c55b-d512-49fb-9b5b-dfe341a09ed0\",\"createdAt\":\"2024-11-08T11:07:06.248Z\",\"updatedAt\":\"2024-11-08T11:07:06.248Z\"},{\"vehicleid\":\"0df79c50-c165-42fe-8faf-c2003e675e3d\",\"vehicletype\":\"9\",\"chassisno\":\"9DK6Z0FJ83YR\",\"Rcnumber\":\"DA9XTFY3E4\",\"Enginenumber\":\"DAJQBCB5AZ\",\"Registrationyear\":\"2022-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"e0146ba0-ad49-4a22-a96f-1db3685cfe48\",\"createdAt\":\"2024-11-08T11:07:06.266Z\",\"updatedAt\":\"2024-11-08T11:07:06.266Z\"},{\"vehicleid\":\"675fce32-7723-4569-b353-e1aab598ec25\",\"vehicletype\":\"5\",\"chassisno\":\"1DK6Z0FJ83YT\",\"Rcnumber\":\"DA9XTFY3E5\",\"Enginenumber\":\"DAJQBCB5AA\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"b10003df-e324-4d6d-ad31-19b3ec0561bf\",\"createdAt\":\"2024-11-08T11:07:06.371Z\",\"updatedAt\":\"2024-11-08T11:07:06.371Z\"},{\"vehicleid\":\"5bf70361-0f58-4abc-9d12-91ca0c2f3950\",\"vehicletype\":\"3\",\"chassisno\":\"CHS123456792\",\"Rcnumber\":\"RC987654324\",\"Enginenumber\":\"ENG123456792\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"d6c7159a-ea85-418d-aedb-d20b32b19ca6\",\"createdAt\":\"2024-11-08T11:07:06.397Z\",\"updatedAt\":\"2024-11-08T11:07:06.397Z\"},{\"vehicleid\":\"566ff3d8-141b-41b0-a107-b06d7a4d43e7\",\"vehicletype\":\"5\",\"chassisno\":\"CHS123456793\",\"Rcnumber\":\"RC987654325\",\"Enginenumber\":\"ENG123456793\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"7168e0d6-1541-42fe-acca-797c582dab02\",\"createdAt\":\"2024-11-08T11:07:06.430Z\",\"updatedAt\":\"2024-11-08T11:07:06.430Z\"},{\"vehicleid\":\"b47c3c13-72d0-418d-92f5-0dd918c6e0a0\",\"vehicletype\":\"9\",\"chassisno\":\"2DK6Z0FJ83YU\",\"Rcnumber\":\"DA9XTFY3E6\",\"Enginenumber\":\"DAJQBCB5AB\",\"Registrationyear\":\"2021-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"c29f8639-2d04-4b9f-b3a9-04867f3cf4cd\",\"createdAt\":\"2024-11-08T11:07:06.432Z\",\"updatedAt\":\"2024-11-08T11:07:06.432Z\"}]"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "5438c257-f111-4720-a462-b3106f49348c",
+    "timestamp": "2024-11-09T07:36:36.865Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:13.536Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"abfe043a-1c3d-4294-9a50-68f97ab1dd5b\",\"phone\":\"+919120408658\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:34.942Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"d7a8d959-8e00-4a6d-9857-0b800af54638\",\"phone\":\"+917000000000\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:37.697Z",
+    "body": {
+      "message": "{\"message\":\"Invalid phone or password\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:50.712Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"phone\":\"917000000000\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:53.573Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"5448\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T07:45:58.003Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlmZWUzMTM4LTUwZDctNDNjMy1iZGMwLTdjNjc5ZTgwNjZlNSIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMxMTM4MzU4fQ.8txO6bFK64tgl2T-Xv3F2M_W56uHk06jkg-x703au68\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T07:46:03.968Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T07:45:50.711Z\",\"updatedAt\":\"2024-11-09T07:45:50.711Z\",\"userId\":null},\"vehicle\":[],\"profile\":{\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"GSTnumber\":null,\"PANnumber\":null,\"FullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"phone\":\"917000000000\",\"profilePic\":null,\"businessName\":null}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T07:46:21.290Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:02:42.108Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:02:56.731Z",
+    "body": {
+      "message": "{\"message\":\"Error Adding car\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:04:46.633Z",
+    "body": {
+      "message": "{\"message\":\"Car and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"listingId\":\"05ebe3d8-73bf-414d-98b4-80930cf2388c\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:05:34.021Z",
+    "body": {
+      "message": "Something broke!"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:06:34.389Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:04:46.626Z\",\"updatedAt\":\"2024-11-09T09:04:46.626Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:06:39.902Z",
+    "body": {
+      "message": "Something broke!"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:13:33.081Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"128ebcf7-1f10-464f-b3f2-8212dbeb706a\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:02:42.100Z\",\"updatedAt\":\"2024-11-09T09:02:42.100Z\"},{\"vehicleid\":\"38f3eb96-160b-44b8-b356-53048d629a01\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:02:56.726Z\",\"updatedAt\":\"2024-11-09T09:02:56.726Z\"},{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:04:46.617Z\",\"updatedAt\":\"2024-11-09T09:04:46.617Z\"}]"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-09T09:13:40.150Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"phone\":\"+918477384440\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:13:44.863Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"7558\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:13:47.811Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjdmZmYxZmIyLWE1YTctNDU0OS1iYzZlLTY2MjQxNmViYjE3YyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMxMTQzNjI3fQ.WY_7p2TJeWXHZvpSUZ6SDlinQdH-QMJtaJRGDyZuY5I\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:13:50.869Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"phone\":\"+918477384440\",\"role\":\"user\",\"createdAt\":\"2024-11-09T09:13:40.140Z\",\"updatedAt\":\"2024-11-09T09:13:44.858Z\"},\"profile\":{\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"dlNumber\":null,\"fullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:14:45.979Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onevehicle",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:22:39.920Z",
+    "body": {
+      "message": "{\"vehicles\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"pricing\":{\"costPerHr\":null,\"hours\":44.5,\"amount\":0}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onevehicle",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:23:37.266Z",
+    "body": {
+      "message": "{\"vehicles\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"pricing\":{\"costPerHr\":null,\"hours\":44.5,\"amount\":0}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onevehicle",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:30:51.821Z",
+    "body": {
+      "message": "{\"vehicles\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"pricing\":{\"costPerHr\":null,\"hours\":-3.5,\"amount\":0}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onevehicle",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:32:02.733Z",
+    "body": {
+      "message": "{\"vehicles\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"pricing\":{\"costPerHr\":null,\"hours\":-1.5,\"amount\":0}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/onevehicle",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-09T09:32:23.908Z",
+    "body": {
+      "message": "{\"vehicles\":{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"pricing\":{\"costPerHr\":null,\"hours\":22.5,\"amount\":0}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/pricing",
+    "status": 400,
+    "user": null,
+    "timestamp": "2024-11-09T09:32:47.688Z",
+    "body": {
+      "message": "{\"message\":\"pricing cannot be found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/pricing",
+    "status": 400,
+    "user": null,
+    "timestamp": "2024-11-09T09:37:01.107Z",
+    "body": {
+      "message": "{\"message\":\"pricing cannot be found\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:37:26.812Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T07:45:50.711Z\",\"updatedAt\":\"2024-11-09T07:45:50.711Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"128ebcf7-1f10-464f-b3f2-8212dbeb706a\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:02:42.100Z\",\"updatedAt\":\"2024-11-09T09:02:42.100Z\"},{\"vehicleid\":\"38f3eb96-160b-44b8-b356-53048d629a01\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:02:56.726Z\",\"updatedAt\":\"2024-11-09T09:02:56.726Z\"},{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:04:46.617Z\",\"updatedAt\":\"2024-11-09T09:04:46.617Z\"}],\"profile\":{\"id\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"Ronny\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000000\",\"profilePic\":null,\"businessName\":\"Spintrip India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/pricing",
+    "status": 400,
+    "user": null,
+    "timestamp": "2024-11-09T09:39:41.346Z",
+    "body": {
+      "message": "{\"message\":\"pricing cannot be found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:44:14.364Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":39.016666666666666,\"amount\":0},\"Additional\":{\"carmodel\":\"Amaze\",\"HorsePower\":null,\"type\":\"Sedan\",\"brand\":\"Honda\",\"variant\":\"CV\",\"color\":\"White\",\"bodytype\":null,\"AC\":null,\"Musicsystem\":null,\"Autowindow\":null,\"Sunroof\":null,\"Touchscreen\":null,\"Sevenseater\":null,\"Reversecamera\":null,\"Transmission\":null,\"Airbags\":null,\"FuelType\":null,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"922e14ad-1a05-4969-ba38-19911c7c22e4\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:04:46.623Z\",\"updatedAt\":\"2024-11-09T09:04:46.623Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:45:36.840Z",
+    "body": {
+      "message": "{\"message\":\"Car and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"00b3d9f8-c652-4c97-a201-150deabf0eba\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"listingId\":\"f7ac00ce-1763-4cd1-aedf-db5bc9f28e2d\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:46:33.609Z",
+    "body": {
+      "message": "{\"message\":\"Car and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"listingId\":\"5123c05e-0a44-4020-84a9-3f0b1e0066c0\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 500,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:47:32.451Z",
+    "body": {
+      "message": "Something broke!"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/carAdditional",
+    "status": 201,
+    "user": "9fee3138-50d7-43c3-bdc0-7c679e8066e5",
+    "timestamp": "2024-11-09T09:48:00.046Z",
+    "body": {
+      "message": "{\"message\":\"Car Additional added\",\"combinedCarData\":{\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"createdAt\":\"2024-11-09T09:48:00.026Z\",\"updatedAt\":\"2024-11-09T09:48:00.026Z\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":null,\"latitude\":null,\"longitude\":null,\"address\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:49:42.974Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":null,\"longitude\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":57.016666666666666,\"amount\":0},\"Additional\":{\"bikemodel\":\"FZ\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Yamaha\",\"variant\":\"F5\",\"color\":\"White\",\"bodytype\":null,\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:46:33.594Z\",\"updatedAt\":\"2024-11-09T09:46:33.594Z\"},\"distance\":8675.15508321251}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:50:08.722Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":null,\"longitude\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":-14.983333333333333,\"amount\":0},\"Additional\":{\"bikemodel\":\"FZ\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Yamaha\",\"variant\":\"F5\",\"color\":\"White\",\"bodytype\":null,\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:46:33.594Z\",\"updatedAt\":\"2024-11-09T09:46:33.594Z\"},\"distance\":8675.15508321251}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:50:18.645Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"9fee3138-50d7-43c3-bdc0-7c679e8066e5\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":null,\"longitude\":null,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":57.016666666666666,\"amount\":0},\"Additional\":{\"bikemodel\":\"FZ\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Yamaha\",\"variant\":\"F5\",\"color\":\"White\",\"bodytype\":null,\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T09:46:33.594Z\",\"updatedAt\":\"2024-11-09T09:46:33.594Z\"},\"distance\":8675.15508321251}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:52:12.261Z",
+    "body": {
+      "message": "{\"message\":\"Booking created successfully\",\"booking\":{\"Bookingid\":\"3a2e8864-89cc-4dea-a88c-1e95dddde1c5\",\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"status\":1,\"updatedAt\":\"2024-11-09T09:52:12.251Z\",\"createdAt\":\"2024-11-09T09:52:12.251Z\",\"Date\":null,\"time\":null,\"timestamp\":null,\"amount\":null,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "7fff1fb2-a5a7-4549-bc6e-662416ebb17c",
+    "timestamp": "2024-11-09T09:52:20.680Z",
+    "body": {
+      "message": "{\"message\":\"Booking created successfully\",\"booking\":{\"Bookingid\":\"b4121bf3-b7f5-4e8e-b0ff-c5a017f88a80\",\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"status\":1,\"updatedAt\":\"2024-11-09T09:52:20.672Z\",\"createdAt\":\"2024-11-09T09:52:20.672Z\",\"Date\":null,\"time\":null,\"timestamp\":null,\"amount\":null,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"userId\":null}}"
+    }
   }
 ]
