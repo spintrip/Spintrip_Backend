@@ -3,8 +3,8 @@ const { authenticate } = require('../Middleware/authMiddleware');
 const {
   adminLogin, verifyOTP,
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
-  getAllCars, getCarById, updateCarById, deleteCarById, getAllListings, getListingById, updateListingById, deleteListingById,
-  createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById,
+  getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
+  createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
@@ -43,6 +43,8 @@ const blogImageStorage = multerS3({
 });
 const upload1 = multer({ storage: blogImageStorage });
 
+router.post('/signup', adminSignup);
+
 // Authentication routes
 router.post('/login', adminLogin);
 router.post('/verify-otp', verifyOTP);
@@ -58,11 +60,11 @@ router.get('/hosts', authenticate, getAllHosts);
 router.get('/hosts/:id', authenticate, getHostById);
 router.delete('/hosts/:id', authenticate, deleteHost);
 
-// Car routes
-router.get('/cars', authenticate, getAllCars);
-router.get('/cars/:id', authenticate, getCarById);
-router.put('/cars/:id', authenticate, updateCarById);
-router.delete('/cars/:id', authenticate, deleteCarById);
+// vehicles routes
+router.get('/vehicles', authenticate, getAllvehicles);
+router.get('/vehicles/:id', authenticate, getvehicleById);
+router.put('/vehicles/:id', authenticate, updatevehicleById);
+router.delete('/vehicles/:id', authenticate, deletevehicleById);
 
 // Listing routes
 router.get('/listings', authenticate, getAllListings);

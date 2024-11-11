@@ -6,12 +6,12 @@ const jwt = require('jsonwebtoken');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { Sequelize, Op } = require('sequelize');
 const { fn, col, sum, count } = require('sequelize');
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional } = require('../Models');
+const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../Models');
 const { and, TIME } = require('sequelize');
-const { sendOTP, generateOTP, tripstart, bookingcompleted } = require('../Controller/hostController');
+const { sendOTP, generateOTP, tripstart, bookingcompleted, cancelbooking } = require('../Controller/hostController');
 const { getAllBlogs } = require('../Controller/blogController');
 const { setTimeout } = require('timers/promises');
-const { Payout } = require('../Models');
+const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 
 const { 
   sendBookingConfirmationEmail, 
@@ -262,48 +262,6 @@ router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCoun
   }
 });
 
-router.get('/payouts', authenticate, async (req, res) => {
-  try {
-    const hostId = req.user.id;
-
-    // Find all payouts related to the host's userId
-    const payouts = await Payout.findAll({
-      where: { userId: hostId },
-    });
-
-    if (!payouts.length) {
-      return res.status(404).json({ message: 'No payouts found for this host' });
-    }
-
-    // Calculate total amount for each payout
-    const payoutsWithTotalAmount = await Promise.all(
-      payouts.map(async (payout) => {
-        // Assuming payout has a field 'bookingIds' that is an array of booking IDs
-        const bookings = await Booking.findAll({
-          where: {
-            Bookingid: payout.bookingIds, // replace 'bookingIds' with the correct field name
-          },
-        });
-
-        // Calculate the sum of totalHostAmount for the bookings
-        const totalAmount = bookings.reduce((sum, booking) => {
-          return sum + (booking.totalHostAmount || 0); // Safely handle null or undefined values
-        }, 0);
-
-        // Add totalAmount to the payout object
-        return {
-          ...payout.toJSON(), // Convert sequelize instance to plain object
-          totalAmount,
-        };
-      })
-    );
-
-    res.status(200).json({ payouts: payoutsWithTotalAmount });
-  } catch (error) {
-    console.error('Error fetching payouts:', error.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 router.post('/vehicle', authenticate, async (req, res) => {
   const {
@@ -1324,7 +1282,7 @@ router.get('/support', authenticate, viewUserSupportTickets);
 router.get('/view-blog',authenticate, getAllBlogs );
 
 router.post('/activate-vehicle', authenticate, async (req, res) => {
-  const { vehicleid, paymentMethod } = req.body;
+  const { vehicleid, paymentMethod, planType } = req.body;
 
   try {
     const host = await Host.findByPk(req.user.id);
@@ -1336,22 +1294,21 @@ router.post('/activate-vehicle', authenticate, async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-
     // Process payment (this is a placeholder, replace with actual payment processing logic)
     const paymentId = uuid.v4();
     const amount = 100; // Example amount, replace with actual amount
-
     await HostPayment.create({
       PaymentId: paymentId,
       HostId: req.user.id,
       VehicleId: vehicleid,
+      PlanType: planType,
       PaymentDate: new Date(),
+      PlanEndDate: new Date() + 1,
       Amount: amount,
       GSTAmount: amount * 0.18,
       TotalAmount: amount * 1.18,
       PaymentStatus: 1, // Assuming 1 means successful
       PaymentMethod: paymentMethod,
-      TransactionId: uuid.v4(),
       Remarks: 'Vehicle activation payment'
     });
 
@@ -1368,4 +1325,13 @@ router.post('/Trip-Started', authenticate, tripstart);
 
 router.post('/booking-completed', authenticate, bookingcompleted);
 
+router.post('/payment', authenticate,  initiatePayment);
+
+router.post('/webhook/cashfree', checkPaymentStatus);
+
+router.post('/phonepayment', authenticate, phonePayment );
+
+router.post('/webhook/phonepe', webhook );
+
+router.post('/Cancel-Booking', authenticate, cancelbooking);
 module.exports = router;

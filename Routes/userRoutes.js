@@ -10,7 +10,6 @@ const {
   login,
   generateOTP,
   sendOTP,
-  razorpay,
   createIndex,
   verify,
   getprofile,

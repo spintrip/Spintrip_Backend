@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     TotalAmount: { type: DataTypes.FLOAT, allowNull: false },
     PaymentStatus: { type: DataTypes.INTEGER, allowNull: false },
     PaymentMethod: { type: DataTypes.STRING, allowNull: false },
-    TransactionId: { type: DataTypes.STRING, unique: true, allowNull: false },
+    TransactionId: { type: DataTypes.STRING, allowNull: true },
     PlanEndDate: { type: DataTypes.DATEONLY, allowNull: false },
     PlanType: { type: DataTypes.STRING, allowNull: false },
     Remarks: { type: DataTypes.TEXT, allowNull: true }
@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
   HostPayment.associate = (models) => {
     HostPayment.belongsTo(models.Host, { foreignKey: 'HostId' });
     HostPayment.belongsTo(models.Vehicle, { foreignKey: 'VehicleId' });
-    HostPayment.belongsTo(models.Payment, { foreignKey: 'TransactionId', targetKey: 'Transactionid' });
+   // HostPayment.belongsTo(models.Transaction, { foreignKey: 'TransactionId', targetKey: 'Transactionid' });
   };
 
   return HostPayment;

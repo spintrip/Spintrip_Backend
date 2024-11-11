@@ -10,7 +10,6 @@ const express = require('express');
 const uuid = require('uuid');
 const { authenticate, generateToken } = require('../Middleware/authMiddleware');
 const { getAllBlogs } = require('../Controller/blogController');
-const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { Op } = require('sequelize');
@@ -18,6 +17,7 @@ const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
 const crypto = require('crypto');
 const multer = require('multer');
+const moment = require('moment');
 const path = require('path');
 const csv = require('csv-parser');
 const router = express.Router();
@@ -97,6 +97,25 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 
   return R * c; // Distance in km
 }
+
+const validateBookingDates = (startDate, endDate, startTime, endTime) => {
+  const startDateTime = moment(`${startDate} ${startTime}`, "YYYY-MM-DD HH:mm");
+  const endDateTime = moment(`${endDate} ${endTime}`, "YYYY-MM-DD HH:mm");
+
+  if (!startDateTime.isValid() || !endDateTime.isValid()) {
+    return { isValid: false, error: "Invalid date or time format." };
+  }
+
+  if (!startDateTime.isBefore(endDateTime)) {
+    return { isValid: false, error: "End time must be after start time." };
+  }
+
+  if (startDateTime.isBefore(moment())) {
+    return { isValid: false, error: "Start date and time must be in the future." };
+  }
+
+  return { isValid: true };
+};
 
 const login = async (req, res) => {
   const { phone } = req.body;
@@ -348,6 +367,10 @@ const features = async (req, res) => {
 const findvehicles = async (req, res) => {
   const { vehicletype, startDate, endDate, startTime, endTime, latitude, longitude, distance  } = req.body;
   try {
+    const dateValidation = validateBookingDates(startDate, endDate, startTime, endTime);
+    if (!dateValidation.isValid) {
+      return res.status(400).json({ message: dateValidation.error });
+    }
     const availableListings = await Listing.findAll({
       where: {
         [Op.and]: [
@@ -466,7 +489,8 @@ const findvehicles = async (req, res) => {
       include: [    {
         model: Vehicle,
         where: {
-          vehicletype: vehicletype, // Add this filter for the vehicle type
+          vehicletype: vehicletype,
+          activated: true,
         },
       },],
     });
@@ -665,6 +689,10 @@ const findvehicles = async (req, res) => {
 const onevehicle = async (req, res) => {
   const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
   try {
+    const dateValidation = validateBookingDates(startDate, endDate, startTime, endTime);
+    if (!dateValidation.isValid) {
+      return res.status(400).json({ message: dateValidation.error });
+    }
     const availableListings = await Listing.findOne({
       where: {
         [Op.and]: [
@@ -992,7 +1020,6 @@ const getBookingDetails = async (bookingId) => {
       where: { id: hostId }
     });
     const bookingDetails = {
-      carModel: host.carmodel,
       startDate: booking.startTripDate,
       startTime: booking.startTripTime,
       endDate: booking.endTripDate,
@@ -1009,7 +1036,10 @@ const booking = async (req, res) => {
   try {
     const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
     const userId = req.user.id;
-
+    const dateValidation = validateBookingDates(startDate, endDate, startTime, endTime);
+    if (!dateValidation.isValid) {
+      return res.status(400).json({ message: dateValidation.error });
+    }
     // Fetch vehicle and host details
     const vehicle = await Vehicle.findByPk(vehicleid);
     if (!vehicle) {
@@ -1507,6 +1537,10 @@ const extend = async (req, res) => {
 const breakup = async (req, res) => {
   try {
     let { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
+    const dateValidation = validateBookingDates(startDate, endDate, startTime, endTime);
+    if (!dateValidation.isValid) {
+      return res.status(400).json({ message: dateValidation.error });
+    }
     const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
     const hours = calculateTripHours(startDate, endDate, startTime, endTime);
     if (!cph) {
@@ -1653,7 +1687,7 @@ const getfeedback = async (req, res) => {
 const transactions = async (req, res) => {
   try {
     const userId = req.user.id;
-    let transactions = []; // Initialize transactions as an array
+    let transactions = []; 
     const bookings = await Booking.findAll({ where: { id: userId } });
     console.log(bookings);
 

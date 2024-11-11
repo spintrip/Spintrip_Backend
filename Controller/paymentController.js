@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Booking, Transaction, User } = require('../Models');
+const { Vehicle, Transaction, User, HostPayment } = require('../Models');
 require('dotenv').config();
 const crypto = require('crypto');
 const uuid = require('uuid');
@@ -9,16 +9,16 @@ function roundToTwo(num) {
 const initiatePayment = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
-    const { bookingId } = req.body;
-    const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
+    const { vehicleid } = req.body;
+    const vehicle = await Vehicle.findOne({ where: { vehicleid : vehicleid  } });
   
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'vehicle not found' });
     }
-    
-    let amount = roundToTwo(booking.totalUserAmount);
+    const hostPaymentPlan = await  HostPayment.findOne({ where: { VehicleId : vehicleid  } });
+    let amount = roundToTwo(hostPaymentPlan.Amount);
     const orderId = uuid.v4();
-  
+
     const paymentLinkRequest = {
       customer_details: {
         customer_phone: user.phone,
@@ -32,9 +32,9 @@ const initiatePayment = async (req, res) => {
       link_amount: amount,
       link_id: orderId,
       link_currency: 'INR',
-      link_purpose: 'Booking Payment',
+      link_purpose: 'Plan Activation Payment',
       notes: {
-        order_note: 'Payment for booking',
+        order_note: 'Payment for Vehicle Activation',
       },
       callback_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
       expires_at: '2024-09-29T00:00:00Z',
@@ -62,17 +62,16 @@ const initiatePayment = async (req, res) => {
       const paymentUrl = response.data.link_url;
   
       // Save transaction details to your database
-      await Booking.update({ Transactionid: orderId }, { where: { Bookingid: bookingId } });
       await Transaction.create({
         Transactionid: orderId,
-        Bookingid: bookingId,
+        vehicleid: vehicleid,
         id: req.user.id,
         status: 1,
-        amount: booking.amount,
-        GSTAmount: booking.GSTAmount,
-        totalAmount: booking.totalUserAmount,
+        amount: hostPaymentPlan.Amount,
+        GSTAmount: hostPaymentPlan.GSTAmount,
+        totalAmount:hostPaymentPlan.TotalAmount,
       });
-  
+      await hostPaymentPlan.update({ Transactionid: orderId });
       return res.status(200).json({ paymentUrl });
     } else {
       console.error('Error creating payment link:', response.data);
@@ -90,42 +89,27 @@ const initiatePayment = async (req, res) => {
 const phonePayment = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
-    const { bookingId } = req.body;
-    const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    const { vehicleid } = req.body;
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
     }
-    let transaction = await Transaction.findOne({ where: { Bookingid: bookingId, Transactionid: booking.Transactionid } }); 
-    if (booking.Transactionid != null && booking.status == 1 && transaction && transaction.status == 2) {
-      return res.status(200).json({ message: 'Payment Already completed' });
+    const hostPaymentPlan = await HostPayment.findOne({ where: { VehicleId: vehicleid } });
+    if (!hostPaymentPlan) {
+      return res.status(404).json({ message: 'Host Plan not found' });
     }
     let amount;
-    if ( booking.status == 2 ) {
-      let transactions = await Transaction.findAll({ 
-        where: { Bookingid: bookingId, status: 2 },
-        attributes: ['totalAmount'] 
-      });
-    
-      let totalTransactionAmount = transactions.reduce((sum, transaction) => {
-        return sum + transaction.totalAmount;
-      }, 0);
-    
-      amount = roundToTwo( booking.totalUserAmount - totalTransactionAmount );
-    }
-    else {
-      amount = roundToTwo( booking.totalUserAmount );
-    }
     const orderId = uuid.v4();
     await Transaction.create({
       Transactionid: orderId,
-      Bookingid: bookingId,
+      vehicleid: vehicleid,
       id: req.user.id,
       status: 1,
-      amount: booking.amount,
-      GSTAmount: booking.GSTAmount,
-      totalAmount: booking.totalUserAmount
+      amount: hostPaymentPlan.Amount,
+      GSTAmount: hostPaymentPlan.GSTAmount,
+      totalAmount: hostPaymentPlan.TotalAmount
     });
-    await Booking.update({ Transactionid: orderId }, { where: { Bookingid: bookingId } });
+    await hostPaymentPlan.update({ Transactionid: orderId });
     const payload = {
         "merchantId": "M2207FVORVMF0",
         "merchantTransactionId": orderId,
@@ -209,14 +193,14 @@ const checkPaymentStatus = async (req, res) => {
         console.log(`Payment status updated for link ID: ${link_id} with status: ${link_status}`);
 
         // Fetch booking and user details if needed and send a confirmation email
-        const booking = await Booking.findOne({ where: { Bookingid: transaction.Bookingid } });
+        const hostPayment = await HostPayment.findOne({ where: { VehicleId: transaction.vehicleid } });
         const user = await User.findByPk(booking.id);
 
-        const bookingDetails = {
-          carModel: booking.carmodel,
-          startDate: booking.startTripDate,
-          endDate: booking.endTripDate,
-          amount: booking.totalUserAmount
+        const PlanDetails = {
+          VehicleId: hostPayment.vehicleid,
+          PlanType: hostPayment.PlanType,
+          PlanEndDate: hostPayment.PlanEndDate,
+          amount: hostPayment.TotalAmount
         };
 
         // Send confirmation email

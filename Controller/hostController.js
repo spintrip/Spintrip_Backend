@@ -113,7 +113,7 @@ const generateOTP = () => {
           { where: { Bookingid: bookingId } }
         );
         const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-        await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
+        //await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
         return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
       }
       else {
@@ -124,9 +124,45 @@ const generateOTP = () => {
       res.status(500).json({ message: 'Server error' });
     }
   }
+
+  const cancelbooking = async (req, res) => {
+    try {
+      const { bookingId, CancelReason } = req.body;
+      const booking = await Booking.findOne(
+        { where: { Bookingid: bookingId } }
+      );
+      if (booking) {
+        if (booking.status === 1) {
+          const today = new Date();
+          const cancelDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          await Booking.update(
+            {
+              status: 4,
+              cancelDate: cancelDate,
+              cancelReason: CancelReason
+            },
+            { where: { Bookingid: bookingId } }
+          );
+          const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
+          sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
+          res.status(201).json({ message: 'Trip Has been Cancelled' });
+        }
+        else {
+          res.status(404).json({ message: 'Ride Already Started' });
+        }
+      }
+      else {
+        res.status(404).json({ message: 'Booking Not found' });
+      }
+    }
+    catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  }
   module.exports = {
     generateOTP,
     sendOTP,
     tripstart,
-    bookingcompleted
+    bookingcompleted,
+    cancelbooking
    }

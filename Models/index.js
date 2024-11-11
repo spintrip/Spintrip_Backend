@@ -57,10 +57,8 @@ db.Device = require('./deviceModel')(sequelize, DataTypes);
 db.Feature = require('./featureModel')(sequelize, DataTypes);
 db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
-db.Payout = require('./payoutModel')(sequelize, DataTypes);
-db.BookingExtension = require('./bookingExtension')(sequelize, DataTypes);
 db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
-db.auditTransaction = require('./auditTransactionModel')(sequelize, DataTypes);
+
 
 const associateModels = () => {
   const { User, Admin, Car, Host, UserAdditional, Booking, Listing,
@@ -110,7 +108,7 @@ const associateModels = () => {
   // Associations for HostPayment
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Vehicle, { foreignKey: 'VehicleId', onDelete: 'CASCADE' });
-  HostPayment.belongsTo(Transaction, { foreignKey: 'TransactionId', targetKey: 'Transactionid', onDelete: 'CASCADE' });
+  //HostPayment.belongsTo(Transaction, { foreignKey: 'TransactionId', targetKey: 'Transactionid', onDelete: 'CASCADE' });
 };
 
 associateModels();

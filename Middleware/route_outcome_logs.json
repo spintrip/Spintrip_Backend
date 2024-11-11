@@ -2538,5 +2538,895 @@
     "body": {
       "message": "{\"message\":\"Booking created successfully\",\"booking\":{\"Bookingid\":\"b4121bf3-b7f5-4e8e-b0ff-c5a017f88a80\",\"vehicleid\":\"e57f42e4-3c10-497b-8a63-7724f86c05fb\",\"id\":\"7fff1fb2-a5a7-4549-bc6e-662416ebb17c\",\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"status\":1,\"updatedAt\":\"2024-11-09T09:52:20.672Z\",\"createdAt\":\"2024-11-09T09:52:20.672Z\",\"Date\":null,\"time\":null,\"timestamp\":null,\"amount\":null,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"userId\":null}}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T08:12:56.262Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T08:13:39.753Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"4209\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T08:13:53.286Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjMwZTYxY2FmLTgzYjUtNGVjYi04OWMzLWM3MDM4NGZjN2NhZSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMxMjI2NDMzfQ.5fQWysH5lmGfwaAhis0UeRCShuxRBYMx3Oip_MYgfwQ\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T08:14:35.148Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"37c76064-68dc-438b-b095-4df41907cb36\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:00.636Z\",\"updatedAt\":\"2024-11-09T01:32:00.636Z\"},{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:15.430Z\",\"updatedAt\":\"2024-11-09T01:32:15.430Z\"},{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"91830775-fb1c-40fa-8bba-8e3001f4b9b0\",\"createdAt\":\"2024-11-09T11:54:37.962Z\",\"updatedAt\":\"2024-11-09T11:54:37.962Z\"},{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"}]"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T08:15:14.947Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/e96b3f20-979e-4af7-af07-1d5437e556c5/vehicleImage_1.png\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/e96b3f20-979e-4af7-af07-1d5437e556c5/vehicleImage_2.png\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"bikemodel\":\"baleno\",\"HorsePower\":120,\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"1\",\"color\":\"2\",\"bodytype\":\"iron\",\"FuelType\":0,\"helmet\":1,\"helmetSpace\":true,\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"timestamp\":null,\"city\":\"bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T01:32:15.459Z\",\"updatedAt\":\"2024-11-09T01:37:59.825Z\"},\"distance\":5828.540465427782},{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"91830775-fb1c-40fa-8bba-8e3001f4b9b0\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/c02a133f-9c5f-4529-9840-4bb45042c142/vehicleImage_1.png\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/c02a133f-9c5f-4529-9840-4bb45042c142/vehicleImage_2.png\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"bikemodel\":\"baleno\",\"HorsePower\":120,\"type\":\"Hatchback\",\"brand\":\"MarutiSuzuki\",\"variant\":\"1\",\"color\":\"2\",\"bodytype\":\"iron\",\"FuelType\":0,\"helmet\":1,\"helmetSpace\":true,\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"timestamp\":null,\"city\":\"bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T11:54:37.984Z\",\"updatedAt\":\"2024-11-09T11:55:52.447Z\"},\"distance\":5828.540465427782},{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_1.png\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_2.png\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"bikemodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"FuelType\":0,\"helmet\":1,\"helmetSpace\":true,\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-09T14:12:05.998Z\",\"updatedAt\":\"2024-11-09T14:14:29.610Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T08:17:40.332Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:13:02.279Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"75d17e6f-79c1-4dd0-b0e5-d3dddda8bb36\",\"phone\":\"+918477384442\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 404,
+    "user": null,
+    "timestamp": "2024-11-10T12:22:48.963Z",
+    "body": {
+      "message": "{\"message\":\"User not found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 404,
+    "user": null,
+    "timestamp": "2024-11-10T12:23:00.149Z",
+    "body": {
+      "message": "{\"message\":\"User not found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:23:21.768Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"75d17e6f-79c1-4dd0-b0e5-d3dddda8bb36\",\"timestamp\":\"2024-11-10T12:23:21.727Z\",\"updatedAt\":\"2024-11-10T12:23:21.731Z\",\"createdAt\":\"2024-11-10T12:23:21.731Z\",\"SecurityQuestion\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T12:23:38.951Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918477384442\",\"otp\":\"9654\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:29:46.930Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"6cedcbaf-74ec-49d6-8d6a-34b1a41aa5ed\",\"phone\":\"+918477384443\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:30:00.352Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"6cedcbaf-74ec-49d6-8d6a-34b1a41aa5ed\",\"timestamp\":\"2024-11-10T12:30:00.333Z\",\"updatedAt\":\"2024-11-10T12:30:00.335Z\",\"createdAt\":\"2024-11-10T12:30:00.335Z\",\"SecurityQuestion\":null,\"adminrole\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:31:44.038Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"dde365d6-22e8-45ea-92d7-5d09a2ab92d7\",\"phone\":\"+918477384444\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T12:31:53.783Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"dde365d6-22e8-45ea-92d7-5d09a2ab92d7\",\"timestamp\":\"2024-11-10T12:31:53.737Z\",\"adminrole\":1,\"updatedAt\":\"2024-11-10T12:31:53.739Z\",\"createdAt\":\"2024-11-10T12:31:53.739Z\",\"SecurityQuestion\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T12:32:12.329Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918477384444\",\"otp\":\"7152\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T12:32:33.901Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T12:39:28.827Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T12:40:01.218Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":{\"name\":\"SequelizeDatabaseError\",\"parent\":{\"length\":110,\"name\":\"error\",\"severity\":\"ERROR\",\"code\":\"42703\",\"position\":\"126\",\"file\":\"parse_relation.c\",\"line\":\"3718\",\"routine\":\"errorMissingColumn\",\"sql\":\"SELECT \\\"id\\\", \\\"SecurityQuestion\\\", \\\"adminrole\\\", \\\"timestamp\\\", \\\"createdAt\\\", \\\"updatedAt\\\", \\\"userId\\\" FROM \\\"Admins\\\" AS \\\"Admin\\\" WHERE \\\"Admin\\\".\\\"phone\\\" = '+918477384444' LIMIT 1;\"},\"original\":{\"length\":110,\"name\":\"error\",\"severity\":\"ERROR\",\"code\":\"42703\",\"position\":\"126\",\"file\":\"parse_relation.c\",\"line\":\"3718\",\"routine\":\"errorMissingColumn\",\"sql\":\"SELECT \\\"id\\\", \\\"SecurityQuestion\\\", \\\"adminrole\\\", \\\"timestamp\\\", \\\"createdAt\\\", \\\"updatedAt\\\", \\\"userId\\\" FROM \\\"Admins\\\" AS \\\"Admin\\\" WHERE \\\"Admin\\\".\\\"phone\\\" = '+918477384444' LIMIT 1;\"},\"sql\":\"SELECT \\\"id\\\", \\\"SecurityQuestion\\\", \\\"adminrole\\\", \\\"timestamp\\\", \\\"createdAt\\\", \\\"updatedAt\\\", \\\"userId\\\" FROM \\\"Admins\\\" AS \\\"Admin\\\" WHERE \\\"Admin\\\".\\\"phone\\\" = '+918477384444' LIMIT 1;\",\"parameters\":{}}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T12:43:01.548Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-10T12:44:07.035Z",
+    "body": {
+      "message": "{\"message\":\"Invalid OTP\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T12:44:16.425Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918477384444\",\"otp\":\"3378\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-10T12:44:23.505Z",
+    "body": {
+      "message": "{\"message\":\"Invalid OTP\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T12:45:24.519Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"dde365d6-22e8-45ea-92d7-5d09a2ab92d7\",\"SecurityQuestion\":null,\"adminrole\":1,\"timestamp\":\"2024-11-10T12:31:53.737Z\",\"createdAt\":\"2024-11-10T12:31:53.739Z\",\"updatedAt\":\"2024-11-10T12:31:53.739Z\",\"userId\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImRkZTM2NWQ2LTIyZTgtNDVlYS05MmQ3LTVkMDlhMmFiOTJkNyIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMTI0MjcyNH0.Ac_-5sX5lMHtbviYdf4JBchNdgFUPj-K05XGmyo6IIE\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/vehicles",
+    "status": 200,
+    "user": "dde365d6-22e8-45ea-92d7-5d09a2ab92d7",
+    "timestamp": "2024-11-10T12:49:25.236Z",
+    "body": {
+      "message": "{\"message\":\"All available vehicles\",\"vehicles\":[{\"vehicleid\":\"37c76064-68dc-438b-b095-4df41907cb36\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:00.636Z\",\"updatedAt\":\"2024-11-09T01:32:00.636Z\",\"additionalInfo\":{\"vehicleid\":\"37c76064-68dc-438b-b095-4df41907cb36\",\"Additionalinfo\":null,\"vehicleimage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/37c76064-68dc-438b-b095-4df41907cb36/vehicleImage_1.png\",\"vehicleimage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/37c76064-68dc-438b-b095-4df41907cb36/vehicleImage_2.png\",\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"4\",\"timestamp\":null,\"createdAt\":\"2024-11-09T01:32:00.649Z\",\"updatedAt\":\"2024-11-09T01:37:15.973Z\"}},{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:15.430Z\",\"updatedAt\":\"2024-11-09T01:32:15.430Z\",\"additionalInfo\":{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"Additionalinfo\":null,\"vehicleimage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/e96b3f20-979e-4af7-af07-1d5437e556c5/vehicleImage_1.png\",\"vehicleimage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/e96b3f20-979e-4af7-af07-1d5437e556c5/vehicleImage_2.png\",\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"4\",\"timestamp\":null,\"createdAt\":\"2024-11-09T01:32:15.445Z\",\"updatedAt\":\"2024-11-09T01:37:59.796Z\"}},{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"91830775-fb1c-40fa-8bba-8e3001f4b9b0\",\"createdAt\":\"2024-11-09T11:54:37.962Z\",\"updatedAt\":\"2024-11-09T11:54:37.962Z\",\"additionalInfo\":{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"Additionalinfo\":null,\"vehicleimage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/c02a133f-9c5f-4529-9840-4bb45042c142/vehicleImage_1.png\",\"vehicleimage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/c02a133f-9c5f-4529-9840-4bb45042c142/vehicleImage_2.png\",\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"4\",\"timestamp\":null,\"createdAt\":\"2024-11-09T11:54:37.977Z\",\"updatedAt\":\"2024-11-09T11:55:52.408Z\"}},{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\",\"additionalInfo\":{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"Additionalinfo\":null,\"vehicleimage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_1.png\",\"vehicleimage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_2.png\",\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":1,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\",\"timestamp\":null,\"createdAt\":\"2024-11-09T14:12:05.979Z\",\"updatedAt\":\"2024-11-09T14:14:29.585Z\"}}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/vehicles/37c76064-68dc-438b-b095-4df41907cb36",
+    "status": 500,
+    "user": "dde365d6-22e8-45ea-92d7-5d09a2ab92d7",
+    "timestamp": "2024-11-10T12:50:25.217Z",
+    "body": {
+      "message": "{\"message\":\"Error fetching vehicle\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T13:01:55.496Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-10T13:02:44.821Z",
+    "body": {
+      "message": "{\"message\":\"Invalid phone or password\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T13:02:57.328Z",
+    "body": {
+      "message": "{\"message\":\"Error creating host\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T13:03:22.044Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"4978\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T13:03:30.069Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFkMGM4NWZhLTJlYjYtNDc5Ny05MDg1LWVhNzIzZDY1M2M2OCIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMxMjQzODEwfQ.CsHKbeCA8h19TU799FI1H8S-3vDL36i1yql_bIvc_10\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:03:45.474Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:04:11.106Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"listingId\":\"af7c03cc-e467-49dc-983c-8abe7e6c8ba6\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:04:19.388Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"listingId\":\"dcb39967-efb5-4bec-ad46-eb887822bda0\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/VehicleAdditional",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:04:38.701Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle Additional added\",\"vehicleAdditionals\":{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\",\"verificationStatus\":1},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":\"120\",\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":\"1\",\"Musicsystem\":\"1\",\"Autowindow\":\"1\",\"Sunroof\":null,\"Touchscreen\":\"1\",\"Sevenseater\":\"1\",\"Reversecamera\":\"1\",\"Transmission\":\"1\",\"Airbags\":\"1\",\"FuelType\":\"0\",\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:04:38.689Z\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/VehicleAdditional",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:05:03.769Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle Additional added\",\"vehicleAdditionals\":{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\",\"verificationStatus\":1},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":\"120\",\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":\"1\",\"Musicsystem\":\"1\",\"Autowindow\":\"1\",\"Sunroof\":null,\"Touchscreen\":\"1\",\"Sevenseater\":\"1\",\"Reversecamera\":\"1\",\"Transmission\":\"1\",\"Airbags\":\"1\",\"FuelType\":\"0\",\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/pricing",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-10T13:05:26.727Z",
+    "body": {
+      "message": "{\"message\":\"price for the vehicle\",\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"costPerHr\":200}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/getvehicleAdditional",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:06:04.122Z",
+    "body": {
+      "message": "{\"message\":\"vehicle Additional data\",\"vehicleAdditionals\":{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"verificationStatus\":1,\"latitude\":15.27,\"longitude\":23.57,\"rcNumber\":\"12345\",\"registrationYear\":\"2020-01-01\"},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"vehicleImages\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\"],\"updatedFeatures\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/listing",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:06:17.289Z",
+    "body": {
+      "message": "{\"message\":\"Listing successfully queried\",\"hostListings\":[{\"id\":\"02845cd6-3a52-4d41-9c11-d40a3aeadfbe\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"details\":null,\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"pauseTimeStartDate\":null,\"pauseTimeEndDate\":null,\"pauseTimeStartTime\":null,\"pauseTimeEndTime\":null,\"bookingId\":null,\"rcNumber\":\"12345\",\"vehicletype\":\"1\",\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_1.png\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/be761843-36a4-48da-a1b6-6dd6e1752849/vehicleImage_2.png\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null},{\"id\":\"af7c03cc-e467-49dc-983c-8abe7e6c8ba6\",\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"details\":null,\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"pauseTimeStartDate\":null,\"pauseTimeEndDate\":null,\"pauseTimeStartTime\":null,\"pauseTimeEndTime\":null,\"bookingId\":null,\"rcNumber\":\"12345\",\"vehicletype\":\"1\",\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null},{\"id\":\"dcb39967-efb5-4bec-ad46-eb887822bda0\",\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"details\":null,\"startDate\":null,\"startTime\":null,\"endDate\":null,\"endTime\":null,\"pauseTimeStartDate\":null,\"pauseTimeEndDate\":null,\"pauseTimeStartTime\":null,\"pauseTimeEndTime\":null,\"bookingId\":null,\"rcNumber\":\"12345\",\"vehicletype\":\"2\",\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T13:08:13.209Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"9312\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T13:08:25.913Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjMwZTYxY2FmLTgzYjUtNGVjYi04OWMzLWM3MDM4NGZjN2NhZSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMxMjQ0MTA1fQ.23fkOI6CQn88kpT4GJ6htIWQdxan4gD3x5zZrvVZeFg\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:08:36.492Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"phone\":\"+918477384440\",\"role\":\"user\",\"createdAt\":\"2024-11-09T11:58:22.126Z\",\"updatedAt\":\"2024-11-10T13:08:13.193Z\"},\"profile\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"dlNumber\":null,\"fullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:09:08.514Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-10T13:09:25.773Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"37c76064-68dc-438b-b095-4df41907cb36\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:00.636Z\",\"updatedAt\":\"2024-11-09T01:32:00.636Z\"},{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:15.430Z\",\"updatedAt\":\"2024-11-09T01:32:15.430Z\"},{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"91830775-fb1c-40fa-8bba-8e3001f4b9b0\",\"createdAt\":\"2024-11-09T11:54:37.962Z\",\"updatedAt\":\"2024-11-09T11:54:37.962Z\"},{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-10T13:04:19.345Z\"}]"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/verify",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:11:46.722Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:11:56.746Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"phone\":\"+918477384440\",\"role\":\"user\",\"createdAt\":\"2024-11-09T11:58:22.126Z\",\"updatedAt\":\"2024-11-10T13:08:13.193Z\"},\"profile\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswatp99@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":1,\"dl\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/30e61caf-83b5-4ecb-89c3-c70384fc7cae/dlFile.png\"],\"aadhar\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/30e61caf-83b5-4ecb-89c3-c70384fc7cae/aadharFile.png\"],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/verify",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:12:27.708Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:12:36.734Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"phone\":\"+918477384440\",\"role\":\"user\",\"createdAt\":\"2024-11-09T11:58:22.126Z\",\"updatedAt\":\"2024-11-10T13:08:13.193Z\"},\"profile\":{\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswatp99@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":1,\"dl\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/30e61caf-83b5-4ecb-89c3-c70384fc7cae/dlFile.png\"],\"aadhar\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/30e61caf-83b5-4ecb-89c3-c70384fc7cae/aadharFile.png\"],\"profilePic\":[\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/30e61caf-83b5-4ecb-89c3-c70384fc7cae/profilePic.png\"]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:13:06.012Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T13:14:16.692Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-10T13:15:48.286Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-10T13:16:05.506Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:16:19.925Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:17:08.768Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:21:23.933Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:22:05.234Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:23:50.850Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:27:16.106Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T13:28:00.990Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T14:09:54.227Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-10T14:10:39.710Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T06:40:09.468Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/phonepayment",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-11T07:40:53.657Z",
+    "body": {
+      "message": "{\"message\":\"Server Error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T07:41:49.264Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T07:42:39.119Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T07:43:44.123Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T07:44:30.598Z",
+    "body": {
+      "message": "{\"message\":\"Error activating vehicle\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T07:46:09.643Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle activated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T07:46:47.842Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-11T07:47:16.773Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"37c76064-68dc-438b-b095-4df41907cb36\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:00.636Z\",\"updatedAt\":\"2024-11-09T01:32:00.636Z\"},{\"vehicleid\":\"e96b3f20-979e-4af7-af07-1d5437e556c5\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"62e496d2-bc5e-4337-90e7-a1666381dfaa\",\"createdAt\":\"2024-11-09T01:32:15.430Z\",\"updatedAt\":\"2024-11-09T01:32:15.430Z\"},{\"vehicleid\":\"c02a133f-9c5f-4529-9840-4bb45042c142\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"91830775-fb1c-40fa-8bba-8e3001f4b9b0\",\"createdAt\":\"2024-11-09T11:54:37.962Z\",\"updatedAt\":\"2024-11-09T11:54:37.962Z\"},{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T07:46:09.628Z\"}]"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T07:47:52.848Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T08:04:01.275Z",
+    "body": {
+      "message": "{\"hostBookings\":[{\"bookingId\":\"26afa93f-2785-4697-92d6-18198c343eb3\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"id\":\"ee524f69-894d-4339-9342-89088729755d\",\"bookedBy\":null,\"status\":4,\"amount\":null,\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"cancelDate\":\"2024-11-08T18:30:00.000Z\",\"cancelReason\":null,\"features\":[],\"createdAt\":\"2024-11-09T14:24:28.763Z\"},{\"bookingId\":\"e0ee54b8-91d9-48aa-bb22-9745c2f46f2c\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"id\":\"ee524f69-894d-4339-9342-89088729755d\",\"bookedBy\":null,\"status\":3,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":null,\"cancelReason\":null,\"features\":[],\"createdAt\":\"2024-11-09T14:26:50.591Z\"}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/monthly-data",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T08:04:36.870Z",
+    "body": {
+      "message": "{\"monthlyData\":[{\"month\":\"2027-11-01T00:00:00.000Z\",\"totalAmount\":4803,\"numberOfBookings\":\"1\"}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:04:47.870Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:06:08.899Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:08:47.036Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:09:27.127Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:11:03.131Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:14:01.061Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:16:51.747Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:17:00.569Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 400,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:17:28.264Z",
+    "body": {
+      "message": "{\"message\":\"Invalid date or time format.\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "ee524f69-894d-4339-9342-89088729755d",
+    "timestamp": "2024-11-11T08:17:39.397Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-11T08:19:14.543Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-11T08:19:21.553Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_1.jfif\",\"vehicleImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/17d2b20a-d52e-47da-99de-e66a423f9d5e/vehicleImage_2.jfif\",\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":200,\"hours\":57.016666666666666,\"amount\":11403},\"Additional\":{\"carmodel\":\"Dominar\",\"HorsePower\":120,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"AC\":true,\"Musicsystem\":true,\"Autowindow\":true,\"Sunroof\":null,\"Touchscreen\":true,\"Sevenseater\":true,\"Reversecamera\":true,\"Transmission\":true,\"Airbags\":true,\"FuelType\":false,\"PetFriendly\":null,\"PowerSteering\":null,\"ABS\":null,\"tractionControl\":null,\"fullBootSpace\":null,\"KeylessEntry\":null,\"airPurifier\":null,\"cruiseControl\":null,\"voiceControl\":null,\"usbCharger\":null,\"bluetooth\":null,\"airFreshner\":null,\"ventelatedFrontSeat\":null,\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"timestamp\":null,\"rating\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-10T13:04:19.365Z\",\"updatedAt\":\"2024-11-10T13:05:03.758Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-11T08:19:51.834Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"2cf7b09e-1cf4-4ebc-9466-38fd0e91eba6\",\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"status\":1,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T08:49:38.268Z",
+    "body": {
+      "message": "{\"hostBookings\":[{\"bookingId\":\"26afa93f-2785-4697-92d6-18198c343eb3\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"id\":\"ee524f69-894d-4339-9342-89088729755d\",\"bookedBy\":null,\"status\":4,\"amount\":null,\"startTripDate\":null,\"endTripDate\":null,\"startTripTime\":null,\"endTripTime\":null,\"cancelDate\":\"2024-11-08T18:30:00.000Z\",\"cancelReason\":null,\"features\":[],\"createdAt\":\"2024-11-09T14:24:28.763Z\"},{\"bookingId\":\"e0ee54b8-91d9-48aa-bb22-9745c2f46f2c\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"id\":\"ee524f69-894d-4339-9342-89088729755d\",\"bookedBy\":null,\"status\":3,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":null,\"cancelReason\":null,\"features\":[],\"createdAt\":\"2024-11-09T14:26:50.591Z\"},{\"bookingId\":\"2cf7b09e-1cf4-4ebc-9466-38fd0e91eba6\",\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"bookedBy\":\"Pandaa\",\"status\":1,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":null,\"cancelReason\":null,\"features\":[],\"createdAt\":\"2024-11-11T08:19:51.325Z\"}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/Trip-Started",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T08:51:56.600Z",
+    "body": {
+      "message": "{\"message\":\"Trip has started\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/booking-completed",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-11T08:53:31.005Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
   }
 ]

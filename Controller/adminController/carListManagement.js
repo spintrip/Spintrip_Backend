@@ -1,85 +1,85 @@
-const { Car, CarAdditional, Listing } = require('../../Models');
+const { Vehicle, VehicleAdditional, Listing } = require('../../Models');
 
 // Get all cars with additional information
-const getAllCars = async (req, res) => {
+const getAllvehicles = async (req, res) => {
   try {
-    const cars = await Car.findAll();
-    const carsWithAdditionalInfo = await Promise.all(
-      cars.map(async (car) => {
-        const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
+    const vehicles = await Vehicle.findAll();
+    const vehiclesWithAdditionalInfo = await Promise.all(
+      vehicles.map(async (vehicle) => {
+        const additionalInfo = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
         return {
-          ...car.toJSON(),
+          ...vehicle.toJSON(),
           additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
         };
       })
     );
 
-    res.status(200).json({ message: "All available cars", cars: carsWithAdditionalInfo });
+    res.status(200).json({ message: "All available vehicles", vehicles: vehiclesWithAdditionalInfo });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error fetching cars', error });
+    res.status(500).json({ message: 'Error fetching vehicles', error });
   }
 };
 
 // Get a car by ID with additional information
-const getCarById = async (req, res) => {
+const getvehicleById = async (req, res) => {
   try {
-    const car = await Car.findByPk(req.params.id);
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
+    const vehicle = await VehiclefindByPk(req.params.id);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
     }
 
-    const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
+    const additionalInfo = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
     res.status(200).json({
-      car: {
-        ...car.toJSON(),
+      vehicle: {
+        ...vehicle.toJSON(),
         additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
       },
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Error fetching car', error });
+    res.status(500).json({ message: 'Error fetching vehicle', error });
   }
 };
 
 // Update a car by ID
-const updateCarById = async (req, res) => {
+const updatevehicleById = async (req, res) => {
   try {
     const { vehicleid } = req.params;
-    const { additionalInfo, ...carData } = req.body;
+    const { additionalInfo, ...vehicleData } = req.body;
 
-    const [updated] = await Car.update(carData, { where: { vehicleid } });
+    const [updated] = await Vehicle.update(vehicleData, { where: { vehicleid } });
     if (!updated) {
-      return res.status(404).json({ message: 'Car not found' });
+      return res.status(404).json({ message: 'vehicle not found' });
     }
 
     if (additionalInfo) {
-      let additionalRecord = await CarAdditional.findOne({ where: { vehicleid } });
+      let additionalRecord = await VehicleAdditional.findOne({ where: { vehicleid } });
       if (additionalRecord) {
         await additionalRecord.update(additionalInfo);
       }
     }
 
-    const updatedCar = await Car.findByPk(vehicleid);
-    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { vehicleid } });
+    const updatedVehicle = await Vehicle.findByPk(vehicleid);
+    const updatedAdditionalInfo = await VehicleAdditional.findOne({ where: { vehicleid } });
 
     res.status(200).json({
-      message: 'Car updated successfully',
+      message: 'Vehicle updated successfully',
       car: {
-        ...updatedCar.toJSON(),
+        ...updatedVehicle.toJSON(),
         additionalInfo: updatedAdditionalInfo ? updatedAdditionalInfo.toJSON() : null,
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating car', error });
+    res.status(500).json({ message: 'Error updating Vehicle', error });
   }
 };
 
 // Delete a car by ID
-const deleteCarById = async (req, res) => {
+const deletevehicleById = async (req, res) => {
   try {
-    await Car.destroy({ where: { vehicleid: req.params.id } });
-    res.status(200).json({ message: 'Car deleted successfully' });
+    await Vehicle.destroy({ where: { vehicleid: req.params.id } });
+    res.status(200).json({ message: 'Vehicle deleted successfully' });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error deleting car', error });
@@ -134,10 +134,10 @@ const deleteListingById = async (req, res) => {
 };
 
 module.exports = { 
-  getAllCars, 
-  getCarById, 
-  updateCarById, 
-  deleteCarById, 
+  getAllvehicles, 
+  getvehicleById, 
+  updatevehicleById, 
+  deletevehicleById, 
   getAllListings, 
   getListingById, 
   updateListingById, 
