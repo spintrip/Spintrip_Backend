@@ -1,7 +1,12 @@
 const axios = require('axios');
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../Models');
-const generateOTP = () => {
+  const {
+    sendBookingConfirmationEmail,
+    sendBookingCompletionEmail,
+    sendBookingCancellationEmail
+  } = require('./emailController');
+  const generateOTP = () => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     return otp;
   };
@@ -29,7 +34,6 @@ const generateOTP = () => {
         throw new Error('Booking not found');
       }
   
-      // Fetch the host's user details using the hostId from the car model
       const user = await UserAdditional.findOne({
         where: { id: booking.id }
       });
@@ -113,7 +117,7 @@ const generateOTP = () => {
           { where: { Bookingid: bookingId } }
         );
         const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
-        //await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
+        await sendBookingCompletionEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
         return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
       }
       else {

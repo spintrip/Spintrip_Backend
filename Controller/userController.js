@@ -1832,7 +1832,7 @@ const rating = async (req, res) => {
 
     await vehicle.update({ rating: new_rating });
 
-    const vehicle_ratings = await vehicle.sum('rating', {
+    const vehicle_ratings = await Vehicle.sum('rating', {
       where: {
         hostId: vehicle.hostId,
       }
