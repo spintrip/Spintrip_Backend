@@ -7,10 +7,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     vehicleid: {
       type: DataTypes.STRING(36),
-      references: {
-        model: 'Cars',
-        key: 'vehicleid'
-      },
       allowNull: false
     },
     userId: {

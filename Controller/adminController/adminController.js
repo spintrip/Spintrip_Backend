@@ -1,4 +1,4 @@
-const { adminLogin, verifyOTP, adminSignup } = require('./authentication');
+const { adminLogin, verifyOTP, adminSignup, adminProfile } = require('./authentication');
 const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost } = require('./userHostManagement');
 const { getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById } = require('./carListManagement');
 const { createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById } = require('./payoutManagement');
@@ -17,5 +17,5 @@ module.exports = {
   createOrUpdateBrand, getAllBrands, updateBrandById, adminSignup,getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
-  sendNotification
+  sendNotification, adminProfile
 };

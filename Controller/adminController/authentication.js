@@ -1,4 +1,4 @@
-const { Admin, User } = require('../../Models');
+const { Admin, User, UserAdditional } = require('../../Models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -12,7 +12,7 @@ const sendOTP = (phone, otp) => {
 };
 
 const adminSignup = async (req, res) =>{
-  const { phone, password, securityQuestion, adminrole } = req.body;
+  const { phone, password, securityQuestion } = req.body;
 
   try {
     const user = await User.findOne({ where: { phone } });
@@ -30,7 +30,6 @@ const adminSignup = async (req, res) =>{
       timestamp: new Date(), // Set the current timestamp
       password: hashedPassword,
       UserId: user.id,
-      adminrole: adminrole,
       role: 'Admin'
     });
 
@@ -82,4 +81,21 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, verifyOTP, adminSignup };
+const adminProfile = async (req, res)  => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const additionalinfo = await UserAdditional.findByPk(adminId)
+
+    res.json({ phone: admin.phone, securityQuestion: admin.SecurityQuestion, additionalinfo });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+}
+
+module.exports = { adminLogin, verifyOTP, adminSignup, adminProfile };

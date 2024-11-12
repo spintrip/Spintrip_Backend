@@ -212,6 +212,7 @@ router.get('/profile', authenticate, async (req, res) => {
     const user = await User.findOne({ where: { id: hostId } });
     const vehicle = await Vehicle.findAll({ where: { hostId: host.id } })
     let additionalInfo = await HostAdditional.findByPk(hostId);
+    console.log(additionalInfo);
     let profile = {
       id: additionalInfo.id,
       GSTnumber: additionalInfo.GSTnumber,
@@ -222,11 +223,10 @@ router.get('/profile', authenticate, async (req, res) => {
       address: additionalInfo.Address,
       verificationStatus: additionalInfo.verification_status,
       phone: user.phone,
-      profilePic: additionalInfo.profilepic,   
+      profilePic: additionalInfo.profilepic, 
+      aadharFile:   additionalInfo.aadhar,
       businessName: additionalInfo.businessName,
     }
-
-
     // You can include more fields as per your User model
     res.json({ hostDetails: host, vehicle, profile });
   } catch (error) {
@@ -235,7 +235,7 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 // Add Car
-router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCount: 1 }]), async (req, res) => {
+router.put('/verify', authenticate, upload.fields([{ name: 'aadharFile', maxCount: 1 },{ name: 'profilePic', maxCount: 1 }]), async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findByPk(userId);
@@ -245,9 +245,10 @@ router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCoun
 
     let files = [];
     if (req.files) {
+      if (req.files['aadharFile']) files.push(req.files['aadharFile'][0]);
       if (req.files['profilePic']) files.push(req.files['profilePic'][0]);
     }
-    const { profilePic } = req.files;
+    const { profilePic, aadharFile } = req.files;
     console.log(profilePic);
     if (profilePic) {
       await HostAdditional.update({
@@ -255,6 +256,12 @@ router.put('/verify', authenticate, upload.fields([{ name: 'profilePic', maxCoun
       }, { where: { id: userId } });
     }
 
+    if (aadharFile) {
+      await HostAdditional.update({
+        aadhar: aadharFile ? aadharFile[0].location : null,
+      }, { where: { id: userId } });
+      console.log(aadharFile)
+    }
     res.status(200).json({ message: 'Profile Updated successfully' });
   } catch (error) {
     console.log(error);

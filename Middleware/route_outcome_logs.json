@@ -3428,5 +3428,895 @@
     "body": {
       "message": "{\"message\":\"Server error\"}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-11T22:12:38.761Z",
+    "body": {
+      "message": "{\"message\":\"Error creating user\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-11T22:13:00.780Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"de098e31-2750-41e6-886d-f85982ebe1d4\",\"phone\":\"+918477384445\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-11T22:13:20.403Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"de098e31-2750-41e6-886d-f85982ebe1d4\",\"timestamp\":\"2024-11-11T22:13:20.381Z\",\"updatedAt\":\"2024-11-11T22:13:20.382Z\",\"createdAt\":\"2024-11-11T22:13:20.382Z\",\"SecurityQuestion\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-11T22:13:31.119Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918477384445\",\"otp\":\"3928\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-11T22:14:05.137Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"de098e31-2750-41e6-886d-f85982ebe1d4\",\"SecurityQuestion\":null,\"timestamp\":\"2024-11-11T22:13:20.381Z\",\"createdAt\":\"2024-11-11T22:13:20.382Z\",\"updatedAt\":\"2024-11-11T22:13:20.382Z\",\"userId\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImRlMDk4ZTMxLTI3NTAtNDFlNi04ODZkLWY4NTk4MmViZTFkNCIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMTM2MzI0NX0.CU6PvT6D0tdoAlSPqzkxh6Vnn3BNwCcqFVi5ixSYQPg\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/profile",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:29:26.875Z",
+    "body": {
+      "message": "{\"message\":{}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/profile",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:33:13.640Z",
+    "body": {
+      "message": "{\"message\":{}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/profile",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:33:16.486Z",
+    "body": {
+      "message": "{\"message\":{}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/profile",
+    "status": 200,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:34:05.570Z",
+    "body": {
+      "message": "{\"securityQuestion\":null,\"additionalinfo\":{\"id\":\"de098e31-2750-41e6-886d-f85982ebe1d4\",\"Dlverification\":null,\"FullName\":null,\"Email\":null,\"AadharVfid\":null,\"Address\":null,\"verification_status\":null,\"CurrentAddressVfid\":null,\"ml_data\":null,\"profilepic\":null,\"dl\":null,\"aadhar\":null,\"createdAt\":\"2024-11-11T22:13:00.779Z\",\"updatedAt\":\"2024-11-11T22:13:00.779Z\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/createBlog",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-11T22:34:15.734Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/createBlog",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:36:24.461Z",
+    "body": {
+      "message": "{\"error\":\"notNull Violation: Blog.blogImage1 cannot be null,\\nnotNull Violation: Blog.blogImage2 cannot be null\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/createBlog",
+    "status": 201,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:37:02.466Z",
+    "body": {
+      "message": "{\"blogId\":\"bf1368c9-7566-498d-bcd0-5301b7c8c21e\",\"blogName\":\"Welcome to SpinTrip\",\"blogAuthor\":\"Pratyay\",\"description\":\"Hello\",\"keywords\":\"World\",\"blogImage1\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/blog/blogImage_1731364620093-449578368.png\",\"blogImage2\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/blog/blogImage_1731364620149-274978325.png\",\"updatedAt\":\"2024-11-11T22:37:02.386Z\",\"createdAt\":\"2024-11-11T22:37:02.386Z\",\"timestamp\":null}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/updateBlog",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-11T22:37:40.474Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/updateBlog",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:37:55.284Z",
+    "body": {
+      "message": "{\"error\":\"notNull Violation: Blog.blogImage1 cannot be null,\\nnotNull Violation: Blog.blogImage2 cannot be null\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/updateBlog",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:38:03.598Z",
+    "body": {
+      "message": "{\"error\":\"notNull Violation: Blog.blogImage1 cannot be null,\\nnotNull Violation: Blog.blogImage2 cannot be null\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/updateBlog",
+    "status": 500,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:38:06.520Z",
+    "body": {
+      "message": "{\"error\":\"notNull Violation: Blog.blogImage1 cannot be null,\\nnotNull Violation: Blog.blogImage2 cannot be null\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/deleteBlog/bf1368c9-7566-498d-bcd0-5301b7c8c21e",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-11T22:38:19.483Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/deleteBlog/bf1368c9-7566-498d-bcd0-5301b7c8c21e",
+    "status": 200,
+    "user": "de098e31-2750-41e6-886d-f85982ebe1d4",
+    "timestamp": "2024-11-11T22:38:33.644Z",
+    "body": {
+      "message": "{\"message\":\"Blog deleted\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 500,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:52:50.039Z",
+    "body": {
+      "message": "{\"message\":\"Error updating profile\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:56:02.834Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:56:09.931Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:57:32.586Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:58:13.229Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T12:58:19.792Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:11:54.070Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:13:44.135Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:13:45.477Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:13:46.454Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:15:34.962Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:16:32.259Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:16:49.799Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:17:55.446Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/verify",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:18:15.911Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:18:21.648Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/aadharFile.jfif\",\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:19:46.623Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"84a49248-e913-401a-8140-3aced92c1b93\",\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"status\":1,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/Trip-Started",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:20:09.611Z",
+    "body": {
+      "message": "{\"message\":\"Trip has started\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/booking-completed",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:20:18.956Z",
+    "body": {
+      "message": "{\"message\":\"booking complete\",\"redirectTo\":\"/rating\",\"bookingId\":\"84a49248-e913-401a-8140-3aced92c1b93\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/rating",
+    "status": 201,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:39:41.578Z",
+    "body": {
+      "message": "\"Thank you for your response\""
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "1d0c85fa-2eb6-4797-9085-ea723d653c68",
+    "timestamp": "2024-11-12T13:40:00.472Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-09T14:05:05.765Z\",\"updatedAt\":\"2024-11-09T14:05:05.765Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-09T14:12:05.928Z\",\"updatedAt\":\"2024-11-09T14:12:05.928Z\"},{\"vehicleid\":\"3c0813ac-7123-458a-b739-5e7034c46a15\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:11.049Z\",\"updatedAt\":\"2024-11-10T13:04:11.049Z\"},{\"vehicleid\":\"17d2b20a-d52e-47da-99de-e66a423f9d5e\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":2.3125,\"activated\":true,\"hostId\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"createdAt\":\"2024-11-10T13:04:19.345Z\",\"updatedAt\":\"2024-11-11T22:05:56.753Z\"}],\"profile\":{\"id\":\"1d0c85fa-2eb6-4797-9085-ea723d653c68\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/profilePic.jfif\",\"aadharFile\":\"https://spintrip-bucket.s3.ap-south-1.amazonaws.com/1d0c85fa-2eb6-4797-9085-ea723d653c68/aadharFile.jfif\",\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:43:24.091Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"b6f109a2-27a1-4d25-9f79-815b479d19ff\",\"vehicleid\":\"be761843-36a4-48da-a1b6-6dd6e1752849\",\"id\":\"30e61caf-83b5-4ecb-89c3-c70384fc7cae\",\"status\":1,\"amount\":4803,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 500,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:44:05.621Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 500,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:47:40.081Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 500,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:48:26.969Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 500,
+    "user": "30e61caf-83b5-4ecb-89c3-c70384fc7cae",
+    "timestamp": "2024-11-12T13:49:49.870Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-12T13:54:47.700Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 404,
+    "user": null,
+    "timestamp": "2024-11-12T13:54:52.747Z",
+    "body": {
+      "message": "{\"message\":\"User not found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T13:55:00.577Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"3123\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T13:55:05.263Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwNjEyNmMzLWJmZTItNDA4NS05Y2ZkLTMyNzYyOWRkMWVkMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMxNDE5NzA1fQ.ywJ_JjuZvpxC01nY76ZNKwDSBaD_aQZn-_gNskoNEyo\"}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:55:14.133Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:55:20.514Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T13:55:00.566Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-12T13:55:39.365Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"phone\":\"917000000001\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T13:55:43.275Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"4973\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T13:55:47.092Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE1MmU5ZWRhLWZjZTAtNDc2MS1hMTAyLTRkNjdiOTM2YTY2MiIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMxNDE5NzQ3fQ.DR92BTgmHpy8jwF02pUlAERwpBHFeaUzSwpXXhUz2As\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:55:51.553Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-12T13:55:39.360Z\",\"updatedAt\":\"2024-11-12T13:55:39.360Z\",\"userId\":null},\"vehicle\":[],\"profile\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"GSTnumber\":null,\"PANnumber\":null,\"FullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"aadharFile\":null,\"businessName\":null}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:56:02.004Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:56:05.437Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-12T13:55:39.360Z\",\"updatedAt\":\"2024-11-12T13:55:39.360Z\",\"userId\":null},\"vehicle\":[],\"profile\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:56:44.641Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"vehicletype\":\"2\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":null,\"listingId\":\"7c9afcae-0ea6-4dc6-9f39-91c2643b62a7\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:56:50.229Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle and listing added successfully for the host\",\"postedVehicle\":{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"vehicletype\":\"1\",\"chassisNo\":\"8945047389294732059\",\"engineNumber\":\"6739\",\"rcNumber\":\"12345\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":null,\"listingId\":\"95ef6177-6071-4f88-8aa0-70d317ae3f22\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/activate-vehicle",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:57:23.016Z",
+    "body": {
+      "message": "{\"message\":\"Vehicle activated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:57:51.659Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:57:55.796Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":null,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":57.016666666666666,\"amount\":0},\"Additional\":{\"bikemodel\":\"Dominar\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-12T13:56:50.219Z\",\"updatedAt\":\"2024-11-12T13:56:50.219Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:58:07.483Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"f95b3a01-fd17-4184-8ddb-9215d6ae79f8\",\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":1,\"amount\":0,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/Trip-Started",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:58:28.917Z",
+    "body": {
+      "message": "{\"message\":\"Trip has started\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/booking-completed",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:58:36.490Z",
+    "body": {
+      "message": "{\"message\":\"booking complete\",\"redirectTo\":\"/rating\",\"bookingId\":\"f95b3a01-fd17-4184-8ddb-9215d6ae79f8\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/rating",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T13:58:52.784Z",
+    "body": {
+      "message": "\"Thank you for your response\""
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T13:59:11.983Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T13:58:52.784Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/Trip-Started",
+    "status": 404,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:42:22.908Z",
+    "body": {
+      "message": "{\"message\":\"Trip already started or not present\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/booking-completed",
+    "status": 404,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:42:31.477Z",
+    "body": {
+      "message": "{\"message\":\"Start the ride to Complete Booking\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:43:25.403Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T13:58:52.784Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:45:07.318Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"rating\":5,\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T13:58:52.784Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:46:45.696Z",
+    "body": {
+      "message": "{\"message\":\"Thank you for your response with feedback\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T14:46:57.410Z",
+    "body": {
+      "message": "[{\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:44.605Z\",\"updatedAt\":\"2024-11-12T13:56:44.605Z\"},{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":4,\"activated\":true,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:50.202Z\",\"updatedAt\":\"2024-11-12T14:46:45.658Z\"}]"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/getFeedback",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:47:29.693Z",
+    "body": {
+      "message": "{\"message\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:47:48.401Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":4,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":57.016666666666666,\"amount\":0},\"Additional\":{\"bikemodel\":\"Dominar\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-12T13:56:50.219Z\",\"updatedAt\":\"2024-11-12T13:56:50.219Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/getFeedback",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:48:05.732Z",
+    "body": {
+      "message": "{\"message\":[{\"feedbackId\":\"eaf4ff0b-2438-4a89-a36c-5eae3143190e\",\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"userId\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"userName\":\"Pandaa\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":4,\"comment\":\"Great Ride\",\"createdAt\":\"2024-11-12T14:46:45.684Z\",\"updatedAt\":\"2024-11-12T14:46:45.684Z\"}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:49:07.317Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"a915405f-8063-4206-a505-eb14457e9667\",\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":1,\"amount\":0,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/Trip-Started",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:49:47.403Z",
+    "body": {
+      "message": "{\"message\":\"Trip has started\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/booking-completed",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:50:04.155Z",
+    "body": {
+      "message": "{\"message\":\"booking complete\",\"redirectTo\":\"/rating\",\"bookingId\":\"a915405f-8063-4206-a505-eb14457e9667\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/rating",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:50:31.038Z",
+    "body": {
+      "message": "\"Thank you for your response\""
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/rating",
+    "status": 201,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:53:15.708Z",
+    "body": {
+      "message": "\"Thank you for your response\""
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:53:32.835Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"rating\":4.25,\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T14:53:15.708Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/rating",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:55:03.700Z",
+    "body": {
+      "message": "{\"message\":\"Thank you for your response with feedback\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/profile",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:55:22.741Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"role\":\"user\",\"rating\":4.25,\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T14:53:15.708Z\"},\"profile\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"dlNumber\":\"98756\",\"fullName\":\"Pandaa\",\"email\":\"saswat@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"dl\":[],\"aadhar\":[],\"profilePic\":[]}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:55:31.118Z",
+    "body": {
+      "message": "{\"availableVehicles\":[{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"chassisNo\":\"8945047389294732059\",\"rcNumber\":\"12345\",\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"rating\":4.5,\"registrationYear\":\"2020-01-01\",\"additionalInfo\":null,\"latitude\":15.27,\"longitude\":23.57,\"vehicleImage1\":null,\"vehicleImage2\":null,\"vehicleImage3\":null,\"vehicleImage4\":null,\"vehicleImage5\":null,\"pricing\":{\"costPerHr\":0,\"hours\":57.016666666666666,\"amount\":0},\"Additional\":{\"bikemodel\":\"Dominar\",\"HorsePower\":null,\"type\":\"Sports\",\"brand\":\"Bajaj\",\"variant\":\"S6\",\"color\":\"White\",\"bodytype\":\"iron\",\"FuelType\":null,\"helmet\":null,\"helmetSpace\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"timestamp\":null,\"city\":\"Bengaluru\",\"hostId\":null,\"createdAt\":\"2024-11-12T13:56:50.219Z\",\"updatedAt\":\"2024-11-12T13:56:50.219Z\"},\"distance\":5828.540465427782}]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T14:58:40.775Z",
+    "body": {
+      "message": "{\"message\":\"Booking successful\",\"bookings\":{\"bookingId\":\"11e7c101-c2c2-4a9a-bd87-9f95b2533d01\",\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":1,\"amount\":0,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\"}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T14:59:55.297Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-12T13:55:39.360Z\",\"updatedAt\":\"2024-11-12T13:55:39.360Z\",\"userId\":null},\"vehicle\":[{\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:44.605Z\",\"updatedAt\":\"2024-11-12T13:56:44.605Z\"},{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":4.5,\"activated\":true,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:50.202Z\",\"updatedAt\":\"2024-11-12T14:55:03.683Z\"}],\"profile\":{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"GSTnumber\":\"123456789\",\"PANnumber\":\"123456798\",\"FullName\":\"shaktimaan\",\"email\":\"pratyay@gmail.com\",\"aadharNumber\":\"9084\",\"address\":\"ajhdaidla\",\"verificationStatus\":null,\"phone\":\"917000000001\",\"profilePic\":null,\"aadharFile\":null,\"businessName\":\" India PVT Limited\"}}"
+    }
+  },
+  {
+    "method": "PUT",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "a52e9eda-fce0-4761-a102-4d67b936a662",
+    "timestamp": "2024-11-12T15:00:09.942Z",
+    "body": {
+      "message": "{\"message\":\"Profile Updated successfully\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/Cancel-Booking",
+    "status": 201,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T15:01:11.435Z",
+    "body": {
+      "message": "{\"message\":\"Trip Has been Cancelled\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/booking",
+    "status": 403,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T15:01:16.446Z",
+    "body": {
+      "message": "{\"message\":\"Only verified users can book this vehicle\"}"
+    }
   }
 ]
