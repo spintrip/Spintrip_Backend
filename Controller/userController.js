@@ -1055,7 +1055,7 @@ const booking = async (req, res) => {
     // Check if host requires verified users
     if (host.onlyVerifiedUsers) {
       const userAdditional = await UserAdditional.findOne({ where: { id: userId } });
-      if (!userAdditional || userAdditional.verification_status !== 1 || userAdditional.verification_status !== 2) {
+      if (!userAdditional || userAdditional.verification_status == 1 || userAdditional.verification_status == null ) {
         return res.status(403).json({ message: 'Only verified users can book this vehicle' });
       }
     }

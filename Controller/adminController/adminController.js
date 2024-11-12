@@ -1,6 +1,6 @@
 const { adminLogin, verifyOTP, adminSignup, adminProfile } = require('./authentication');
 const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost } = require('./userHostManagement');
-const { getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById } = require('./carListManagement');
+const { deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars, getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById } = require('./carListManagement');
 const { createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById } = require('./payoutManagement');
 const { getAllBookings, getBookingById, updateBookingById, deleteBookingById } = require('./bookingManagement');
 const { createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById } = require('./brandPricingManagement');
@@ -9,7 +9,7 @@ const { viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, reso
 const { sendNotification } = require('./notificationManagement');
 
 module.exports = {
-  adminLogin, verifyOTP,
+  adminLogin, verifyOTP, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
   getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById,

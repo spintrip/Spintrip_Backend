@@ -9,7 +9,7 @@ const {
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
-  sendNotification, adminProfile
+  sendNotification, adminProfile, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController')
 
@@ -62,221 +62,24 @@ router.get('/hosts/:id', authenticate, getHostById);
 router.delete('/hosts/:id', authenticate, deleteHost);
 
 
-router.get('/cars', authenticate, async (req, res) => {
-  try {
-    const adminId = req.user.id;
-    const admin = await Admin.findByPk(adminId);
-
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
-    
-    const cars = await Car.findAll();
-    const carsWithAdditionalInfo = await Promise.all(cars.map(async (car) => {
-      const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
-      return {
-        ...car.toJSON(),
-        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
-      };
-    }));
-
-    res.status(200).json({ message: "All available cars", cars: carsWithAdditionalInfo });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error fetching cars', error });
-  }
-});
-
+router.get('/cars', authenticate, cars);
 // Get Car by ID
-router.get('/cars/:id', authenticate, async (req, res) => {
-  try {
-    const car = await Car.findByPk(req.params.id);
-    if (!car) {
-      return res.status(404).json({ message: 'Car not found' });
-    }
-
-    const additionalInfo = await CarAdditional.findOne({ where: { vehicleid: car.vehicleid } });
-
-    res.status(200).json({
-      car: {
-        ...car.toJSON(),
-        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
-      }
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error fetching car', error });
-  }
-});
-
-
-
+router.get('/cars/:id', authenticate, carsById);
 // Update Car by ID
-router.put('/cars/:vehicleid', authenticate, async (req, res) => {
-  try {
-    const { vehicleid } = req.params;
-    const updateFields = {};
-    const { additionalInfo, ...carData } = req.body;
+router.put('/cars/:vehicleid', authenticate, updateCars);
 
-    // Update Car data
-    for (let key in carData) {
-      if (carData.hasOwnProperty(key)) {
-        updateFields[key] = carData[key];
-      }
-    }
-
-    const [updated] = await Car.update(updateFields, { where: { vehicleid } });
-
-    // if (!updated) {
-    //   return res.status(404).json({ message: 'Car not found' });
-    // }
-
-    if (additionalInfo) {
-      let additionalRecord = await CarAdditional.findOne({ where: { vehicleid } });
-
-      if (additionalRecord) {
-          await additionalRecord.update(additionalInfo);
-      }
-    }
-
-    // Fetch updated car with additional info
-    const updatedCar = await Car.findByPk(vehicleid);
-    const updatedAdditionalInfo = await CarAdditional.findOne({ where: { vehicleid } });
-
-    res.status(200).json({
-      message: 'Car updated successfully',
-      car: {
-        ...updatedCar.toJSON(),
-        additionalInfo: updatedAdditionalInfo ? updatedAdditionalInfo.toJSON() : null,
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating car', error });
-  }
-});
-
-router.delete('/cars/:id', authenticate, async (req, res) => {
-  try {
-    await Car.destroy({ where: { vehicleid: req.params.id } });
-    res.status(200).json({ message: 'Car deleted' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting car', error });
-  }
-});
-
-router.get('/users/:id', authenticate, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Fetch the additional info separately
-    const additionalInfo = await UserAdditional.findOne({
-      where: { id: user.id }
-    });
-
-    res.status(200).json({
-      user: {
-        ...user.toJSON(),
-        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
-      }
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error fetching user', error });
-  }
-});
-
-router.get('/hosts', authenticate, async (req, res) => {
-  try {
-    const adminId = req.user.id;
-    const admin = await Admin.findByPk(adminId);
-
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
-    const hosts = await Host.findAll();
-    res.status(200).json({ "message": "All available Hosts", hosts });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error fetching host', error });
-  }
-});
-
-//Get all users
-router.get('/users', authenticate, async (req, res) => {
-  try {
-    const adminId = req.user.id;
-    const admin = await Admin.findByPk(adminId);
-
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
+router.delete('/cars/:id', authenticate, deleteCars);
 
 
-    const users = await User.findAll();
-    const userAdditional = await UserAdditional.findAll();
+router.get('/bike', authenticate, bikes);
+// Get Car by ID
+router.get('/bike/:id', authenticate, bikeById);
+// Update Car by ID
+router.put('/bike/:vehicleid', authenticate, updateBike);
 
-    const usersWithAdditionalInfo = users.map(user => {
-      const additionalInfo = userAdditional.find(additional => additional.id === user.id);
-      return {
-        ...user.toJSON(),  // Convert Sequelize model instance to plain object
-        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null
-      };
-    });
-
-    res.status(200).json({ message: "All available Users", users: usersWithAdditionalInfo });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error fetching users', error });
-  }
-});
+router.delete('/bike/:id', authenticate, deleteBike);
 
 
-router.put('/users/:id', authenticate, async (req, res) => {
-  try {
-    console.log(req.user.id);
-    const adminId = req.user.id;
-    const admin = await Admin.findByPk(adminId);
-
-    if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const { additionalInfo, ...userData } = req.body;
-    await user.update(userData);
-
-    if (additionalInfo) {
-      let additionalRecord = await UserAdditional.findOne({ where: { id: req.params.id } });
-
-      if (additionalRecord) {
-        await additionalRecord.update(additionalInfo);
-      } 
-    }
-
-    // Fetch the updated user data and additional info separately
-    const updatedUser = await User.findByPk(req.params.id);
-    const updatedAdditionalInfo = await UserAdditional.findOne({ where: { id:  req.params.id  } });
-
-    res.status(200).json({
-      message: 'User updated successfully',
-      user: {
-        ...updatedUser.toJSON(),
-        additionalInfo: updatedAdditionalInfo ? updatedAdditionalInfo.toJSON() : null,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error updating user', error });
-  }
-});
 
 router.get('/transaction', authenticate, async (req, res) => {
   try {
@@ -338,86 +141,6 @@ router.delete('/transaction/:id', authenticate, async (req, res) => {
   }
 });
 
-router.delete('/users/:id', async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const bookings = await Booking.findAll({
-      where: { id: user.id },
-      include: [{ model: Transaction, where: { Bookingid: Sequelize.col('Booking.Bookingid') }, required: false }], // Fetch related transactions
-      raw: true
-    });
-    
-    if (bookings && bookings.length > 0) {
-      const auditBookings = bookings.map(booking => ({
-        Bookingid: booking.Bookingid,
-        Date: booking.Date,
-        vehicleid: booking.vehicleid,
-        time: booking.time,
-        timestamp: booking.timestamp,
-        id: booking.id,
-        status: booking.status,
-        amount: booking.amount,
-        GSTAmount: booking.GSTAmount,
-        insurance: booking.insurance,
-        totalUserAmount: booking.totalUserAmount,
-        TDSAmount: booking.TDSAmount,
-        totalHostAmount: booking.totalHostAmount,
-        Transactionid: booking.Transactionid,
-        startTripDate: booking.startTripDate,
-        endTripDate: booking.endTripDate,
-        startTripTime: booking.startTripTime,
-        endTripTime: booking.endTripTime,
-        cancelDate: booking.cancelDate,
-        cancelReason: booking.cancelReason,
-        features: booking.features
-      }));
-    
-      const auditTransactions = bookings
-        .filter(booking => booking['Transactions.Transactionid']) 
-        .map(booking => ({
-          Transactionid: booking['Transactions.Transactionid'],
-          Bookingid: booking.Bookingid,
-          Date: booking['Transactions.Date'],
-          time: booking['Transactions.time'],
-          timestamp: booking['Transactions.timestamp'],
-          id: booking['Transactions.id'],
-          status: booking['Transactions.status'],
-          amount: booking['Transactions.amount'],
-          GSTAmount: booking['Transactions.GSTAmount'],
-          totalAmount: booking['Transactions.totalAmount']
-        }));
-    
-      await auditBooking.bulkCreate(auditBookings);
-      await auditTransaction.bulkCreate(auditTransactions);
-    }
-    await user.destroy();
-    res.status(200).json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting user', error });
-  }
-});
-
-router.delete('/hosts/:id', async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'Host not found' });
-    }
-    const host = await Host.findByPk(req.params.id);
-    if(!host){
-      return res.status(404).json({ message: 'Host not found' });
-    }
-    await user.destroy();
-    res.status(200).json({ message: 'Host deleted successfully' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting user', error });
-  }
-});
 
 router.post('/createBlog', authenticate, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), createBlog);
 
