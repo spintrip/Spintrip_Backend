@@ -4318,5 +4318,135 @@
     "body": {
       "message": "{\"message\":\"Only verified users can book this vehicle\"}"
     }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/users",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-12T21:04:43.117Z",
+    "body": {
+      "message": "{\"message\":\"Invalid token\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-12T21:04:51.883Z",
+    "body": {
+      "message": "{\"message\":\"Invalid phone number\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-12T21:04:58.658Z",
+    "body": {
+      "message": "{\"message\":\"Admin created\",\"admin\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"timestamp\":\"2024-11-12T21:04:58.636Z\",\"updatedAt\":\"2024-11-12T21:04:58.638Z\",\"createdAt\":\"2024-11-12T21:04:58.638Z\",\"SecurityQuestion\":null,\"userId\":null}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T21:05:04.079Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"phone\":\"+918477384445\",\"otp\":\"7760\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/admin/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-12T21:05:08.831Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"SecurityQuestion\":null,\"timestamp\":\"2024-11-12T21:04:58.636Z\",\"createdAt\":\"2024-11-12T21:04:58.638Z\",\"updatedAt\":\"2024-11-12T21:04:58.638Z\",\"userId\":null},\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwNjEyNmMzLWJmZTItNDA4NS05Y2ZkLTMyNzYyOWRkMWVkMSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMTQ0NTUwOH0.PayQRY4OEOXwOPQ1ud9hn3u4mUeCUGhkb2y_PwE4phw\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/users",
+    "status": 500,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:05:14.844Z",
+    "body": {
+      "message": "{\"message\":\"Error fetching users\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/users",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:06:05.447Z",
+    "body": {
+      "message": "{\"message\":\"All available Users\",\"users\":[{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"phone\":\"917000000001\",\"password\":\"$2b$10$TeCtkDLNBz0Wqc8KtTSLKOMnX6CN0GmbZ97hEhEfUGc.fMZECcbJq\",\"role\":\"Host\",\"otp\":\"4973\",\"timestamp\":null,\"status\":null,\"rating\":null,\"createdAt\":\"2024-11-12T13:55:39.356Z\",\"updatedAt\":\"2024-11-12T13:55:43.266Z\",\"userId\":null,\"additionalInfo\":null},{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"password\":\"$2b$10$ZzBWof1XF8TavzlUc7xRx.5XYyPQ4vWdxNRtnbvaGt9j/qFmZcQU2\",\"role\":\"user\",\"otp\":\"7760\",\"timestamp\":null,\"status\":null,\"rating\":4.25,\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T21:05:04.073Z\",\"userId\":null,\"additionalInfo\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"Dlverification\":\"98756\",\"FullName\":\"Pandaa\",\"Email\":\"saswat@gmail.com\",\"AadharVfid\":\"9084\",\"Address\":\"ajhdaidla\",\"verification_status\":null,\"CurrentAddressVfid\":null,\"ml_data\":null,\"profilepic\":null,\"dl\":null,\"aadhar\":null,\"createdAt\":\"2024-11-12T13:54:47.699Z\",\"updatedAt\":\"2024-11-12T13:55:14.117Z\"}}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/users/906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:06:28.674Z",
+    "body": {
+      "message": "{\"user\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"phone\":\"+918477384445\",\"password\":\"$2b$10$ZzBWof1XF8TavzlUc7xRx.5XYyPQ4vWdxNRtnbvaGt9j/qFmZcQU2\",\"role\":\"user\",\"otp\":\"7760\",\"timestamp\":null,\"status\":null,\"rating\":4.25,\"createdAt\":\"2024-11-12T13:54:47.690Z\",\"updatedAt\":\"2024-11-12T21:05:04.073Z\",\"userId\":null,\"additionalInfo\":{\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"Dlverification\":\"98756\",\"FullName\":\"Pandaa\",\"Email\":\"saswat@gmail.com\",\"AadharVfid\":\"9084\",\"Address\":\"ajhdaidla\",\"verification_status\":null,\"CurrentAddressVfid\":null,\"ml_data\":null,\"profilepic\":null,\"dl\":null,\"aadhar\":null,\"createdAt\":\"2024-11-12T13:54:47.699Z\",\"updatedAt\":\"2024-11-12T13:55:14.117Z\"}}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/vehicles",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:06:47.655Z",
+    "body": {
+      "message": "{\"message\":\"All available vehicles\",\"vehicles\":[{\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"vehicletype\":\"2\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":null,\"activated\":false,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:44.605Z\",\"updatedAt\":\"2024-11-12T13:56:44.605Z\",\"additionalInfo\":{\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\",\"timestamp\":null,\"createdAt\":\"2024-11-12T13:56:44.619Z\",\"updatedAt\":\"2024-11-12T13:56:44.619Z\"}},{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"vehicletype\":\"1\",\"chassisno\":\"8945047389294732059\",\"Rcnumber\":\"12345\",\"Enginenumber\":\"6739\",\"Registrationyear\":\"2020-01-01\",\"timestamp\":null,\"rating\":4.5,\"activated\":true,\"hostId\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"createdAt\":\"2024-11-12T13:56:50.202Z\",\"updatedAt\":\"2024-11-12T14:55:03.683Z\",\"additionalInfo\":{\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"Additionalinfo\":null,\"vehicleimage1\":null,\"vehicleimage2\":null,\"vehicleimage3\":null,\"vehicleimage4\":null,\"vehicleimage5\":null,\"verification_status\":null,\"latitude\":15.27,\"longitude\":23.57,\"address\":\"dkjfbjghfdbhodfgh\",\"timestamp\":null,\"createdAt\":\"2024-11-12T13:56:50.214Z\",\"updatedAt\":\"2024-11-12T13:56:50.214Z\"}}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/transaction",
+    "status": 500,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:07:03.445Z",
+    "body": {
+      "message": "{\"message\":\"Error fetching transaction\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/bookings",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:07:09.028Z",
+    "body": {
+      "message": "{\"message\":\"All available bookings\",\"bookings\":[{\"Bookingid\":\"f95b3a01-fd17-4184-8ddb-9215d6ae79f8\",\"Date\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"time\":null,\"timestamp\":null,\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":3,\"amount\":0,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"createdAt\":\"2024-11-12T13:58:07.469Z\",\"updatedAt\":\"2024-11-12T13:58:36.462Z\",\"userId\":null},{\"Bookingid\":\"a915405f-8063-4206-a505-eb14457e9667\",\"Date\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"time\":null,\"timestamp\":null,\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":3,\"amount\":0,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":null,\"cancelReason\":null,\"features\":null,\"createdAt\":\"2024-11-12T14:49:07.260Z\",\"updatedAt\":\"2024-11-12T14:50:04.128Z\",\"userId\":null},{\"Bookingid\":\"11e7c101-c2c2-4a9a-bd87-9f95b2533d01\",\"Date\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"time\":null,\"timestamp\":null,\"id\":\"906126c3-bfe2-4085-9cfd-327629dd1ed1\",\"status\":4,\"amount\":0,\"GSTAmount\":null,\"insurance\":null,\"totalUserAmount\":null,\"TDSAmount\":null,\"totalHostAmount\":null,\"Transactionid\":null,\"startTripDate\":\"2027-11-21\",\"endTripDate\":\"2027-11-22\",\"startTripTime\":\"05:30:00\",\"endTripTime\":\"05:31:00\",\"cancelDate\":\"2024-11-11T18:30:00.000Z\",\"cancelReason\":null,\"features\":null,\"createdAt\":\"2024-11-12T14:58:40.723Z\",\"updatedAt\":\"2024-11-12T15:01:11.416Z\",\"userId\":null}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/hosts",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:07:14.614Z",
+    "body": {
+      "message": "{\"message\":\"All available Hosts\",\"hosts\":[{\"id\":\"a52e9eda-fce0-4761-a102-4d67b936a662\",\"onlyVerifiedUsers\":true,\"createdAt\":\"2024-11-12T13:55:39.360Z\",\"updatedAt\":\"2024-11-12T15:00:09.936Z\",\"userId\":null}]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/admin/pricing",
+    "status": 200,
+    "user": "906126c3-bfe2-4085-9cfd-327629dd1ed1",
+    "timestamp": "2024-11-12T21:07:22.665Z",
+    "body": {
+      "message": "{\"message\":\"All pricing information\",\"pricing\":[{\"costperhr\":null,\"vehicleid\":\"f6499d26-653c-463e-9d19-c98777485bd4\",\"createdAt\":\"2024-11-12T13:56:44.632Z\",\"updatedAt\":\"2024-11-12T13:56:44.632Z\"},{\"costperhr\":null,\"vehicleid\":\"31227893-2104-412c-b3c3-bb3ead5cb68c\",\"createdAt\":\"2024-11-12T13:56:50.224Z\",\"updatedAt\":\"2024-11-12T13:56:50.224Z\"}]}"
+    }
   }
 ]
