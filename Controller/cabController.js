@@ -37,29 +37,55 @@ async function getDistanceAndDuration(origin, destination) {
  * Search for cabs within a specified area.
  */
 const searchForCabs = async (req, res) => {
-  const { latitude, longitude, distance } = req.body;
-
+  const { fromLocation, toLocation, searchRadius } = req.body;
+  console.log(req.body)
   try {
-    if (!latitude || !longitude || !distance) {
-      return res.status(400).json({ message: 'Missing required parameters' });
+    // Validate request parameters
+    if (!fromLocation || !toLocation || !searchRadius) {
+      return res.status(400).json({ message: 'Missing required parameters: fromLocation, toLocation, or searchRadius' });
     }
 
-    const searchRequestId = uuid.v4();
-    await publishMessage('search-cabs', { searchRequestId, latitude, longitude, distance });
+    const { latitude: fromLat, longitude: fromLng } = fromLocation;
+    console.log(fromLocation,toLocation);
+    // Find cabs within the search radius from the 'fromLocation'
+    const nearbyCabs = await VehicleAdditional.findAll({
+      where: sequelize.literal(`
+        ST_Distance_Sphere(
+          POINT(${fromLng}, ${fromLat}),
+          POINT(longitude, latitude)
+        ) <= ${searchRadius * 1000}  -- Convert radius from km to meters
+      `),
+      include: [
+        {
+          model: Vehicle,
+          where: { vehicletype: 3 }, // Ensure it's a cab
+        },
+      ],
+    });
 
-    const response = await waitForResponse('search-response', searchRequestId, 5000);
-
-    if (!response || !response.availableCabs) {
-      return res.status(404).json({ message: 'No cabs available in the specified area.' });
+    if (!nearbyCabs.length) {
+      return res.status(404).json({ message: 'No cabs available within the specified area.' });
     }
 
-    res.status(200).json({ message: 'Cabs found', availableCabs: response.availableCabs });
+    const results = nearbyCabs.map((cab) => ({
+      vehicleId: cab.vehicleid,
+      latitude: cab.latitude,
+      longitude: cab.longitude,
+      address: cab.address,
+      distanceFromStart: cab.distance, // Calculated by SQL if using distance
+    }));
+
+    res.status(200).json({
+      message: 'Cabs found',
+      availableCabs: results,
+      fromLocation,
+      toLocation,
+    });
   } catch (error) {
     console.error('Error searching for cabs:', error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 /**
  * Get an estimate for a trip using Google Maps API and dynamic pricing.
  */

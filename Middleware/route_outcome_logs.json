@@ -868,5 +868,205 @@
     "body": {
       "message": "{\"message\":\"Keep-alive received.\"}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": "14728cfe-0305-47f1-a667-6b92093e6253",
+    "timestamp": "2024-11-26T14:07:48.909Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"7305\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "14728cfe-0305-47f1-a667-6b92093e6253",
+    "timestamp": "2024-11-26T14:13:52.386Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-26T14:19:22.943Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"d5b47cb2-21d7-4a05-acde-a8addd03f40e\",\"phone\":\"+919588884923\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T14:19:26.190Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"5989\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T14:19:28.436Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"d5b47cb2-21d7-4a05-acde-a8addd03f40e\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQ1YjQ3Y2IyLTIxZDctNGEwNS1hY2RlLWE4YWRkZDAzZjQwZSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMyNjMwNzY4fQ.komgdJ_6kdaD46yE-7gUBDMvgrpOvFYP4fx8iNixkuo\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:20:41.831Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:23:48.466Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:23:51.570Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:27:25.058Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:28:14.368Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:28:19.235Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:28:57.571Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:29:05.125Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T14:29:27.567Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"d5b47cb2-21d7-4a05-acde-a8addd03f40e\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQ1YjQ3Y2IyLTIxZDctNGEwNS1hY2RlLWE4YWRkZDAzZjQwZSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMyNjMxMzY3fQ.olntOXxuhfebk3Ho0qBvCXNaeZ0JswZxpc9S4oAJMWk\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:29:30.178Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:29:44.975Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T14:29:49.904Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/users/vehicles",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T14:30:31.543Z",
+    "body": {
+      "message": "[]"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/profile",
+    "status": 200,
+    "user": "14728cfe-0305-47f1-a667-6b92093e6253",
+    "timestamp": "2024-11-26T14:31:04.745Z",
+    "body": {
+      "message": "{\"hostDetails\":{\"id\":\"14728cfe-0305-47f1-a667-6b92093e6253\",\"onlyVerifiedUsers\":false,\"createdAt\":\"2024-11-26T13:29:22.785Z\",\"updatedAt\":\"2024-11-26T13:29:22.785Z\",\"userId\":null},\"vehicle\":[],\"profile\":{\"id\":\"14728cfe-0305-47f1-a667-6b92093e6253\",\"GSTnumber\":null,\"PANnumber\":null,\"FullName\":null,\"email\":null,\"aadharNumber\":null,\"address\":null,\"verificationStatus\":null,\"phone\":\"917000000055\",\"profilePic\":null,\"aadharFile\":null,\"businessName\":null}}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/listing",
+    "status": 201,
+    "user": "14728cfe-0305-47f1-a667-6b92093e6253",
+    "timestamp": "2024-11-26T14:31:15.569Z",
+    "body": {
+      "message": "{\"message\":\"Listing successfully queried\",\"hostListings\":[]}"
+    }
   }
 ]

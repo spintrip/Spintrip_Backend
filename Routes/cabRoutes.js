@@ -230,7 +230,7 @@ router.post('/booking/complete', authenticate, async (req, res) => {
 });
 
 // Add a Cab
-router.post('/cab/add', authenticate, async (req, res) => {
+router.post('/add', authenticate, async (req, res) => {
   const { vehicleModel, type, brand, variant, color, bodyType, chassisNo, rcNumber, engineNumber, registrationYear, city, latitude, longitude, address, timeStamp } = req.body;
 
   try {
@@ -243,7 +243,6 @@ router.post('/cab/add', authenticate, async (req, res) => {
     await Cab.create({ vehicleid: vehicleId, cabmodel: vehicleModel, type, brand, variant, color, bodytype: bodyType, city });
     await Pricing.create({ vehicleid: vehicleId });
     await Listing.create({ id: uuid.v4(), vehicleid: vehicleId, hostid: req.user.id });
-
     res.status(201).json({ message: 'Cab added successfully', vehicleId });
   } catch (error) {
     console.error('Error adding cab:', error);
