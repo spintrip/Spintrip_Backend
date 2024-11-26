@@ -270,108 +270,113 @@ router.put('/verify', authenticate, upload.fields([{ name: 'aadharFile', maxCoun
 });
 
 
-router.post('/vehicle', authenticate, async (req, res) => {
-  const {
-    vehicleModel,
-    vehicletype,
-    type,
-    brand,
-    variant,
-    color,
-    bodyType,
-    chassisNo,
-    rcNumber,
-    engineNumber,
-    registrationYear,
-    city,
-    latitude,
-    longitude,
-    address,
-    timeStamp
-  } = req.body;
+// Add the required cabRoutes module
+const cabRoutesHandler = require('./cabRoutes');
+
+// Modify the existing endpoint
+router.post('/vehicle', authenticate, async (req, res, next) => {
+  const { vehicletype } = req.body;
 
   try {
+    // Reroute to cabRoutes if vehicle type is 3
+    if (vehicletype === '3') {
+      return cabRoutesHandler.addCab(req, res, next); // Invoke the specific handler in cabRoutes
+    }
+
+    // Continue with the default vehicle logic for other types
+    const {
+      vehicleModel,
+      vehicletype,
+      type,
+      brand,
+      variant,
+      color,
+      bodyType,
+      chassisNo,
+      rcNumber,
+      engineNumber,
+      registrationYear,
+      city,
+      latitude,
+      longitude,
+      address,
+      timeStamp
+    } = req.body;
+
     const host = await Host.findByPk(req.user.id);
-    const vehiclehostid = req.user.id;
 
     if (!host) {
       return res.status(401).json({ message: 'No Host found' });
     }
+
     const vehicleid = uuid.v4();
 
     const vehicle = await Vehicle.create({
-      vehicletype: vehicletype,
+      vehicletype,
       chassisno: chassisNo,
       Rcnumber: rcNumber,
       Enginenumber: engineNumber,
       Registrationyear: registrationYear,
-      vehicleid: vehicleid,
-      hostId: vehiclehostid,
+      vehicleid,
+      hostId: req.user.id,
       timestamp: timeStamp,
       activated: false // Add activated field
     });
 
     await VehicleAdditional.create({
       vehicleid: vehicle.vehicleid,
-      latitude: latitude,
-      longitude: longitude,
-      address: address,
+      latitude,
+      longitude,
+      address,
     });
 
-    if (vehicletype == '1') {
+    if (vehicletype === '1') {
       await Bike.create({
-        vehicleid: vehicleid,
+        vehicleid,
         bikemodel: vehicleModel,
-        type: type,
-        brand: brand,
-        variant: variant,
-        color: color,
+        type,
+        brand,
+        variant,
+        color,
         bodytype: bodyType,
-        city: city
+        city,
       });
     }
-    if (vehicletype == 2) {
+
+    if (vehicletype === '2') {
       await Car.create({
-        vehicleid: vehicleid,
+        vehicleid,
         carmodel: vehicleModel,
-        type: type,
-        brand: brand,
-        variant: variant,
-        color: color,
+        type,
+        brand,
+        variant,
+        color,
         bodytype: bodyType,
-        city: city
+        city,
       });
     }
 
     await Pricing.create({
-      vehicleid: vehicle.vehicleid
+      vehicleid: vehicle.vehicleid,
     });
 
     const listingid = uuid.v4();
     const listing = await Listing.create({
       id: listingid,
       vehicleid: vehicle.vehicleid,
-      hostid: vehiclehostid,
+      hostid: req.user.id,
     });
 
-    let postedVehicle = {
-      vehicleid: vehicle.vehicleid,
-      vehicletype: vehicle.vehicletype,
-      type: vehicle.type,
-      chassisNo: vehicle.chassisno,
-      engineNumber: vehicle.Enginenumber,
-      rcNumber: vehicle.Rcnumber,
-      hostId: vehicle.hostId,
-      rating: vehicle.rating,
-      listingId: listing.id,
-    };
-    res.status(201).json({ message: 'Vehicle and listing added successfully for the host', postedVehicle });
-
+    res.status(201).json({
+      message: 'Vehicle and listing added successfully for the host',
+      vehicle,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error Adding Vehicle' });
+    res.status(500).json({ message: 'Error adding vehicle', error });
   }
 });
+
 
 //chat
 router.post('/chat/send', chatController.sendMessage);

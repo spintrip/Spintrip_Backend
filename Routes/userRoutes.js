@@ -37,6 +37,11 @@ const {
   deleteuser,
   rating
  } = require('../Controller/userController');
+ const {
+  searchForCabs,
+  getEstimate,
+  bookCab,
+} = require('../Controller/cabController');
 const { getAllBlogs } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
@@ -168,7 +173,11 @@ router.post('/extend-booking', authenticate, extend);
 //Trip-Started
 router.post('/view-breakup', authenticate, breakup);
 
-
+//cab booking
+router.post('/search-cabs', authenticate, searchForCabs);
+router.post('/get-estimate', authenticate, getEstimate);
+router.post('/book-cab', authenticate, bookCab);
+//end cab
 
 //Cancel-Booking
 router.post('/Cancel-Booking', authenticate, cancelbooking);

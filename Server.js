@@ -15,6 +15,7 @@ const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
 const routeLogger = require('./Middleware/routeLogger'); 
+const cabRoutes = require('./Routes/cabRoutes');
 
 // Setting up your port
 const PORT = process.env.PORT || 2000;
@@ -139,6 +140,7 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
+app.use('/api/cab', cabRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
