@@ -6,7 +6,33 @@ const { publishMessage, waitForResponse } = require('../Controller/pubsubControl
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+async function getDistanceAndDuration(origin, destination) {
+  try {
+    const response = await axios.get(GOOGLE_MAPS_API_URL, {
+      params: {
+        origins: `${origin.latitude},${origin.longitude}`,
+        destinations: `${destination.latitude},${destination.longitude}`,
+        key: GOOGLE_MAPS_API_KEY,
+      },
+    });
 
+    const { rows } = response.data;
+
+    if (rows[0].elements[0].status !== 'OK') {
+      throw new Error(`Google API error: ${rows[0].elements[0].status}`);
+    }
+
+    const { distance, duration } = rows[0].elements[0];
+
+    return {
+      distance: distance.value / 1000, // Convert meters to kilometers
+      duration: duration.value / 60,  // Convert seconds to minutes
+    };
+  } catch (error) {
+    console.error('Error fetching data from Google Maps API:', error.message);
+    throw new Error('Failed to fetch distance and duration');
+  }
+}
 /**
  * Search for cabs within a specified area.
  */
@@ -45,22 +71,7 @@ const getEstimate = async (req, res) => {
       return res.status(400).json({ message: 'Missing required parameters' });
     }
 
-    const response = await axios.get(GOOGLE_MAPS_API_URL, {
-      params: {
-        origins: `${startLocation.latitude},${startLocation.longitude}`,
-        destinations: `${endLocation.latitude},${endLocation.longitude}`,
-        key: GOOGLE_MAPS_API_KEY,
-        departure_time: 'now', // Real-time traffic consideration
-        traffic_model: 'best_guess', // Optimize for real-time traffic
-      },
-    });
-
-    if (!response.data || !response.data.rows || !response.data.rows.length) {
-      return res.status(500).json({ message: 'Error fetching distance from Google Maps API' });
-    }
-
-    const distance = response.data.rows[0].elements[0].distance.value / 1000; // Convert meters to kilometers
-    const duration = response.data.rows[0].elements[0].duration.value / 60; // Convert seconds to minutes
+    const { distance, duration } = await getDistanceAndDuration(startLocation, endLocation);
 
     const vehiclePricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
     if (!vehiclePricing) {
@@ -78,8 +89,8 @@ const getEstimate = async (req, res) => {
       duration,
     });
   } catch (error) {
-    console.error('Error calculating estimate:', error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error calculating estimate:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -87,45 +98,27 @@ const getEstimate = async (req, res) => {
  * Book a cab and notify the driver.
  */
 const bookCab = async (req, res) => {
-  const { vehicleid, startDate, endDate, startTime, endTime, features } = req.body;
+  const { vehicleid, startLocation, endLocation, startDate, startTime } = req.body;
   const userId = req.user.id;
 
   try {
-    // Validate booking dates and times
-    if (!startDate || !endDate || !startTime || !endTime) {
-      return res.status(400).json({ message: 'Invalid or missing booking dates/times.' });
-    }
-
-    const vehicle = await Vehicle.findByPk(vehicleid);
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-
-    const bookingId = uuid.v4();
-    let totalAmount = 0;
+    const { distance } = await getDistanceAndDuration(startLocation, endLocation);
 
     const pricing = await Pricing.findOne({ where: { vehicleid } });
-    if (pricing) {
-      const hours = calculateTripHours(startDate, endDate, startTime, endTime);
-      totalAmount = pricing.costperhr * hours;
-
-      if (features) {
-        for (const featureId of features) {
-          const feature = await Feature.findByPk(featureId);
-          if (feature) totalAmount += feature.price;
-        }
-      }
+    if (!pricing) {
+      return res.status(404).json({ message: 'Pricing information not found for this vehicle.' });
     }
 
+    const amount = Math.round(distance * pricing.costperkm);
+
+    const bookingId = uuid.v4();
     await Booking.create({
       Bookingid: bookingId,
       vehicleid,
       id: userId,
       startTripDate: startDate,
-      endTripDate: endDate,
       startTripTime: startTime,
-      endTripTime: endTime,
-      amount: totalAmount,
+      amount,
       status: 1, // Pending
     });
 
@@ -137,10 +130,10 @@ const bookCab = async (req, res) => {
       startTime,
     });
 
-    res.status(201).json({ message: 'Cab booked successfully', bookingId, totalAmount });
+    res.status(201).json({ message: 'Cab booked successfully', bookingId, amount });
   } catch (error) {
-    console.error('Error booking cab:', error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error booking cab:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
