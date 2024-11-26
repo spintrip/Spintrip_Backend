@@ -12,6 +12,7 @@ const { sendOTP, generateOTP, tripstart, bookingcompleted, cancelbooking } = req
 const { getAllBlogs } = require('../Controller/blogController');
 const { setTimeout } = require('timers/promises');
 const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
+const { addCab } = require('../Controller/cabController'); // Import the addCab function
 
 const { 
   sendBookingConfirmationEmail, 
@@ -278,11 +279,14 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
   const { vehicletype } = req.body;
 
   try {
+    // If it's a cab, delegate to addCab function from cabRoutes
+    if (vehicletype === '3') {
+      return addCab(req, res); // Pass request and response directly to addCab
+    }
 
-    // Continue with the default vehicle logic for other types
+    // For other vehicle types, handle the logic here (e.g., bikes or cars)
     const {
       vehicleModel,
-      vehicletype,
       type,
       brand,
       variant,
@@ -296,16 +300,16 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
       latitude,
       longitude,
       address,
-      timeStamp
+      timeStamp,
     } = req.body;
 
     const host = await Host.findByPk(req.user.id);
 
     if (!host) {
-      return res.status(401).json({ message: 'No Host found' });
+      return res.status(401).json({ message: 'Host not found' });
     }
 
-    const vehicleid = uuid.v4();
+    const vehicleId = uuid.v4();
 
     const vehicle = await Vehicle.create({
       vehicletype,
@@ -313,14 +317,14 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
       Rcnumber: rcNumber,
       Enginenumber: engineNumber,
       Registrationyear: registrationYear,
-      vehicleid,
+      vehicleid: vehicleId,
       hostId: req.user.id,
       timestamp: timeStamp,
-      activated: false // Add activated field
+      activated: false,
     });
 
     await VehicleAdditional.create({
-      vehicleid: vehicle.vehicleid,
+      vehicleid: vehicleId,
       latitude,
       longitude,
       address,
@@ -328,7 +332,7 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
 
     if (vehicletype === '1') {
       await Bike.create({
-        vehicleid,
+        vehicleid: vehicleId,
         bikemodel: vehicleModel,
         type,
         brand,
@@ -341,7 +345,7 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
 
     if (vehicletype === '2') {
       await Car.create({
-        vehicleid,
+        vehicleid: vehicleId,
         carmodel: vehicleModel,
         type,
         brand,
@@ -351,18 +355,16 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
         city,
       });
     }
-    if (vehicletype === '3') {
-      return cabRoutesHandler.addCab(req, res, next); // Invoke the specific handler in cabRoutes
-    }
 
     await Pricing.create({
-      vehicleid: vehicle.vehicleid,
+      vehicleid: vehicleId,
     });
 
-    const listingid = uuid.v4();
-    const listing = await Listing.create({
-      id: listingid,
-      vehicleid: vehicle.vehicleid,
+    const listingId = uuid.v4();
+
+    await Listing.create({
+      id: listingId,
+      vehicleid: vehicleId,
       hostid: req.user.id,
     });
 
@@ -371,7 +373,7 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
       vehicle,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error adding vehicle:', error.message);
     res.status(500).json({ message: 'Error adding vehicle', error });
   }
 });

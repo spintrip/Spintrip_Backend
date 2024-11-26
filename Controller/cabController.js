@@ -1,6 +1,6 @@
 const axios = require('axios');
 const uuid = require('uuid');
-const { Vehicle, Pricing, Booking, Feature } = require('../Models');
+const { Host, Vehicle, VehicleAdditional, Cab, Pricing, Listing } = require('../Models');
 const { publishMessage, waitForResponse } = require('../Controller/pubsubController');
 
 // Google Maps API Configuration
@@ -146,8 +146,86 @@ const calculateTripHours = (startDate, endDate, startTime, endTime) => {
   const hours = Math.abs((end - start) / (1000 * 60 * 60));
   return Math.ceil(hours);
 };
+// Add the following function inside cabRoutes.js
+const addCab = async (req, res) => {
+  const {
+    vehicleModel,
+    type,
+    brand,
+    variant,
+    color,
+    bodyType,
+    chassisNo,
+    rcNumber,
+    engineNumber,
+    registrationYear,
+    city,
+    latitude,
+    longitude,
+    address,
+    timeStamp,
+  } = req.body;
+  
+  try {
+    const host = await Host.findByPk(req.user.id);
+    if (!host) {
+      return res.status(401).json({ message: 'Host not found' });
+    }
 
+    const vehicleId = uuid.v4();
+
+    const vehicle = await Vehicle.create({
+      vehicletype: 3,
+      chassisno: chassisNo,
+      Rcnumber: rcNumber,
+      Enginenumber: engineNumber,
+      Registrationyear: registrationYear,
+      vehicleid: vehicleId,
+      hostId: req.user.id,
+      timestamp: timeStamp,
+      activated: false,
+    });
+    await VehicleAdditional.create({
+      vehicleid: vehicleId,
+      latitude,
+      longitude,
+      address,
+    });
+
+    await Cab.create({
+      vehicleid: vehicleId,
+      cabmodel: vehicleModel,
+      type,
+      brand,
+      variant,
+      color,
+      bodytype: bodyType,
+      city,
+    });
+
+    await Pricing.create({
+      vehicleid: vehicleId,
+    });
+
+    await Listing.create({
+      id: uuid.v4(),
+      vehicleid: vehicleId,
+      hostid: req.user.id,
+    });
+
+    res.status(201).json({
+      message: 'Cab added successfully',
+      vehicleId,
+    });
+  } catch (error) {
+    console.error('Error adding cab:', error.message);
+    res.status(500).json({ message: 'Error adding cab', error: error.message });
+  }
+};
+
+// Export the addCab function
 module.exports = {
+  addCab,
   searchForCabs,
   getEstimate,
   bookCab,

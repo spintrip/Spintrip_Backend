@@ -63,7 +63,8 @@ db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.Driver = require('./driverModel')(sequelize, DataTypes);
-db.CabToDriver = require('./CabtoDriverModel')(sequelize, DataTypes);
+db.CabToDriver =  require('./CabtoDriverModel')(sequelize, DataTypes);
+db.Cab = require('./cabModel')(sequelize, DataTypes);
 db.CabBookingRequest = require('./cabBookingRequestModel')(sequelize, DataTypes);
 db.CabBookingAccepted = require('./cabBookingAcceptModel')(sequelize, DataTypes);
 db.DriverKeepAlive = require('./driverKeepAliveModel')(sequelize, DataTypes);
@@ -73,7 +74,7 @@ const associateModels = () => {
     User, Admin, Host, Car, Bike, Vehicle, UserAdditional, HostAdditional, VehicleAdditional,
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver, CabToDriver,
-    CabBookingRequest, CabBookingAccepted, DriverKeepAlive
+    CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab
   } = sequelize.models;
 
   // User and related associations

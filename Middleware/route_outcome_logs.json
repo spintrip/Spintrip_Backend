@@ -318,5 +318,215 @@
     "body": {
       "message": "{\"hostBookings\":[]}"
     }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "138874f9-efa8-40f4-bae2-70872a909391",
+    "timestamp": "2024-11-26T12:33:12.108Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "138874f9-efa8-40f4-bae2-70872a909391",
+    "timestamp": "2024-11-26T12:33:13.872Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-26T12:38:01.490Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"54af1a63-2f53-40c8-9ea9-e205d455c06d\",\"phone\":\"917000000055\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T12:38:03.755Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"2875\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T12:38:06.222Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"54af1a63-2f53-40c8-9ea9-e205d455c06d\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU0YWYxYTYzLTJmNTMtNDBjOC05ZWE5LWUyMDVkNDU1YzA2ZCIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMyNjI0Njg2fQ.umcMDPbgelBLDIb6ci7voqxIBLQ8xYloRN1oo3SqMtc\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:38:51.750Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:40:36.512Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:41:16.932Z",
+    "body": {
+      "message": "{\"message\":\"Error adding vehicle\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:44:24.798Z",
+    "body": {
+      "message": "{\"message\":\"Error adding vehicle\",\"error\":{}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:45:35.656Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Host is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:47:24.963Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"VehicleAdditional is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:47:49.906Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cab is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:48:12.749Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:50:23.634Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:54:31.730Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:54:56.732Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:55:38.858Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:56:17.277Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:57:05.797Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 500,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:57:21.550Z",
+    "body": {
+      "message": "{\"message\":\"Error adding cab\",\"error\":\"Cannot read properties of undefined (reading 'create')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/vehicle",
+    "status": 201,
+    "user": "54af1a63-2f53-40c8-9ea9-e205d455c06d",
+    "timestamp": "2024-11-26T12:59:15.132Z",
+    "body": {
+      "message": "{\"message\":\"Cab added successfully\",\"vehicleId\":\"e6f47810-5153-4c90-b48c-a39edce028c4\"}"
+    }
   }
 ]
