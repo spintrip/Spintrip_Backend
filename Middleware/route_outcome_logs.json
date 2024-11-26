@@ -1,0 +1,182 @@
+[
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-26T11:10:53.240Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"3578b2cd-7528-4787-b1e3-ce7e6738350b\",\"phone\":\"+918477384445\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 404,
+    "user": null,
+    "timestamp": "2024-11-26T11:10:56.369Z",
+    "body": {
+      "message": "{\"message\":\"User not found\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T11:11:06.257Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"2447\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-26T11:11:13.405Z",
+    "body": {
+      "message": "{\"message\":\"Invalid OTP\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T11:11:18.577Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"3578b2cd-7528-4787-b1e3-ce7e6738350b\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM1NzhiMmNkLTc1MjgtNDc4Ny1iMWUzLWNlN2U2NzM4MzUwYiIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMyNjE5NDc4fQ.B_IZyEEtL2GPNXn28Hh2l6HPGLwYaVBdRrRCOyBDQHQ\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 400,
+    "user": "3578b2cd-7528-4787-b1e3-ce7e6738350b",
+    "timestamp": "2024-11-26T11:11:25.730Z",
+    "body": {
+      "message": "{\"message\":\"Start date and time must be in the future.\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "3578b2cd-7528-4787-b1e3-ce7e6738350b",
+    "timestamp": "2024-11-26T11:11:35.190Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "3578b2cd-7528-4787-b1e3-ce7e6738350b",
+    "timestamp": "2024-11-26T11:14:09.367Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "3578b2cd-7528-4787-b1e3-ce7e6738350b",
+    "timestamp": "2024-11-26T11:17:30.188Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "3578b2cd-7528-4787-b1e3-ce7e6738350b",
+    "timestamp": "2024-11-26T11:18:05.647Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-26T11:19:44.485Z",
+    "body": {
+      "message": "{\"message\":\"Invalid token\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-26T11:19:50.785Z",
+    "body": {
+      "message": "{\"message\":\"User created\",\"response\":{\"id\":\"c37b444d-3294-4e18-aad7-73db6e0ab29c\",\"phone\":\"+918477384445\",\"role\":\"user\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T11:19:52.551Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"4372\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T11:19:55.361Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"c37b444d-3294-4e18-aad7-73db6e0ab29c\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImMzN2I0NDRkLTMyOTQtNGUxOC1hYWQ3LTczZGI2ZTBhYjI5YyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMyNjE5OTk1fQ.OqdwN39KmJkDYXEhFtPnETV8tr0v3FuJis7OlOUD9MQ\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:19:59.960Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:20:18.749Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:20:27.660Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:20:31.403Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
+  }
+]

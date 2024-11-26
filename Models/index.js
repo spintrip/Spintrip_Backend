@@ -123,7 +123,9 @@ const associateModels = () => {
   // Device management
   Vehicle.hasOne(carDevices, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   carDevices.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-
+  
+  Listing.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasMany(Listing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   // Pricing and transactions
   Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });

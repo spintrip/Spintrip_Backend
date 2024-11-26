@@ -4,9 +4,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(36),
       primaryKey: true,
     },
-    vehicleid: {
+    vehicleid: { // Renamed from carid
       type: DataTypes.STRING(36),
-      primaryKey: true,
+      allowNull: false,
     },
     hostid: {
       type: DataTypes.STRING(36),
@@ -15,12 +15,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
     },
     start_date: {
-      type: DataTypes.DATEONLY, // Use DATEONLY for date without time
-      allowNull: true, // Allow null values for optional dates
+      type: DataTypes.DATEONLY,
+      allowNull: true,
     },
     start_time: {
       type: DataTypes.TIME,
-      allowNull: true, // Allow null values for optional times
+      allowNull: true,
     },
     end_date: {
       type: DataTypes.DATEONLY,
@@ -54,17 +54,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        isInt: true, // Ensure it's an integer
-        min: 0, // Ensure it's non-negative
+        isInt: true,
+        min: 0,
       },
     },
-    bookingId : {
+    bookingId: {
       type: DataTypes.STRING(36),
       allowNull: true,
     },
   });
-
-  // Define associations here, if needed
 
   return Listing;
 };
