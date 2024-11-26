@@ -130,7 +130,7 @@ const associateModels = () => {
   carFeature.belongsTo(Feature, { foreignKey: 'featureid', onDelete: 'CASCADE' });
   carFeature.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Listing.hasOne(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
-  Listing.hasOne(Host, { foreignKey: 'id', sourceKey: 'hostid', onDelete: 'SET NULL' });
+  Listing.hasOne(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
   // Pricing and transaction associations
   Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });
