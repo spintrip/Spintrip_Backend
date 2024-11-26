@@ -13,20 +13,32 @@ const router = express.Router();
 /** ======================= Driver Routes ======================= **/
 
 // Driver Signup with OTP Verification
-router.post('/driver/signup', async (req, res) => {
-  const { phone, name, hostId } = req.body;
+router.post('/driver/signup', authenticate, async (req, res) => {
+  const { phone, name } = req.body;
 
   try {
+    const hostId = req.user.id; // Get host ID from the authenticated token
     const host = await Host.findByPk(hostId);
     if (!host) return res.status(404).json({ message: 'Host not found' });
 
     const existingDriver = await Driver.findOne({ where: { phone } });
-    if (existingDriver) return res.status(400).json({ message: 'Driver already exists' });
+    if (existingDriver) {
+      return res.status(400).json({ message: 'Driver already exists. Please log in.' });
+    }
 
     const driverId = uuid.v4();
     const otp = generateOTP();
-    const driver = await Driver.create({ id: driverId, phone, name, hostid: hostId, otp });
-
+    
+    // Create driver with default password as `1234`
+    const driver = await Driver.create({
+      id: driverId,
+      phone:phone,
+      name:name,
+      hostid: hostId,
+      otp:otp,
+      password: '1234',
+    });
+    console.log(driver);
     sendOTP(phone, otp);
     res.status(201).json({ message: 'Driver added. OTP sent for verification.', driverId });
   } catch (error) {
@@ -34,7 +46,6 @@ router.post('/driver/signup', async (req, res) => {
     res.status(500).json({ message: 'Error adding driver', error });
   }
 });
-
 // Driver OTP Verification
 router.post('/driver/verify-otp', async (req, res) => {
   const { phone, otp } = req.body;
@@ -44,15 +55,32 @@ router.post('/driver/verify-otp', async (req, res) => {
     if (!driver) return res.status(404).json({ message: 'Driver not found' });
 
     if (driver.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    const JWT_SECRET = 'your_secret_key';
 
-    const token = jwt.sign({ id: driver.id, role: 'driver' }, process.env.JWT_SECRET);
+    const token = jwt.sign({ id: driver.id, role: 'driver' }, JWT_SECRET, { expiresIn: '1d' });
     res.status(200).json({ message: 'OTP verified successfully', token });
   } catch (error) {
     console.error('Error verifying OTP:', error);
     res.status(500).json({ message: 'Error verifying OTP', error });
   }
 });
+router.post('/driver/login', async (req, res) => {
+  const { phone } = req.body;
 
+  try {
+    const driver = await Driver.findOne({ where: { phone } });
+    if (!driver) return res.status(404).json({ message: 'Driver not found. Please sign up.' });
+
+    const otp = generateOTP();
+    await driver.update({ otp });
+
+    sendOTP(phone, otp);
+    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.' });
+  } catch (error) {
+    console.error('Error during driver login:', error);
+    res.status(500).json({ message: 'Error during login', error });
+  }
+});
 // Driver Keep-Alive
 router.post('/driver/keep-alive', authenticate, async (req, res) => {
   const driverId = req.user.id;
@@ -70,7 +98,6 @@ router.post('/driver/keep-alive', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error updating keep-alive', error });
   }
 });
-
 /** ======================= Host Routes ======================= **/
 
 // Add Driver
@@ -88,6 +115,7 @@ router.post('/host/add-driver', authenticate, async (req, res) => {
       name,
       phone,
       otp,
+      password: '1234', // Default password
     });
 
     sendOTP(phone, otp);

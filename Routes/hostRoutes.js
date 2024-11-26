@@ -272,7 +272,8 @@ router.put('/verify', authenticate, upload.fields([{ name: 'aadharFile', maxCoun
 
 
 // Add the required cabRoutes module
-const cabRoutesHandler = require('./cabRoutes');
+const cabRoutes = require('./cabRoutes');
+router.use('/cab', cabRoutes);
 
 // Modify the existing endpoint
 router.post('/vehicle', authenticate, async (req, res, next) => {

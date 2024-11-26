@@ -32,6 +32,8 @@ module.exports = (sequelize, DataTypes) => {
     pausetime_end_date: DataTypes.DATEONLY,
     pausetime_start_time: DataTypes.TIME,
     pausetime_end_time: DataTypes.TIME,
+    otp:DataTypes.STRING(100),
+
   });
 
   return Driver;
