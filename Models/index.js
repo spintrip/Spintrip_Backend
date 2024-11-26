@@ -106,6 +106,7 @@ const associateModels = () => {
 
   Booking.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Booking.belongsTo(User, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  Booking.belongsTo(UserAdditional, { foreignKey: 'id', onDelete: 'SET NULL' });
 
   // Cab SaaS associations
   Driver.hasMany(CabToDriver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
@@ -128,7 +129,8 @@ const associateModels = () => {
   // Feature and car feature associations
   carFeature.belongsTo(Feature, { foreignKey: 'featureid', onDelete: 'CASCADE' });
   carFeature.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-
+  Listing.hasOne(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
+  Listing.hasOne(Host, { foreignKey: 'id', sourceKey: 'hostid', onDelete: 'SET NULL' });
   // Pricing and transaction associations
   Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });

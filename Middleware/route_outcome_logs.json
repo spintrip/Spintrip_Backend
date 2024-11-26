@@ -178,5 +178,35 @@
     "body": {
       "message": "{\"availableVehicles\":[]}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:39:02.487Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 500,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:39:03.916Z",
+    "body": {
+      "message": "{\"message\":\"Error finding available vehicles\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/findvehicles",
+    "status": 200,
+    "user": "c37b444d-3294-4e18-aad7-73db6e0ab29c",
+    "timestamp": "2024-11-26T11:40:33.463Z",
+    "body": {
+      "message": "{\"availableVehicles\":[]}"
+    }
   }
 ]
