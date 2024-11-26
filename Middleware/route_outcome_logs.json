@@ -208,5 +208,65 @@
     "body": {
       "message": "{\"availableVehicles\":[]}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T12:13:48.951Z",
+    "body": {
+      "message": "{\"message\":\"Error creating host\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T12:19:41.021Z",
+    "body": {
+      "message": "{\"message\":\"Error creating host\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T12:19:56.628Z",
+    "body": {
+      "message": "{\"message\":\"Error creating host\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/signup",
+    "status": 201,
+    "user": null,
+    "timestamp": "2024-11-26T12:20:55.662Z",
+    "body": {
+      "message": "{\"message\":\"Host created\",\"response\":{\"id\":\"138874f9-efa8-40f4-bae2-70872a909391\",\"phone\":\"+918618469706\",\"role\":\"Host\"}}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-26T12:21:02.153Z",
+    "body": {
+      "message": "{\"message\":\"Invalid phone or password\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T12:21:06.575Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"2379\"}"
+    }
   }
 ]
