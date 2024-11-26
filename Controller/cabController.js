@@ -2,10 +2,11 @@ const axios = require('axios');
 const uuid = require('uuid');
 const { Host, Vehicle, VehicleAdditional, Cab, Pricing, Listing } = require('../Models');
 const { publishMessage, waitForResponse } = require('../Controller/pubsubController');
-
-// Google Maps API Configuration
+const sequelize = require('../Models').sequelize; // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const { Op } = require('sequelize');
+
 async function getDistanceAndDuration(origin, destination) {
   try {
     const response = await axios.get(GOOGLE_MAPS_API_URL, {
@@ -37,52 +38,65 @@ async function getDistanceAndDuration(origin, destination) {
  * Search for cabs within a specified area.
  */
 const searchForCabs = async (req, res) => {
-  const { fromLocation, toLocation, searchRadius } = req.body;
-  console.log(req.body)
+  const { fromLocation, searchRadius } = req.body;
+  const {latitude,longitude} = fromLocation;
+  const maxLatitude = latitude + searchRadius / 111; // 1 degree latitude ≈ 111 km
+  const minLatitude = latitude - searchRadius / 111;
+  const maxLongitude = longitude + searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
+  const minLongitude = longitude - searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
+  
   try {
-    // Validate request parameters
-    if (!fromLocation || !toLocation || !searchRadius) {
-      return res.status(400).json({ message: 'Missing required parameters: fromLocation, toLocation, or searchRadius' });
+    if (!fromLocation || !searchRadius) {
+      return res.status(400).json({ message: 'Missing required parameters: fromLocation or searchRadius' });
     }
 
-    const { latitude: fromLat, longitude: fromLng } = fromLocation;
-    console.log(fromLocation,toLocation);
-    // Find cabs within the search radius from the 'fromLocation'
-    const nearbyCabs = await VehicleAdditional.findAll({
-      where: sequelize.literal(`
-        ST_Distance_Sphere(
-          POINT(${fromLng}, ${fromLat}),
-          POINT(longitude, latitude)
-        ) <= ${searchRadius * 1000}  -- Convert radius from km to meters
-      `),
-      include: [
-        {
-          model: Vehicle,
-          where: { vehicletype: 3 }, // Ensure it's a cab
-        },
-      ],
+    const { latitude, longitude } = fromLocation;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'Invalid location coordinates.' });
+    }
+
+    // Fetch all vehicles of type "cab" with their latitude and longitude
+    const cabs = await VehicleAdditional.findAll({
+      attributes: ['vehicleid', 'latitude', 'longitude', 'address'],
+      where: {
+        latitude: { [Op.between]: [minLatitude, maxLatitude] },
+        longitude: { [Op.between]: [minLongitude, maxLongitude] },
+      },
     });
 
-    if (!nearbyCabs.length) {
-      return res.status(404).json({ message: 'No cabs available within the specified area.' });
+    if (!cabs.length) {
+      return res.status(404).json({ message: 'No cabs available.' });
     }
 
-    const results = nearbyCabs.map((cab) => ({
-      vehicleId: cab.vehicleid,
-      latitude: cab.latitude,
-      longitude: cab.longitude,
-      address: cab.address,
-      distanceFromStart: cab.distance, // Calculated by SQL if using distance
-    }));
+    // Filter cabs within the search radius
+    const nearbyCabs = cabs
+      .map((cab) => {
+        const distance = geolib.getDistance(
+          { latitude, longitude },
+          { latitude: cab.latitude, longitude: cab.longitude }
+        ) / 1000; // Convert to kilometers
+
+        return {
+          vehicleId: cab.vehicleid,
+          address: cab.address,
+          latitude: cab.latitude,
+          longitude: cab.longitude,
+          distance,
+        };
+      })
+      .filter((cab) => cab.distance <= searchRadius);
+
+    if (!nearbyCabs.length) {
+      return res.status(404).json({ message: 'No cabs available within the specified radius.' });
+    }
 
     res.status(200).json({
       message: 'Cabs found',
-      availableCabs: results,
-      fromLocation,
-      toLocation,
+      nearbyCabs,
     });
   } catch (error) {
-    console.error('Error searching for cabs:', error);
+    console.error('Error searching for cabs:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -191,7 +205,7 @@ const addCab = async (req, res) => {
     address,
     timeStamp,
   } = req.body;
-  
+
   try {
     const host = await Host.findByPk(req.user.id);
     if (!host) {

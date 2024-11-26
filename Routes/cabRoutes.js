@@ -8,6 +8,8 @@ const {
 } = require('../Models');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { publishMessage } = require('../Controller/pubsubController');
+const CabtoDriverModel = require('../Models/CabtoDriverModel');
+const { where } = require('sequelize');
 const router = express.Router();
 
 /** ======================= Driver Routes ======================= **/
@@ -83,19 +85,25 @@ router.post('/driver/login', async (req, res) => {
 });
 // Driver Keep-Alive
 router.post('/driver/keep-alive', authenticate, async (req, res) => {
+  const { latitude, longitude } = req.body;
   const driverId = req.user.id;
 
   try {
-    const driver = await Driver.findByPk(driverId);
-    if (!driver) return res.status(404).json({ message: 'Driver not found' });
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'Missing latitude or longitude' });
+    }
 
-    await DriverKeepAlive.upsert({ driverId, lastPingTime: new Date(), isActive: true });
-    await publishMessage('driver-status', { driverId, isActive: true });
+    // Update the driver's location in the database
+    const vehicleId = CabtoDriverModel.findOne({where: {driverId:driverId}});
+    await VehicleAdditional.update(
+      { latitude, longitude },
+      { where: { vehicleid: vehicleId.vehicleId } }
+    );
 
-    res.status(200).json({ message: 'Keep-alive received.' });
+    res.status(200).json({ message: 'Location updated successfully' });
   } catch (error) {
-    console.error('Error updating keep-alive:', error);
-    res.status(500).json({ message: 'Error updating keep-alive', error });
+    console.error('Error in keep-alive:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 /** ======================= Host Routes ======================= **/

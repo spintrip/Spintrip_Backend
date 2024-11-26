@@ -1068,5 +1068,435 @@
     "body": {
       "message": "{\"message\":\"Listing successfully queried\",\"hostListings\":[]}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T15:37:10.395Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T15:38:17.499Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": null,
+    "timestamp": "2024-11-26T15:38:46.198Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:39:11.399Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"sequelize is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:40:54.917Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"sequelize is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:41:29.508Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Vehicle is not associated to VehicleAdditional!\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:47:28.593Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"function st_distance_sphere(point, point) does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:56:45.847Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:58:09.630Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:58:18.728Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T15:59:58.270Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:00:20.933Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:00:24.082Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 404,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:01:06.753Z",
+    "body": {
+      "message": "{\"message\":\"No cabs available.\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:08:24.444Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Vehicle is not associated to VehicleAdditional!\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:10:07.209Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:12:02.314Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:12:21.600Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:14:06.034Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:16:18.978Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:17:08.936Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:17:11.603Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:17:12.589Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:18:49.717Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:19:25.774Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:20:03.058Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:20:14.595Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T16:22:18.726Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"5004\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T16:22:22.230Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"d5b47cb2-21d7-4a05-acde-a8addd03f40e\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQ1YjQ3Y2IyLTIxZDctNGEwNS1hY2RlLWE4YWRkZDAzZjQwZSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzMyNjM4MTQyfQ.9_NMZs8Ud_1D_MTG4r46JE7K3u6FYT5jJTsvsN6LixM\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:22:24.745Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:22:40.635Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:23:15.459Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:24:56.730Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"latitude is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:25:04.541Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"lati is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:26:23.381Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:27:01.173Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:27:06.580Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"operator does not exist: character varying = integer\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:30:16.951Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"sequelize is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:30:36.398Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'literal')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:31:17.020Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"function st_makepoint(double precision, double precision) does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:35:34.850Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Op is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 404,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:36:40.595Z",
+    "body": {
+      "message": "{\"message\":\"No cabs available.\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 404,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-26T16:38:34.167Z",
+    "body": {
+      "message": "{\"message\":\"No cabs available.\"}"
+    }
   }
 ]
