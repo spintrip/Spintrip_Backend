@@ -68,7 +68,6 @@ db.CabBookingRequest = require('./cabBookingRequestModel')(sequelize, DataTypes)
 db.CabBookingAccepted = require('./cabBookingAcceptModel')(sequelize, DataTypes);
 db.DriverKeepAlive = require('./driverKeepAliveModel')(sequelize, DataTypes);
 
-// Define model associations
 const associateModels = () => {
   const {
     User, Admin, Host, Car, Bike, Vehicle, UserAdditional, HostAdditional, VehicleAdditional,
@@ -77,43 +76,47 @@ const associateModels = () => {
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive
   } = sequelize.models;
 
-  // User and Admin associations
+  // User and related associations
   User.hasOne(Admin, { foreignKey: 'userId', onDelete: 'SET NULL' });
   User.hasOne(Host, { foreignKey: 'userId', onDelete: 'SET NULL' });
   User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
   User.hasMany(Booking, { foreignKey: 'userId', onDelete: 'SET NULL' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
 
+  // Admin associations
   Admin.hasMany(SupportChat, { foreignKey: 'adminId', onDelete: 'CASCADE' });
+  Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'CASCADE' });
 
-  // Car and Bike associations
+  // Vehicle-specific associations
   Vehicle.hasOne(Car, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasOne(Bike, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasMany(Feedback, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasOne(Listing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasOne(VehicleAdditional, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+
+  // Car and Bike associations
   Car.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Bike.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
   // Feedback associations
-  Vehicle.hasMany(Feedback, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Feedback.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
-  // Listing and Vehicle associations
+  // Listing associations
   Listing.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-  Vehicle.hasOne(Listing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-
-  // Listing and Host associations
-  Host.hasMany(Listing, { foreignKey: 'hostid', onDelete: 'CASCADE' });
   Listing.belongsTo(Host, { foreignKey: 'hostid', onDelete: 'CASCADE' });
 
-  // Additional models associations
-  Vehicle.hasOne(VehicleAdditional, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-  VehicleAdditional.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-
+  // Booking associations
   Booking.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'SET NULL' });
   Booking.belongsTo(User, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  Booking.belongsTo(UserAdditional, { foreignKey: 'userId', onDelete: 'SET NULL' });
+
+  // UserAdditional associations
+  UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
   // Cab SaaS associations
   Driver.hasMany(CabToDriver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
@@ -121,7 +124,6 @@ const associateModels = () => {
   CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
   // Pricing and Transaction associations
-  Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });
   HostPayment.belongsTo(Vehicle, { foreignKey: 'VehicleId', onDelete: 'CASCADE' });
 
@@ -132,6 +134,16 @@ const associateModels = () => {
   // Feature and carFeature associations
   carFeature.belongsTo(Feature, { foreignKey: 'featureid', onDelete: 'CASCADE' });
   carFeature.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+
+  // Device associations
+  carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
+
+  // Support and SupportChat associations
+  Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  Support.hasMany(SupportChat, { foreignKey: 'supportId', onDelete: 'CASCADE' });
+  SupportChat.belongsTo(Support, { foreignKey: 'supportId', onDelete: 'CASCADE' });
+  SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
 };
 
 associateModels();

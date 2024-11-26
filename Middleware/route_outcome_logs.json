@@ -268,5 +268,55 @@
     "body": {
       "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"2379\"}"
     }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 401,
+    "user": null,
+    "timestamp": "2024-11-26T12:25:44.328Z",
+    "body": {
+      "message": "{\"message\":\"Invalid token\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/login",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T12:25:47.983Z",
+    "body": {
+      "message": "{\"message\":\"OTP sent successfully\",\"redirectTo\":\"/verify-otp\",\"otp\":\"6635\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/host/verify-otp",
+    "status": 200,
+    "user": null,
+    "timestamp": "2024-11-26T12:25:53.486Z",
+    "body": {
+      "message": "{\"message\":\"OTP verified successfully\",\"id\":\"138874f9-efa8-40f4-bae2-70872a909391\",\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEzODg3NGY5LWVmYTgtNDBmNC1iYWUyLTcwODcyYTkwOTM5MSIsInJvbGUiOiJob3N0IiwiaWF0IjoxNzMyNjIzOTUzfQ.LBIuO4YKdbu3niHE6K6QL7HlVsdcAoXiOpf5Bqs_JK4\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 500,
+    "user": "138874f9-efa8-40f4-bae2-70872a909391",
+    "timestamp": "2024-11-26T12:25:58.287Z",
+    "body": {
+      "message": "{\"message\":\"Server error\"}"
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/host/host-bookings",
+    "status": 201,
+    "user": "138874f9-efa8-40f4-bae2-70872a909391",
+    "timestamp": "2024-11-26T12:31:20.895Z",
+    "body": {
+      "message": "{\"hostBookings\":[]}"
+    }
   }
 ]
