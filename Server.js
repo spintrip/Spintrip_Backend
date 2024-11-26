@@ -94,9 +94,9 @@ app.get('/uploads/:userId/:imageName', (req, res) => {
     }
 });
 
-app.get('/uploads/host/CarAdditional/:carId/:imageName', (req, res) => {
-    const { carId, imageName } = req.params;
-    const imagePath = path.join(__dirname, './uploads/host/CarAdditional', carId, imageName);
+app.get('/uploads/host/CarAdditional/:vehicleid/:imageName', (req, res) => {
+    const { vehicleid, imageName } = req.params;
+    const imagePath = path.join(__dirname, './uploads/host/CarAdditional', vehicleid, imageName);
 
     // Check if file exists
     if (fs.existsSync(imagePath)) {

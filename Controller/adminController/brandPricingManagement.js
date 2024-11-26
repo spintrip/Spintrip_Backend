@@ -69,10 +69,10 @@ const getPricing = async (req, res) => {
 // Update pricing by car ID
 const updatePricingById = async (req, res) => {
   try {
-    const { carid } = req.params;
+    const { vehicleid } = req.params;
     const { costperhr } = req.body;
 
-    const pricing = await Pricing.findOne({ where: { carid } });
+    const pricing = await Pricing.findOne({ where: { vehicleid } });
     if (!pricing) {
       return res.status(404).json({ message: 'Pricing record not found' });
     }

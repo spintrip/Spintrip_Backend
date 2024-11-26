@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
   const Booking = sequelize.define("Booking", {
     Bookingid: { type: DataTypes.STRING(36), primaryKey: true },
     Date: DataTypes.DATEONLY,
-    carid: { type: DataTypes.STRING(36)},   
+    vehicleid: { type: DataTypes.STRING(36)},   
     time: DataTypes.DATE,
     timestamp: DataTypes.DATE,
     id: {type: DataTypes.STRING(36)},
@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     features: { type: DataTypes.JSON, allowNull: true } 
   });
 
+  Booking.associate = (models) => {
+    Booking.belongsTo(models.Vehicle, { foreignKey: 'vehicleid' });
+  };
 
   return Booking;
 };

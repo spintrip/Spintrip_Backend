@@ -3,14 +3,10 @@ const { Tax, Feature } = require('../../Models');
 // Create a new tax record
 const createTax = async (req, res) => {
   try {
-    const { GST, HostGST, TDS, Commission, insurance } = req.body;
+    const { GST } = req.body;
 
     const newTax = await Tax.create({
-      GST,
-      HostGST,
-      TDS,
-      Commission,
-      insurance,
+      GST
     });
 
     res.status(201).json({ message: 'Tax created successfully', newTax });
@@ -38,7 +34,7 @@ const getAllTaxes = async (req, res) => {
 const updateTaxById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { GST, HostGST, TDS, Commission, insurance } = req.body;
+    const { GST } = req.body;
 
     const tax = await Tax.findByPk(id);
     if (!tax) {
@@ -47,10 +43,6 @@ const updateTaxById = async (req, res) => {
 
     await tax.update({
       GST: GST !== undefined ? GST : tax.GST,
-      HostGST: HostGST !== undefined ? HostGST : tax.HostGST,
-      TDS: TDS !== undefined ? TDS : tax.TDS,
-      Commission: Commission !== undefined ? Commission : tax.Commission,
-      insurance: insurance !== undefined ? insurance : tax.insurance,
     });
 
     res.status(200).json({ message: 'Tax updated successfully', tax });

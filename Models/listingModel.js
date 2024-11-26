@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(36),
       primaryKey: true,
     },
-    carid: {
+    vehicleid: {
       type: DataTypes.STRING(36),
       primaryKey: true,
     },

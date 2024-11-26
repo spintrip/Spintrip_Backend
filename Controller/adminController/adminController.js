@@ -1,6 +1,6 @@
-const { adminLogin, verifyOTP } = require('./authentication');
+const { adminLogin, verifyOTP, adminSignup, adminProfile } = require('./authentication');
 const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost } = require('./userHostManagement');
-const { getAllCars, getCarById, updateCarById, deleteCarById, getAllListings, getListingById, updateListingById, deleteListingById } = require('./carListManagement');
+const { deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars, getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById } = require('./carListManagement');
 const { createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById } = require('./payoutManagement');
 const { getAllBookings, getBookingById, updateBookingById, deleteBookingById } = require('./bookingManagement');
 const { createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById } = require('./brandPricingManagement');
@@ -9,13 +9,13 @@ const { viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, reso
 const { sendNotification } = require('./notificationManagement');
 
 module.exports = {
-  adminLogin, verifyOTP,
+  adminLogin, verifyOTP, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
-  getAllCars, getCarById, updateCarById, deleteCarById, getAllListings, getListingById, updateListingById, deleteListingById,
+  getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById,
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
-  createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
+  createOrUpdateBrand, getAllBrands, updateBrandById, adminSignup,getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
-  sendNotification
+  sendNotification, adminProfile
 };

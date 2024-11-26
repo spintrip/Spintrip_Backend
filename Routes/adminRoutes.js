@@ -3,14 +3,15 @@ const { authenticate } = require('../Middleware/authMiddleware');
 const {
   adminLogin, verifyOTP,
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
-  getAllCars, getCarById, updateCarById, deleteCarById, getAllListings, getListingById, updateListingById, deleteListingById,
-  createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById,
+  getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
+  createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
-  sendNotification
+  sendNotification, adminProfile, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars
 } = require('../Controller/adminController/adminController');
+const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController')
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
@@ -43,10 +44,12 @@ const blogImageStorage = multerS3({
 });
 const upload1 = multer({ storage: blogImageStorage });
 
+router.post('/signup', adminSignup);
+
 // Authentication routes
 router.post('/login', adminLogin);
 router.post('/verify-otp', verifyOTP);
-
+router.get('/profile', authenticate, adminProfile);
 // User routes
 router.get('/users', authenticate, getAllUsers);
 router.get('/users/:id', authenticate, getUserById);
@@ -58,11 +61,405 @@ router.get('/hosts', authenticate, getAllHosts);
 router.get('/hosts/:id', authenticate, getHostById);
 router.delete('/hosts/:id', authenticate, deleteHost);
 
-// Car routes
-router.get('/cars', authenticate, getAllCars);
-router.get('/cars/:id', authenticate, getCarById);
-router.put('/cars/:id', authenticate, updateCarById);
-router.delete('/cars/:id', authenticate, deleteCarById);
+
+router.get('/cars', authenticate, cars);
+// Get Car by ID
+router.get('/cars/:id', authenticate, carsById);
+// Update Car by ID
+router.put('/cars/:vehicleid', authenticate, updateCars);
+
+router.delete('/cars/:id', authenticate, deleteCars);
+
+
+router.get('/bike', authenticate, bikes);
+// Get Car by ID
+router.get('/bike/:id', authenticate, bikeById);
+// Update Car by ID
+router.put('/bike/:vehicleid', authenticate, updateBike);
+
+router.delete('/bike/:id', authenticate, deleteBike);
+
+
+
+router.get('/transaction', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const transactions = await Transaction.findAll();
+    res.status(200).json({ "message": "All available transaction", transactions });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching transaction', error });
+  }
+})
+
+router.get('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    const transactions = await Transaction.findByPk(req.params.id);
+    if (!transactions) {
+      return res.status(404).json({ message: 'transaction not found' });
+    }
+    res.status(200).json({ transactions });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching booking', error });
+  }
+});
+
+router.put('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedFields = req.body;
+
+    const transactions = await Transaction.findByPk(id);
+
+    if (!transactions) {
+      return res.status(404).json({ message: 'transaction not found' });
+    }
+
+    await transactions.update(updatedFields);
+
+    res.status(200).json({ message: 'transaction updated successfully', transactions });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating transaction', error });
+  }
+});
+
+
+router.delete('/transaction/:id', authenticate, async (req, res) => {
+  try {
+    await Transaction.destroy({ where: { Transactionid: req.params.id } });
+    res.status(200).json({ message: 'Transaction deleted' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error deleting transaction', error });
+  }
+});
+
+
+router.post('/createBlog', authenticate, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), createBlog);
+
+router.post('/updateBlog', authenticate, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), updateBlog);
+
+router.get('/deleteBlog/:id', authenticate, deleteBlog);
+router.get('/getAllBlogs', getAllBlogs);
+router.get('/getBlogById/:id', getBlogById);
+router.get('/device', async (req, res) => {
+  const queryParams = req.query;
+  try {
+    // Create new device entry in the database
+    const newDevice = await Device.create({
+      deviceid: queryParams.id,
+      lat: queryParams.lat,
+      lng: queryParams.lng,
+      speed: queryParams.speed,
+      date: queryParams.date,
+      time: queryParams.time,
+    });
+
+    console.log('Data saved to database successfully:', newDevice.toJSON());
+    res.status(200).send('Payload saved successfully');
+  } catch (error) {
+    console.error('Error saving data to database:', error.message);
+    res.status(500).send('Error saving data to database');
+  }
+});
+router.get('/device/:id', async (req, res) => {
+  const id = req.params.id;
+  const limit = parseInt(req.query.limit, 10) || 10; 
+
+  try {
+    const results = await Device.findAll({
+      where: {
+        deviceid: id,
+      },
+      order: [['createdAt', 'DESC']],
+      limit: limit, // Apply the limit
+    });
+
+    if (results.length === 0) {
+      return res.status(404).send('No data found for the provided id');
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error retrieving data from database:', error.message);
+    res.status(500).send('Error retrieving data from database');
+  }
+});
+
+
+router.post('/car-device', async (req, res) => {
+  try {
+    const { deviceid, vehicleid } = req.body;
+    const car = await Car.findOne({
+      where: {
+        vehicleid: vehicleid,
+      }})
+    if(!car){
+      return res.status(400).json({ message: 'Car not found' });
+    }  
+    const mapping = await carDevices.findOne({
+      where: {
+        [Op.or]: [
+          { vehicleid: vehicleid },
+          { deviceid: deviceid }
+        ]
+      }
+    });
+    if(mapping)
+    {
+      return res.status(400).json({ message: 'Car or device id already mapped' });
+    }  
+    const newMapping = await carDevices.create({ deviceid, vehicleid });
+
+    res.status(201).json({ message: 'Mapping created successfully', newMapping });
+  } catch (error) {
+    console.error('Error creating mapping:', error.message);
+    res.status(500).json({ message: 'Error creating mapping', error });
+  }
+});
+
+// READ - Get all mappings
+router.get('/car-device', async (req, res) => {
+  try {
+    const mappings = await carDevices.findAll();
+
+    if (mappings.length === 0) {
+      return res.status(404).json({ message: 'No mappings found' });
+    }
+    res.json(mappings);
+  } catch (error) {
+    console.error('Error fetching mappings:', error.message);
+    res.status(500).json({ message: 'Error fetching mappings', error });
+  }
+});
+
+router.get('/car-device/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const mapping = await carDevices.findByPk(id);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
+    }
+    res.json(mapping);
+  } catch (error) {
+    console.error('Error fetching mapping:', error.message);
+    res.status(500).json({ message: 'Error fetching mapping', error });
+  }
+});
+
+
+router.put('/car-device', async (req, res) => {
+
+  const { deviceid, vehicleid } = req.body;
+
+  try {
+    const mapping = await carDevices.findByPk(deviceid);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
+    }
+    const car = await Car.findOne({
+      where: {
+        vehicleid: vehicleid,
+      }})
+    if(!car){
+      return res.status(400).json({ message: 'Car not found' });
+    } 
+
+    mapping.vehicleid = vehicleid !== undefined ? vehicleid : mapping.vehicleid;
+
+    await mapping.save();
+
+    res.json({ message: 'Mapping updated successfully', mapping });
+  } catch (error) {
+    console.error('Error updating mapping:', error.message);
+    res.status(500).json({ message: 'Error updating mapping', error });
+  }
+});
+
+
+router.delete('/car-device/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const mapping = await carDevices.findByPk(id);
+
+    if (!mapping) {
+      return res.status(404).json({ message: 'Mapping not found' });
+    }
+
+    await mapping.destroy();
+
+    res.json({ message: 'Mapping deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting mapping:', error.message);
+    res.status(500).json({ message: 'Error deleting mapping', error });
+  }
+});
+
+router.get('/pending-profile', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    let pendingProfiles = await UserAdditional.findAll({
+      where: { verification_status: 1 }
+    });
+
+    if (pendingProfiles.length === 0) {
+      return res.status(200).json({ message: 'No user approval required' });
+    }
+
+    const updatedProfiles = await Promise.all(
+      pendingProfiles.map(async (profile) => {
+        const user = await User.findByPk(profile.id);
+        let userFolder = path.join('./uploads', profile.id.toString());
+        let aadharFile = [];
+        let dlFile = [];
+        
+        if (fs.existsSync(userFolder)) {
+          let files = fs.readdirSync(userFolder);
+          aadharFile = files.filter(file => file.includes('aadharFile')).map(file => `${process.env.BASE_URL}/uploads/${profile.id}/${file}`);
+          dlFile = files.filter(file => file.includes('dlFile')).map(file => `${process.env.BASE_URL}/uploads/${profile.id}/${file}`);
+        }
+        
+        return {
+          ...profile.toJSON(),
+          aadharFile: aadharFile[0] || null,
+          dlFile: dlFile[0] || null,
+          user: user ? user.toJSON() : null
+        };
+      })
+    );
+
+    res.status(200).json({ updatedProfiles });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching pending profiles', error });
+  }
+});
+
+
+router.get('/pending-carprofile', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    let pendingProfiles = await CarAdditional.findAll({
+      where: 
+          { verification_status: 1 }
+    });
+
+    if (pendingProfiles.length === 0) {
+      return res.status(200).json({ message: 'No car approval required' });
+    }
+
+    const updatedProfiles = await Promise.all(
+      pendingProfiles.map(async (profile) => {
+        const car = await Car.findByPk(profile.vehicleid);
+        
+        return {
+          ...profile.toJSON(),
+          car: car ? car.toJSON() : null
+        };
+      })
+    );
+
+    res.status(200).json({ pendingProfiles: updatedProfiles });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error fetching pending car profiles', error });
+  }
+});
+
+router.put('/approve-profile', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const userId = req.body.userId;
+    await UserAdditional.update({ verification_status: 2 }, { where: { id: userId } });
+    res.status(200).json({ message: 'Profile approved successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error approving profile', error });
+  }
+});
+
+router.put('/approve-carprofile', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+    if (!admin){
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const vehicleid = req.body.vehicleid;
+    await CarAdditional.update({ verification_status: 2 }, { where: { vehicleid: vehicleid } });
+    res.status(200).json({ message: 'Car Profile approved successfully' });
+  } catch (error) {
+    console.log(error);
+    }
+  });
+
+router.put('/reject-profile', authenticate, async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const userId = req.body.userId;
+    await UserAdditional.update({ dl: null , aadhar: null, verification_status: null }, { where: { id: userId } });
+    res.status(200).json({ message: 'Profile rejected successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error rejected profile', error });
+  }
+});
+
+router.put('/reject-carprofile', authenticate,  async (req, res) => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const vehicleid = req.body.vehicleid;
+    await CarAdditional.update({ verification_status: null }, { where: { vehicleid: vehicleid } });
+    res.status(200).json({ message: 'Car Profile rejected successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error in rejected Car profile', error });
+  }
+});
+
+// vehicles routes
+router.get('/vehicles', authenticate, getAllvehicles);
+router.get('/vehicles/:id', authenticate, getvehicleById);
+router.put('/vehicles/:id', authenticate, updatevehicleById);
+router.delete('/vehicles/:id', authenticate, deletevehicleById);
 
 // Listing routes
 router.get('/listings', authenticate, getAllListings);
@@ -70,12 +467,11 @@ router.get('/listings/:id', authenticate, getListingById);
 router.put('/listings/:id', authenticate, updateListingById);
 router.delete('/listings/:id', authenticate, deleteListingById);
 
-// Payout routes
-router.post('/payouts', authenticate, createPayout);
-router.get('/payouts', authenticate, getAllPayouts);
-router.get('/payouts/:id', authenticate, getPayoutById);
-router.put('/payouts/:id', authenticate, updatePayoutById);
-router.delete('/payouts/:id', authenticate, deletePayoutById);
+// Payment Host routes
+// router.get('/hostPayments', authenticate, getAllHostPayments);
+// router.get('/hostPayments/:id', authenticate, getHostPaymentsById);
+// router.put('/hostPayments/:id', authenticate, updateHostPaymentsById);
+// router.delete('/hostPayments/:id', authenticate, deleteHostPaymentsyId);
 
 // Booking routes
 router.get('/bookings', authenticate, getAllBookings);

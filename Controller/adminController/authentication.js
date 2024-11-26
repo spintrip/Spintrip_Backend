@@ -1,4 +1,4 @@
-const { Admin } = require('../../Models');
+const { Admin, User, UserAdditional } = require('../../Models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -11,16 +11,64 @@ const sendOTP = (phone, otp) => {
   console.log(`Sending OTP ${otp} to phone number ${phone}`);
 };
 
-const adminLogin = async (req, res) => {
-  // Functionality here
+const adminSignup = async (req, res) =>{
+  const { phone, password, securityQuestion } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { phone } });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the Admin table with the user's ID and other properties
+    const admin = await Admin.create({
+      id: user.id, // Link to the user in the User table
+      securityQuestion,
+      timestamp: new Date(), // Set the current timestamp
+      password: hashedPassword,
+      UserId: user.id,
+      role: 'Admin'
+    });
+
+    res.status(201).json({ message: 'Admin created', admin });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error creating admin' });
+  }
 };
+
+const adminLogin = async (req, res) => {
+  try{
+  const { phone } = req.body;
+  const user = await User.findOne({ where: { phone } });
+  const admin = await Admin.findOne({ where: { id: user.id } });
+  if (!admin) {
+    return res.status(401).json({ message: 'Invalid phone number' });
+  }
+  const otp = generateOTP();
+  sendOTP(phone, otp);
+  await user.update({ otp: otp })
+  return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', phone, otp });
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ message: 'Error logging in', error });
+}};
 
 const verifyOTP = async (req, res) => {
   try {
-    const { otp } = req.body;
-    const user = await Admin.findOne({ where: { id: req.user.id } });
-
-    const fixed_otp = user.otp;
+    const { phone, otp } = req.body;
+    const admin = await User.findOne( { where: { phone: phone } })
+    if(!admin){
+      return res.status(404).json({ message: 'User doesnt exist' });
+    }
+    const user = await Admin.findOne({ where: { id: admin.id } });
+    if(!user){
+      return res.status(404).json({ message: 'Admin doesnt exist' });
+    }
+    const fixed_otp = admin.otp;
     if (fixed_otp === otp) {
       const token = jwt.sign({ id: user.id, role: 'admin' }, 'your_secret_key');
       return res.json({ message: 'OTP verified successfully', user, token });
@@ -33,4 +81,21 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, verifyOTP };
+const adminProfile = async (req, res)  => {
+  try {
+    const adminId = req.user.id;
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+    const additionalinfo = await UserAdditional.findByPk(adminId)
+
+    res.json({ phone: admin.phone, securityQuestion: admin.SecurityQuestion, additionalinfo });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error });
+  }
+}
+
+module.exports = { adminLogin, verifyOTP, adminSignup, adminProfile };
