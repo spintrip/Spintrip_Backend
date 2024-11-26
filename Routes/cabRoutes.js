@@ -101,7 +101,7 @@ router.post('/driver/keep-alive', authenticate, async (req, res) => {
 /** ======================= Host Routes ======================= **/
 
 // Add Driver
-router.post('/host/add-driver', authenticate, async (req, res) => {
+router.post('/add-driver', authenticate, async (req, res) => {
   const { name, phone } = req.body;
   const hostId = req.user.id;
 
@@ -127,7 +127,7 @@ router.post('/host/add-driver', authenticate, async (req, res) => {
 });
 
 // Assign Driver to Vehicle
-router.post('/host/assign-driver', authenticate, async (req, res) => {
+router.post('/assign-driver', authenticate, async (req, res) => {
   const { driverId, vehicleId } = req.body;
   const hostId = req.user.id;
 
