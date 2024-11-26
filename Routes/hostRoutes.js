@@ -278,10 +278,6 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
   const { vehicletype } = req.body;
 
   try {
-    // Reroute to cabRoutes if vehicle type is 3
-    if (vehicletype === '3') {
-      return cabRoutesHandler.addCab(req, res, next); // Invoke the specific handler in cabRoutes
-    }
 
     // Continue with the default vehicle logic for other types
     const {
@@ -354,6 +350,9 @@ router.post('/vehicle', authenticate, async (req, res, next) => {
         bodytype: bodyType,
         city,
       });
+    }
+    if (vehicletype === '3') {
+      return cabRoutesHandler.addCab(req, res, next); // Invoke the specific handler in cabRoutes
     }
 
     await Pricing.create({
