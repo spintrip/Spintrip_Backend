@@ -140,7 +140,7 @@ router.post('/signup', signup);
 
 router.get('/get-brand', getbrand);
 
-router.post('/features', authenticate,);
+router.post('/features', authenticate,features);
 
 //Get All Vehicles
 router.get('/vehicles', async (req, res) => {
@@ -176,7 +176,26 @@ router.post('/view-breakup', authenticate, breakup);
 
 //cab booking
 router.post('/search-cabs', authenticate, searchForCabs);
-router.post('/get-estimate', authenticate, estimatePrice);
+router.post('/get-estimate', authenticate, async (req, res) => {
+  try {
+    // Extract data from the request body
+    const { origin, destination, vehicleId, trafficConditions } = req.body;
+
+    // Validate the input
+    if (!origin || !destination || !vehicleId) {
+      return res.status(400).json({ message: "Missing required parameters: origin, destination, or vehicleId." });
+    }
+
+    // Call the estimatePrice function with the required parameters
+    const result = await estimatePrice({ origin, destination, vehicleId, trafficConditions });
+
+    // Return the result to the client
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in /get-estimate route:", error.message);
+    res.status(500).json({ message: "Failed to estimate price.", error: error.message });
+  }
+});
 router.post('/book-cab', authenticate, bookCab);
 //end cab
 
