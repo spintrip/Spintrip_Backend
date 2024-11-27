@@ -6,6 +6,7 @@ const sequelize = require('../Models').sequelize; // Google Maps API Configurati
 const GOOGLE_MAPS_API_URL = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const { Op } = require('sequelize');
+const { geolib } = require('geolib');
 
 async function getDistanceAndDuration(origin, destination) {
   try {

@@ -8,7 +8,7 @@ const {
 } = require('../Models');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { publishMessage } = require('../Controller/pubsubController');
-const CabtoDriverModel = require('../Models/CabtoDriverModel');
+const CabToDriver = require('../Models/CabtoDriverModel');
 const { where } = require('sequelize');
 const router = express.Router();
 
@@ -94,7 +94,7 @@ router.post('/driver/keep-alive', authenticate, async (req, res) => {
     }
 
     // Update the driver's location in the database
-    const vehicleId = CabtoDriverModel.findOne({where: {driverId:driverId}});
+    const vehicleId = CabToDriver.findOne({where: {driverId:driverId}});
     await VehicleAdditional.update(
       { latitude, longitude },
       { where: { vehicleid: vehicleId.vehicleId } }
