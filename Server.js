@@ -14,7 +14,6 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
-const routeLogger = require('./Middleware/routeLogger'); 
 const cabRoutes = require('./Routes/cabRoutes');
 
 // Setting up your port
@@ -121,7 +120,6 @@ app.get('/uploads/host/CarAdditional/:vehicleid/:imageName', (req, res) => {
         res.status(404).send('Image not found');
     }
 });
-app.use(routeLogger);
 
 // Routes
 app.use('/user', userRoutes);
