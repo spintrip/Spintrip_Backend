@@ -274,43 +274,45 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
         origins: `${origin.latitude},${origin.longitude}`,
         destinations: `${destination.latitude},${destination.longitude}`,
         key: GOOGLE_MAPS_API_KEY,
-        departure_time: "now", // Current time for traffic data
+        departure_time: "now", // Fetch real-time traffic data
       },
     });
 
     const { rows } = response.data;
-    if (!rows || rows[0].elements[0].status !== "OK") {
+
+    // Validate API response
+    if (!rows || !rows[0].elements || rows[0].elements[0].status !== "OK") {
       throw new Error("Failed to fetch distance and duration from Google Maps.");
     }
 
-    const { distance, duration, traffic_speed_entry } = rows[0].elements[0];
-    const distanceInKm = distance.value / 1000; // Meters to Kilometers
-    const durationInMinutes = duration.value / 60; // Seconds to Minutes
+    const { distance, duration } = rows[0].elements[0]; // Extract distance and duration
+    const distanceInKm = distance.value / 1000; // Convert meters to kilometers
+    const durationInMinutes = duration.value / 60; // Convert seconds to minutes
 
-    // Get base pricing from the database
+    // Fetch pricing from the database
     const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
     if (!pricing) {
       throw new Error("Pricing information not found for this vehicle.");
     }
 
-    const costPerHr = pricing.costperhr || 0; // Ensure costPerHr is defined
-    const basePrice = distanceInKm * costPerHr;
+    const costPerHr = pricing.costperhr || 0; // Base cost per hour
+    const basePrice = distanceInKm * costPerHr; // Base price calculation
 
-    // Calculate multipliers based on traffic and night-time conditions
+    // Initialize pricing multiplier
     let multiplier = 1.0;
 
-    // Traffic-based pricing (if traffic_speed_entry or conditions indicate high traffic)
-    if (trafficConditions || traffic_speed_entry === "HEAVY") {
-      multiplier *= 1.3;
+    // Apply traffic multiplier
+    if (trafficConditions === "HEAVY") {
+      multiplier *= 1.3; // Increase price by 30% if traffic is heavy
     }
 
-    // Night-time pricing (22:00 - 06:00)
+    // Apply night-time multiplier (22:00 - 06:00)
     const currentHour = new Date().getHours();
     if (currentHour >= 22 || currentHour < 6) {
-      multiplier *= 1.1;
+      multiplier *= 1.1; // Increase price by 10% during night hours
     }
 
-    const estimatedPrice = Math.round(basePrice * multiplier);
+    const estimatedPrice = Math.round(basePrice * multiplier); // Calculate final price
 
     return {
       distance: distanceInKm,
