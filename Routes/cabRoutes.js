@@ -8,7 +8,6 @@ const {
 } = require('../Models');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { publishMessage } = require('../Controller/pubsubController');
-const CabToDriver = require('../Models/CabtoDriverModel');
 const { where } = require('sequelize');
 const router = express.Router();
 
