@@ -115,35 +115,44 @@ const searchForCabs = async (req, res) => {
  * Book a cab and notify nearby drivers
  */
 const bookCab = async (req, res) => {
-  const { startLocation, endLocation, startDate, startTime } = req.body;
+  const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
   const userId = req.user.id;
 
   try {
-    const { distance } = await getDistanceAndDuration(startLocation, endLocation);
-
-    const pricing = await Pricing.findOne({ where: { vehicleid: req.body.vehicleId } });
-    if (!pricing) {
-      return res.status(404).json({ message: "Pricing information not found for this vehicle." });
+    // Validate input
+    if (!startLocation || !endLocation || !vehicleId) {
+      return res.status(400).json({ message: "Missing required parameters." });
     }
 
-    const amount = Math.round(distance * pricing.costperkm);
+    // Estimate price internally
+    const { estimatedPrice, distance } = await estimatePrice({
+      origin: startLocation,
+      destination: endLocation,
+      vehicleId,
+    });
+
+    if (!estimatedPrice) {
+      return res.status(500).json({ message: "Failed to estimate price." });
+    }
+
     const bookingId = uuid.v4();
 
     // Create the booking request
     await CabBookingRequest.create({
       bookingId,
       userId,
+      vehicleId,
       startLocationLatitude: startLocation.latitude,
       startLocationLongitude: startLocation.longitude,
       endLocationLatitude: endLocation.latitude,
       endLocationLongitude: endLocation.longitude,
-      estimate_price: amount,
+      estimate_price: estimatedPrice,
       status: "pending",
     });
 
     // Notify drivers
     const notificationText = "New booking request nearby";
-    const notificationMetadata = { bookingId, startLocation, endLocation, amount };
+    const notificationMetadata = { bookingId, startLocation, endLocation, estimatedPrice };
 
     const drivers = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
 
@@ -159,7 +168,7 @@ const bookCab = async (req, res) => {
       });
     }
 
-    res.status(201).json({ message: "Booking created and drivers notified", bookingId, amount });
+    res.status(201).json({ message: "Booking created and drivers notified", bookingId, estimatedPrice });
   } catch (error) {
     console.error("Error booking cab:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
