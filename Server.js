@@ -30,8 +30,16 @@ app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 // Socket.io setup
 const io = new Server(server, {
     cors: {
-        origin: [ 'https://spintrip-admin.netlify.app' , 'https://spintrip.in', 'http://localhost', 'https://spintrip.in', 'http://localhost:3000','http://13.232.236.183:3000', 'http://3.109.122.29:3000', 'http://spintrip.in']
-    }
+        origin: [
+            'https://spintrip-admin.netlify.app', 
+            'https://spintrip.in', 
+            'http://localhost', 
+            'http://localhost:3000',
+            'http://13.232.236.183:3000', 
+            'http://3.109.122.29:3000',
+            'http://spintrip.in'
+        ],
+    },
 });
 
 io.on('connection', (socket) => {
@@ -64,7 +72,17 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Middleware
 app.use(helmet());
-app.use(cors({ origin: [ 'https://spintrip-admin.netlify.app', 'https://spintrip.in','https://spintrip.in', 'http://localhost', 'http://localhost:3000','http://13.232.236.183:3000', 'http://3.109.122.29:3000', 'http://spintrip.in'] }));
+app.use(cors({ 
+    origin: [
+        'https://spintrip-admin.netlify.app', 
+        'https://spintrip.in', 
+        'http://localhost', 
+        'http://localhost:3000',
+        'http://13.232.236.183:3000', 
+        'http://3.109.122.29:3000',
+        'http://spintrip.in'
+    ],
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -86,9 +104,7 @@ app.get('/uploads/:userId/:imageName', (req, res) => {
     const { userId, imageName } = req.params;
     const imagePath = path.join(__dirname, './uploads', userId, imageName);
 
-    // Check if file exists
     if (fs.existsSync(imagePath)) {
-        // You can add additional logic here if needed
         res.sendFile(imagePath);
     } else {
         res.status(404).send('Image not found');
@@ -99,9 +115,7 @@ app.get('/uploads/host/CarAdditional/:vehicleid/:imageName', (req, res) => {
     const { vehicleid, imageName } = req.params;
     const imagePath = path.join(__dirname, './uploads/host/CarAdditional', vehicleid, imageName);
 
-    // Check if file exists
     if (fs.existsSync(imagePath)) {
-        // You can add additional logic here if needed
         res.sendFile(imagePath);
     } else {
         res.status(404).send('Image not found');
@@ -114,6 +128,7 @@ app.use('/user', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/host', hostRoutes);
+app.use('/api/cab', cabRoutes);
 
 // Synchronizing the database
 db.sequelize.sync().then(() => {
@@ -140,7 +155,6 @@ app.get('/', (req, res) => {
         </html>
     `);
 });
-app.use('/api/cab', cabRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -148,5 +162,24 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
+// Graceful shutdown handler
+const shutdownHandler = () => {
+    console.log('\nGracefully shutting down...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+};
+
 // Listening to server connection
-server.listen(PORT, () => console.log(`Server is connected on ${PORT}`));
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
+// Catch signals for shutdown
+process.on('SIGTERM', shutdownHandler);
+process.on('SIGINT', shutdownHandler);
+
+// Global unhandled promise rejection handler
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', reason);
+    // Add logging or monitoring here if necessary
+});
