@@ -9,7 +9,9 @@ const {
   Listing,
   CabBookingRequest,
   CabBookingAccepted,
-  Driver,
+  Driver, 
+  CabToDriver,
+  DriverKeepAlive
 } = require("../Models");
 const { sendNotification } = require("./adminController/notificationManagement");
 const { publishMessage } = require("../Controller/pubsubController");
@@ -57,53 +59,62 @@ async function getDistanceAndDuration(origin, destination) {
  */
 const searchForCabs = async (req, res) => {
   const { fromLocation, searchRadius } = req.body;
-  const { latitude, longitude } = fromLocation;
 
   try {
     if (!fromLocation || !searchRadius) {
       return res.status(400).json({ message: "Missing required parameters: fromLocation or searchRadius" });
     }
 
-    const currentTime = new Date();
-    const minLatitude = latitude - searchRadius / 111;
+    const { latitude, longitude } = fromLocation;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: "Invalid location coordinates." });
+    }
+
+    // Calculate bounds for latitude and longitude
+    const minLatitude = latitude - searchRadius / 111; // Approx. 1 degree latitude ≈ 111 km
     const maxLatitude = latitude + searchRadius / 111;
     const minLongitude = longitude - searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
     const maxLongitude = longitude + searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
 
-    // Fetch active drivers within the radius
-    const drivers = await sequelize.query(
-      `
-      SELECT d.id as driverId, va.latitude, va.longitude, va.address, dk.updatedAt as lastPing, d.deviceToken
-      FROM VehicleAdditional va
-      JOIN CabToDriver cd ON va.vehicleid = cd.vehicleid
-      JOIN DriverKeepAlive dk ON cd.driverid = dk.driverid
-      JOIN Driver d ON cd.driverid = d.id
-      WHERE va.latitude BETWEEN :minLatitude AND :maxLatitude
-        AND va.longitude BETWEEN :minLongitude AND :maxLongitude
-        AND TIMESTAMPDIFF(MINUTE, dk.updatedAt, :currentTime) <= 5
-      LIMIT 10
-      `,
-      {
-        replacements: { minLatitude, maxLatitude, minLongitude, maxLongitude, currentTime },
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+    // Fetch all vehicles of type "cab" with their latitude and longitude
+    const cabs = await VehicleAdditional.findAll({
+      attributes: ['vehicleid', 'latitude', 'longitude', 'address'],
+      where: {
+        latitude: { [Op.between]: [minLatitude, maxLatitude] },
+        longitude: { [Op.between]: [minLongitude, maxLongitude] },
+      },
+    });
 
-    if (!drivers.length) {
-      return res.status(404).json({ message: "No active drivers available within the specified radius." });
+    if (!cabs.length) {
+      return res.status(404).json({ message: "No cabs available." });
     }
 
-    const nearbyDrivers = drivers.map((driver) => ({
-      ...driver,
-      distance: geolib.getDistance(
-        { latitude, longitude },
-        { latitude: driver.latitude, longitude: driver.longitude }
-      ) / 1000, // Convert to kilometers
-    }));
+    // Filter cabs within the search radius
+    const nearbyCabs = cabs
+      .map((cab) => {
+        const distance = geolib.getDistance(
+          { latitude, longitude },
+          { latitude: cab.latitude, longitude: cab.longitude }
+        ) / 1000; // Convert to kilometers
+
+        return {
+          vehicleId: cab.vehicleid,
+          address: cab.address,
+          latitude: cab.latitude,
+          longitude: cab.longitude,
+          distance,
+        };
+      })
+      .filter((cab) => cab.distance <= searchRadius);
+
+    if (!nearbyCabs.length) {
+      return res.status(404).json({ message: "No cabs available within the specified radius." });
+    }
 
     res.status(200).json({
-      message: "Nearby drivers found",
-      nearbyDrivers,
+      message: "Cabs found",
+      nearbyCabs,
     });
   } catch (error) {
     console.error("Error searching for cabs:", error.message);

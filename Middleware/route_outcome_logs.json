@@ -1498,5 +1498,345 @@
     "body": {
       "message": "{\"message\":\"No cabs available.\"}"
     }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:21:43.076Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"relation \\\"VehicleAdditional\\\" does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:31:08.306Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:36:53.025Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'Driver')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:38:57.048Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'Driver')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:38:57.291Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'Driver')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:38:58.147Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'Driver')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:41:40.189Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Cannot read properties of undefined (reading 'Driver')\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:43:21.051Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:44:05.385Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"DriverKeepAlive is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:44:17.361Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"DriverKeepAlive is not associated to Driver!\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:48:15.335Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:49:46.549Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:51:59.008Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:54:49.836Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:54:50.935Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:56:04.163Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:56:26.888Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:57:25.147Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:57:42.033Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"column DriverKeepAlive.driverid does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 400,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:58:56.351Z",
+    "body": {
+      "message": "{\"message\":\"Missing required parameters: fromLocation, toLocation, or searchRadius\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T14:59:36.975Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"Sequelize is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:01:00.649Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"redisClient is not defined\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:01:31.792Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"relation \\\"vehicleadditional\\\" does not exist\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:05:18.666Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"missing FROM-clause entry for table \\\"CabToDrivers\\\"\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:06:34.688Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"DriverKeepAlive is associated to Driver using an alias. You've included an alias (DriverKeepAlives), but it does not match the alias(es) defined in your association (DriverKeepAlive).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:07:00.703Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"missing FROM-clause entry for table \\\"CabToDrivers\\\"\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:07:16.335Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is associated to Driver using an alias. You've included an alias (CabToDriver), but it does not match the alias(es) defined in your association (CabToDrivers).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:07:42.202Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is associated to Driver using an alias. You've included an alias (CabToDriver), but it does not match the alias(es) defined in your association (CabToDrivers).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:08:20.143Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"missing FROM-clause entry for table \\\"CabToDrivers\\\"\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:08:47.964Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"DriverKeepAlive is associated to Driver using an alias. You've included an alias (DriverKeepAlives), but it does not match the alias(es) defined in your association (DriverKeepAlive).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:09:06.276Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"missing FROM-clause entry for table \\\"CabToDrivers\\\"\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:09:21.954Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is associated to Driver using an alias. You've included an alias (CabToDriver), but it does not match the alias(es) defined in your association (CabToDrivers).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 500,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:15:07.437Z",
+    "body": {
+      "message": "{\"message\":\"Server error\",\"error\":\"CabToDriver is associated to Driver using an alias. You've included an alias (CabToDriver), but it does not match the alias(es) defined in your association (CabToDrivers).\"}"
+    }
+  },
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 404,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T15:16:24.888Z",
+    "body": {
+      "message": "{\"message\":\"No cabs available.\"}"
+    }
   }
 ]

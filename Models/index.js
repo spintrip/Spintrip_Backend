@@ -63,7 +63,7 @@ db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.Driver = require('./driverModel')(sequelize, DataTypes);
-db.CabToDriver =  require('./CabtoDriverModel')(sequelize, DataTypes);
+db.CabToDriver = require('./CabtoDriverModel')(sequelize, DataTypes);
 db.Cab = require('./cabModel')(sequelize, DataTypes);
 db.CabBookingRequest = require('./cabBookingRequestModel')(sequelize, DataTypes);
 db.CabBookingAccepted = require('./cabBookingAcceptModel')(sequelize, DataTypes);
@@ -146,6 +146,10 @@ const associateModels = () => {
   SupportChat.belongsTo(Support, { foreignKey: 'supportId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
+  // DriverKeepAlive associations
+  Driver.hasOne(DriverKeepAlive, { foreignKey: 'driverid', onDelete: 'CASCADE' });
+  DriverKeepAlive.belongsTo(Driver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
+
 };
 
 associateModels();

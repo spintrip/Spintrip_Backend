@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   
     DriverKeepAlive.associate = (models) => {
-      DriverKeepAlive.belongsTo(models.Driver, { foreignKey: "driverId" });
+      DriverKeepAlive.belongsTo(models.Driver, { foreignKey: "driverid" });
     };
   
     return DriverKeepAlive;

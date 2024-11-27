@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false 
       },
       vehicleId: DataTypes.STRING(36),  
-      driverId: DataTypes.STRING(36),
+      driverid: DataTypes.STRING(36),
       date: DataTypes.DATEONLY,
       time: DataTypes.TIME,
       status: { 
