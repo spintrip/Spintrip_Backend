@@ -17,7 +17,7 @@ const { sendNotification } = require("./adminController/notificationManagement")
 const { publishMessage } = require("../Controller/pubsubController");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
-const { geolib } = require("geolib");
+const geolib = require("geolib");
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -93,10 +93,10 @@ const searchForCabs = async (req, res) => {
     // Filter cabs within the search radius
     const nearbyCabs = cabs
       .map((cab) => {
-        const distance = geolib.getDistance(
+        const distance = geolib.getPreciseDistance(
           { latitude, longitude },
           { latitude: cab.latitude, longitude: cab.longitude }
-        ) / 1000; // Convert to kilometers
+        ) / 1000; // Convert meters to kilometers
 
         return {
           vehicleId: cab.vehicleid,
@@ -121,6 +121,7 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 /**
  * Book a cab and notify nearby drivers
