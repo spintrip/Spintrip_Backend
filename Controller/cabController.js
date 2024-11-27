@@ -347,16 +347,20 @@ const addCab = async (req, res) => {
     longitude,
     address,
     timeStamp,
+    costperkm, // Add costperkm to the request body
   } = req.body;
 
   try {
+    // Validate host
     const host = await Host.findByPk(req.user.id);
     if (!host) {
       return res.status(401).json({ message: "Host not found" });
     }
 
+    // Generate vehicle ID
     const vehicleId = uuid.v4();
 
+    // Create Vehicle entry
     const vehicle = await Vehicle.create({
       vehicletype: 3,
       chassisno: chassisNo,
@@ -369,6 +373,7 @@ const addCab = async (req, res) => {
       activated: false,
     });
 
+    // Create VehicleAdditional entry
     await VehicleAdditional.create({
       vehicleid: vehicleId,
       latitude,
@@ -376,6 +381,7 @@ const addCab = async (req, res) => {
       address,
     });
 
+    // Create Cab entry
     await Cab.create({
       vehicleid: vehicleId,
       cabmodel: vehicleModel,
@@ -387,10 +393,17 @@ const addCab = async (req, res) => {
       city,
     });
 
+    // Validate and Create Pricing entry
+    if (!costperkm || costperkm <= 0) {
+      return res.status(400).json({ message: "Invalid cost per km. Please provide a positive value." });
+    }
+
     await Pricing.create({
       vehicleid: vehicleId,
+      costperhr: costperkm, // Save costperkm as costperhr
     });
 
+    // Create Listing entry
     await Listing.create({
       id: uuid.v4(),
       vehicleid: vehicleId,
@@ -406,6 +419,7 @@ const addCab = async (req, res) => {
     res.status(500).json({ message: "Error adding cab", error: error.message });
   }
 };
+
 async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
   try {
     console.log("Estimating price with input:", { origin, destination, vehicleId, trafficConditions });
@@ -446,7 +460,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
       throw new Error("Pricing information not found for this vehicle.");
     }
 
-    const costPerKm = pricing.costperhr || 0; // Use costperhr field as cost per km
+    const costPerKm = pricing.costperhr || 20; // Use costperhr field as cost per km
     const basePrice = distanceInKm * costPerKm; // Base price calculation
 
     // Initialize pricing multiplier

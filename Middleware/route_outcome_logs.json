@@ -1,0 +1,12 @@
+[
+  {
+    "method": "POST",
+    "url": "/api/users/search-cabs",
+    "status": 404,
+    "user": "d5b47cb2-21d7-4a05-acde-a8addd03f40e",
+    "timestamp": "2024-11-27T17:43:47.165Z",
+    "body": {
+      "message": "{\"message\":\"No active vehicles found within the specified radius.\"}"
+    }
+  }
+]
