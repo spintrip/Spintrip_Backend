@@ -13,8 +13,6 @@ const {
   CabToDriver,
   DriverKeepAlive
 } = require("../Models");
-const { sendNotification } = require("./adminController/notificationManagement");
-const { publishMessage } = require("../Controller/pubsubController");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
@@ -26,6 +24,7 @@ const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 /**
  * Get distance and duration using Google Maps API
  */
+
 async function getDistanceAndDuration(origin, destination) {
   try {
     const response = await axios.get(GOOGLE_MAPS_API_URL, {
@@ -53,6 +52,145 @@ async function getDistanceAndDuration(origin, destination) {
     throw new Error("Failed to fetch distance and duration");
   }
 }
+/**
+ * Driver Signup with OTP Verification
+ */
+const driverSignup = async (req, res) => {
+  const { phone, name } = req.body;
+
+  try {
+    const hostId = req.user.id; // Get host ID from the authenticated token
+    const host = await Host.findByPk(hostId);
+    if (!host) return res.status(404).json({ message: "Host not found" });
+
+    const existingDriver = await Driver.findOne({ where: { phone } });
+    if (existingDriver) {
+      return res.status(400).json({ message: "Driver already exists. Please log in." });
+    }
+
+    const driverId = uuid.v4();
+    const otp = generateOTP();
+
+    // Create driver with default password as `1234`
+    await Driver.create({
+      id: driverId,
+      phone,
+      name,
+      hostid: hostId,
+      otp,
+      password: "1234",
+    });
+
+    sendOTP(phone, otp);
+    res.status(201).json({ message: "Driver added. OTP sent for verification.", driverId });
+  } catch (error) {
+    console.error("Error during driver signup:", error.message);
+    res.status(500).json({ message: "Error adding driver", error: error.message });
+  }
+};
+
+/**
+ * Driver OTP Verification
+ */
+const verifyDriverOtp = async (req, res) => {
+  const { phone, otp } = req.body;
+
+  try {
+    const driver = await Driver.findOne({ where: { phone } });
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+
+    if (driver.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+
+    const token = jwt.sign({ id: driver.id, role: "driver" }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    res.status(200).json({ message: "OTP verified successfully", token });
+  } catch (error) {
+    console.error("Error verifying OTP:", error.message);
+    res.status(500).json({ message: "Error verifying OTP", error: error.message });
+  }
+};
+
+/**
+ * Driver Keep-Alive
+ */
+const driverKeepAlive = async (req, res) => {
+  const { latitude, longitude } = req.body;
+  const driverId = req.user.id;
+
+  try {
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: "Missing latitude or longitude" });
+    }
+
+    // Update driver's location
+    const vehicleMapping = await CabToDriver.findOne({ where: { driverid: driverId } });
+    if (!vehicleMapping) {
+      return res.status(404).json({ message: "Driver is not assigned to a vehicle" });
+    }
+
+    await VehicleAdditional.update(
+      { latitude, longitude },
+      { where: { vehicleid: vehicleMapping.vehicleid } }
+    );
+
+    res.status(200).json({ message: "Location updated successfully" });
+  } catch (error) {
+    console.error("Error in keep-alive:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ======================= HOST CONTROLLER FUNCTIONS =======================
+
+/**
+ * Add Driver
+ */
+const addDriver = async (req, res) => {
+  const { name, phone } = req.body;
+  const hostId = req.user.id;
+
+  try {
+    const driverId = uuid.v4();
+    const otp = generateOTP();
+
+    await Driver.create({
+      id: driverId,
+      hostid: hostId,
+      name,
+      phone,
+      otp,
+      password: "1234",
+    });
+
+    sendOTP(phone, otp);
+    res.status(201).json({ message: "Driver added. OTP sent for verification.", driverId });
+  } catch (error) {
+    console.error("Error adding driver:", error.message);
+    res.status(500).json({ message: "Error adding driver", error: error.message });
+  }
+};
+
+/**
+ * Assign Driver to Vehicle
+ */
+const assignDriverToVehicle = async (req, res) => {
+  const { driverId, vehicleId } = req.body;
+  const hostId = req.user.id;
+
+  try {
+    const driver = await Driver.findOne({ where: { id: driverId, hostid: hostId } });
+    if (!driver) return res.status(404).json({ message: "Driver not found or unauthorized" });
+
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleId, hostId } });
+    if (!vehicle) return res.status(404).json({ message: "Vehicle not found or unauthorized" });
+
+    await CabToDriver.upsert({ driverid: driverId, vehicleid: vehicleId, assignedAt: new Date() });
+
+    res.status(200).json({ message: "Driver assigned to vehicle successfully" });
+  } catch (error) {
+    console.error("Error assigning driver:", error.message);
+    res.status(500).json({ message: "Error assigning driver", error: error.message });
+  }
+};
 
 /**
  * Search for nearby cabs
@@ -168,17 +306,17 @@ const bookCab = async (req, res) => {
 
     const drivers = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
 
-    for (const driver of drivers.nearbyDrivers) {
-      if (driver.deviceToken) {
-        await publishMessage(`driver-${driver.driverId}`, { text: notificationText, metadata: notificationMetadata });
-      }
-      await sendNotification({
-        receiverIds: [driver.driverId],
-        receiverType: "driver",
-        text: notificationText,
-        metadata: notificationMetadata,
-      });
-    }
+    //for (const driver of drivers.nearbyDrivers) {
+    //  if (driver.deviceToken) {
+    //    await publishMessage(`driver-${driver.driverId}`, { text: notificationText, metadata: notificationMetadata });
+    //  }
+    //  await sendNotification({
+    //    receiverIds: [driver.driverId],
+    //    receiverType: "driver",
+    //    text: notificationText,
+    //    metadata: notificationMetadata,
+    //  });
+    //}
 
     res.status(201).json({ message: "Booking created and drivers notified", bookingId, estimatedPrice });
   } catch (error) {
@@ -344,4 +482,9 @@ module.exports = {
   bookCab,
   addCab,
   estimatePrice,
+  driverSignup,
+  verifyDriverOtp,
+  driverKeepAlive,
+  addDriver,
+  assignDriverToVehicle,
 };
