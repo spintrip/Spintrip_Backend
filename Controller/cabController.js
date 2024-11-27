@@ -268,6 +268,17 @@ const addCab = async (req, res) => {
 };
 async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
   try {
+    // Log the received input for debugging
+    console.log("Estimating price with input:", { origin, destination, vehicleId, trafficConditions });
+
+    // Validate input
+    if (!origin || !destination || !vehicleId) {
+      throw new Error("Missing required parameters: origin, destination, or vehicleId.");
+    }
+    if (!origin.latitude || !origin.longitude || !destination.latitude || !destination.longitude) {
+      throw new Error("Invalid origin or destination coordinates.");
+    }
+
     // Fetch distance and duration from Google Maps API
     const response = await axios.get(GOOGLE_MAPS_API_URL, {
       params: {
@@ -282,6 +293,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
 
     // Validate API response
     if (!rows || !rows[0].elements || rows[0].elements[0].status !== "OK") {
+      console.error("Google Maps API response error:", response.data);
       throw new Error("Failed to fetch distance and duration from Google Maps.");
     }
 
@@ -326,6 +338,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
     throw new Error("Failed to estimate price.");
   }
 }
+
 module.exports = {
   searchForCabs,
   bookCab,
