@@ -9,6 +9,7 @@ const {
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { publishMessage } = require('../Controller/pubsubController');
 const { where } = require('sequelize');
+const { estimatePrice } = require('../Controller/cabController');
 const router = express.Router();
 
 /** ======================= Driver Routes ======================= **/
@@ -172,11 +173,12 @@ router.get('/host/drivers', authenticate, async (req, res) => {
 
 // Create Booking Request
 router.post('/booking/request', authenticate, async (req, res) => {
-  const { vehicleId, startLocation, endLocation, estimatedPrice } = req.body;
+  const { vehicleId, startLocation, endLocation } = req.body;
   const userId = req.user.id;
 
   try {
     const bookingId = uuid.v4();
+    const estimatedPrice = await estimatePrice(startLocation,endLocation,vehicleId,"HEAVY");
     const bookingRequest = await CabBookingRequest.create({
       bookingId,
       userId,
@@ -185,7 +187,7 @@ router.post('/booking/request', authenticate, async (req, res) => {
       startLocationLongitude: startLocation.longitude,
       endLocationLatitude: endLocation.latitude,
       endLocationLongitude: endLocation.longitude,
-      estimate_price: estimatedPrice,
+      estimatedPrice: estimatedPrice.estimatedPrice,
       status: 'pending',
     });
 
