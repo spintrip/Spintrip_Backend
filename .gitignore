@@ -132,3 +132,4 @@ dist
 uploads
 payloads.csv
 data
+config/firebaseServiceAccountKey.json

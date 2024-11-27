@@ -492,7 +492,29 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
   }
 }
 
+const updateDriverDeviceToken = async (req, res) => {
+  try {
+    const driverId = req.user.id; // Extract driver ID from authenticated user
+    const { deviceToken } = req.body; // Get device token from the request body
 
+    if (!deviceToken) {
+      return res.status(400).json({ message: "Device token is required" });
+    }
+
+    // Find the driver and update the device token
+    const driver = await Driver.findByPk(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    await driver.update({ deviceToken });
+
+    res.status(200).json({ message: "Device token updated successfully" });
+  } catch (error) {
+    console.error("Error updating driver device token:", error.message);
+    res.status(500).json({ message: "Error updating device token", error: error.message });
+  }
+};
 module.exports = {
   searchForCabs,
   bookCab,
@@ -503,4 +525,5 @@ module.exports = {
   driverKeepAlive,
   addDriver,
   assignDriverToVehicle,
+  updateDriverDeviceToken
 };

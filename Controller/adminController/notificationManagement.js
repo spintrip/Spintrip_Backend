@@ -1,14 +1,19 @@
 const { Notification, User, Driver } = require("../../Models");
-const { sendEmail } = require("../pushNotificationService");
-// Placeholder for FCM
-const { sendPushNotification } = require("../pushNotificationService");
+const { sendPushNotification, sendPushNotificationToMultipleDevices } = require("../pushNotificationService");
 
 /**
- * Send notification to users or drivers.
+ * Send notifications to users or drivers (push + in-app).
+ * @param {Object} params - Notification details.
+ * @param {string[]} params.receiverIds - Array of receiver IDs.
+ * @param {string} params.receiverType - 'user' or 'driver'.
+ * @param {string} params.text - The notification text.
+ * @param {string} [params.title] - The notification title (for push notifications).
+ * @param {string} [params.subject] - Email subject (optional).
+ * @param {object} [params.metadata] - Additional data for the notification.
  */
-const sendNotification = async ({ receiverIds, receiverType, text, subject, metadata }) => {
+const sendNotification = async ({ receiverIds, receiverType, text, title = "Notification", metadata }) => {
   try {
-    if (!receiverIds || receiverIds.length === 0 || !receiverType || !text) {
+    if (!receiverIds || !receiverIds.length || !receiverType || !text) {
       throw new Error("Missing required fields");
     }
 
@@ -16,40 +21,46 @@ const sendNotification = async ({ receiverIds, receiverType, text, subject, meta
       throw new Error("Invalid receiver type");
     }
 
-    // Fetch receiver details
+    // Fetch receivers (users or drivers)
     const receiverModel = receiverType === "user" ? User : Driver;
     const receivers = await receiverModel.findAll({
       where: { id: receiverIds },
+      attributes: ["id", "deviceToken"], // Include only necessary fields
     });
 
-    if (!receivers || receivers.length === 0) {
+    if (!receivers || !receivers.length) {
       throw new Error("No receivers found");
     }
 
-    // Create and send notifications
+    // Send notifications
+    const pushTokens = [];
     const notifications = await Promise.all(
       receivers.map(async (receiver) => {
         const notification = await Notification.create({
           receiverId: receiver.id,
           receiverType,
           text,
-          deviceToken: receiver.deviceToken || null,
           metadata: metadata || {},
+          status: "pending", // Set initial status
         });
 
-        // Send email if subject provided (optional)
-        if (subject && receiver.Email) {
-          await sendEmail(receiver.Email, subject, text);
-        }
-
-        // Send push notification if device token available
         if (receiver.deviceToken) {
-          await sendPushNotification(receiver.deviceToken, text, metadata);
+          pushTokens.push(receiver.deviceToken);
         }
 
         return notification;
       })
     );
+
+    // Send push notifications
+    if (pushTokens.length) {
+      try {
+        const pushResponse = await sendPushNotificationToMultipleDevices(pushTokens, title, text, metadata);
+        console.log("Push notifications sent:", pushResponse);
+      } catch (pushError) {
+        console.error("Error sending push notifications:", pushError.message);
+      }
+    }
 
     return notifications;
   } catch (error) {
@@ -58,135 +69,6 @@ const sendNotification = async ({ receiverIds, receiverType, text, subject, meta
   }
 };
 
-/**
- * Fetch notifications for a specific user or driver.
- */
-const getNotifications = async ({ receiverId, receiverType, status }) => {
-  try {
-    if (!receiverId || !receiverType) {
-      throw new Error("Missing receiverId or receiverType");
-    }
-
-    if (!["user", "driver"].includes(receiverType)) {
-      throw new Error("Invalid receiver type");
-    }
-
-    const query = {
-      where: { receiverId, receiverType },
-      order: [["timestamp", "DESC"]],
-    };
-
-    if (status) {
-      query.where.status = status; // Filter by status if provided
-    }
-
-    const notifications = await Notification.findAll(query);
-
-    return notifications;
-  } catch (error) {
-    console.error("Error fetching notifications:", error.message);
-    throw error;
-  }
-};
-
-/**
- * Update the status of a notification.
- */
-const updateNotificationStatus = async ({ notificationId, status }) => {
-  try {
-    if (!notificationId || !["pending", "delivered", "read"].includes(status)) {
-      throw new Error("Invalid notification ID or status");
-    }
-
-    const notification = await Notification.findByPk(notificationId);
-
-    if (!notification) {
-      throw new Error("Notification not found");
-    }
-
-    await notification.update({ status });
-
-    return notification;
-  } catch (error) {
-    console.error("Error updating notification status:", error.message);
-    throw error;
-  }
-};
-
-/**
- * Helper to send email and push notifications from the controllers.
- */
-const sendNotificationFromController = async (req, res) => {
-  try {
-    const { receiverIds, receiverType, text, subject, metadata } = req.body;
-
-    if (!receiverIds || !receiverType || !text) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const notifications = await sendNotification({ receiverIds, receiverType, text, subject, metadata });
-
-    res.status(200).json({
-      message: "Notifications sent successfully",
-      notifications,
-    });
-  } catch (error) {
-    console.error("Error in controller:", error.message);
-    res.status(500).json({ message: "Error sending notifications", error });
-  }
-};
-
-/**
- * Controller to fetch notifications.
- */
-const getNotificationsController = async (req, res) => {
-  try {
-    const { receiverId, receiverType, status } = req.query;
-
-    if (!receiverId || !receiverType) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const notifications = await getNotifications({ receiverId, receiverType, status });
-
-    res.status(200).json({
-      message: "Notifications retrieved successfully",
-      notifications,
-    });
-  } catch (error) {
-    console.error("Error fetching notifications:", error.message);
-    res.status(500).json({ message: "Error fetching notifications", error });
-  }
-};
-
-/**
- * Controller to update notification status.
- */
-const updateNotificationStatusController = async (req, res) => {
-  try {
-    const { notificationId, status } = req.body;
-
-    if (!notificationId || !status) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-
-    const notification = await updateNotificationStatus({ notificationId, status });
-
-    res.status(200).json({
-      message: "Notification status updated successfully",
-      notification,
-    });
-  } catch (error) {
-    console.error("Error updating notification status:", error.message);
-    res.status(500).json({ message: "Error updating notification status", error });
-  }
-};
-
 module.exports = {
   sendNotification,
-  getNotifications,
-  updateNotificationStatus,
-  sendNotificationFromController,
-  getNotificationsController,
-  updateNotificationStatusController,
 };

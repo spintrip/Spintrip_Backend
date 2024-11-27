@@ -35,7 +35,8 @@ const {
   chathistory,
   toprating,
   deleteuser,
-  rating
+  rating,
+  updateDeviceToken
  } = require('../Controller/userController');
  const {
   searchForCabs,
@@ -232,5 +233,6 @@ router.get('/support', authenticate, viewUserSupportTickets);
 router.get('/view-blog', getAllBlogs);
 
 router.get('/transactions', authenticate, transactions);
+router.post('/update-device-token', authenticate, updateDeviceToken);
 
 module.exports = router;

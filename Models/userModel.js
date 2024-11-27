@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
     otp:DataTypes.STRING(100),
     timestamp: DataTypes.DATE,
     status:DataTypes.INTEGER,
-    rating: DataTypes.FLOAT
+    rating: DataTypes.FLOAT,
+    deviceToken: DataTypes.STRING, 
   });
 
   return User;
