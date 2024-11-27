@@ -1,5 +1,5 @@
 const { Notification, User, Driver } = require("../../Models");
-const { sendEmail } = require("../emailController");
+const { sendEmail } = require("../pushNotificationService");
 // Placeholder for FCM
 const { sendPushNotification } = require("../pushNotificationService");
 

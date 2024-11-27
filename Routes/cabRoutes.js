@@ -8,8 +8,9 @@ const {
 } = require('../Models');
 const { sendOTP, generateOTP } = require('../Controller/hostController');
 const { publishMessage } = require('../Controller/pubsubController');
-const { sendNotification } = require('../NotificationManagement');
+const { sendNotification } = require("../Controller/adminController/notificationManagement");
 const router = express.Router();
+const { estimatePrice } = require("../Controller/cabController"); // Import the estimation function
 
 /** ======================= Driver Routes ======================= **/
 
@@ -199,5 +200,31 @@ router.post('/booking/request', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error creating booking request', error });
   }
 });
+
+router.post("/estimate-price", authenticate, async (req, res) => {
+  const { startLocation, endLocation, vehicleId, trafficConditions } = req.body;
+
+  try {
+    if (!startLocation || !endLocation || !vehicleId) {
+      return res.status(400).json({ message: "Missing required parameters." });
+    }
+
+    const result = await estimatePrice({
+      origin: startLocation,
+      destination: endLocation,
+      vehicleId,
+      trafficConditions, // Pass this if traffic data is precomputed
+    });
+
+    res.status(200).json({
+      message: "Price estimation successful.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in /estimate-price:", error.message);
+    res.status(500).json({ message: "Failed to estimate price.", error: error.message });
+  }
+});
+
 
 module.exports = router;

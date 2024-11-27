@@ -39,8 +39,9 @@ const {
  } = require('../Controller/userController');
  const {
   searchForCabs,
-  getEstimate,
   bookCab,
+  estimatePrice,
+
 } = require('../Controller/cabController');
 const { getAllBlogs } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
@@ -175,7 +176,7 @@ router.post('/view-breakup', authenticate, breakup);
 
 //cab booking
 router.post('/search-cabs', authenticate, searchForCabs);
-router.post('/get-estimate', authenticate, getEstimate);
+router.post('/get-estimate', authenticate, estimatePrice);
 router.post('/book-cab', authenticate, bookCab);
 //end cab
 

@@ -11,12 +11,11 @@ const {
   CabBookingAccepted,
   Driver,
 } = require("../Models");
-const { sendNotification } = require("../NotificationManagement");
+const { sendNotification } = require("./adminController/notificationManagement");
 const { publishMessage } = require("../Controller/pubsubController");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const { geolib } = require("geolib");
-const redisClient = require("../redisClient"); // Redis client for caching
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -71,18 +70,6 @@ const searchForCabs = async (req, res) => {
     const minLongitude = longitude - searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
     const maxLongitude = longitude + searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
 
-    // Check Redis cache for nearby drivers
-    const cacheKey = `nearbyDrivers:${latitude}:${longitude}:${searchRadius}`;
-    const cachedDrivers = await redisClient.get(cacheKey);
-
-    if (cachedDrivers) {
-      console.log("Serving drivers from cache.");
-      return res.status(200).json({
-        message: "Nearby drivers found (cached)",
-        nearbyDrivers: JSON.parse(cachedDrivers),
-      });
-    }
-
     // Fetch active drivers within the radius
     const drivers = await sequelize.query(
       `
@@ -113,9 +100,6 @@ const searchForCabs = async (req, res) => {
         { latitude: driver.latitude, longitude: driver.longitude }
       ) / 1000, // Convert to kilometers
     }));
-
-    // Cache the result for 5 minutes
-    await redisClient.set(cacheKey, JSON.stringify(nearbyDrivers), { EX: 300 });
 
     res.status(200).json({
       message: "Nearby drivers found",
@@ -261,9 +245,67 @@ const addCab = async (req, res) => {
     res.status(500).json({ message: "Error adding cab", error: error.message });
   }
 };
+async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
+  try {
+    // Fetch distance and duration from Google Maps API
+    const response = await axios.get(GOOGLE_MAPS_API_URL, {
+      params: {
+        origins: `${origin.latitude},${origin.longitude}`,
+        destinations: `${destination.latitude},${destination.longitude}`,
+        key: GOOGLE_MAPS_API_KEY,
+        departure_time: "now", // Current time for traffic data
+      },
+    });
 
+    const { rows } = response.data;
+    if (!rows || rows[0].elements[0].status !== "OK") {
+      throw new Error("Failed to fetch distance and duration from Google Maps.");
+    }
+
+    const { distance, duration, traffic_speed_entry } = rows[0].elements[0];
+    const distanceInKm = distance.value / 1000; // Meters to Kilometers
+    const durationInMinutes = duration.value / 60; // Seconds to Minutes
+
+    // Get base pricing from the database
+    const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
+    if (!pricing) {
+      throw new Error("Pricing information not found for this vehicle.");
+    }
+
+    const costPerHr = pricing.costperhr || 0; // Ensure costPerHr is defined
+    const basePrice = distanceInKm * costPerHr;
+
+    // Calculate multipliers based on traffic and night-time conditions
+    let multiplier = 1.0;
+
+    // Traffic-based pricing (if traffic_speed_entry or conditions indicate high traffic)
+    if (trafficConditions || traffic_speed_entry === "HEAVY") {
+      multiplier *= 1.3;
+    }
+
+    // Night-time pricing (22:00 - 06:00)
+    const currentHour = new Date().getHours();
+    if (currentHour >= 22 || currentHour < 6) {
+      multiplier *= 1.1;
+    }
+
+    const estimatedPrice = Math.round(basePrice * multiplier);
+
+    return {
+      distance: distanceInKm,
+      duration: durationInMinutes,
+      estimatedPrice,
+      multiplier,
+      basePrice,
+    };
+  } catch (error) {
+    console.error("Error estimating price:", error.message);
+    throw new Error("Failed to estimate price.");
+  }
+}
 module.exports = {
   searchForCabs,
   bookCab,
   addCab,
+  estimatePrice,
 };
