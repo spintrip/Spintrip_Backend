@@ -94,6 +94,7 @@ router.post('/driver/keep-alive', authenticate, async (req, res) => {
 
     // Update the driver's location in the database
     const vehicleId = CabToDriver.findOne({where: {driverid:driverId}});
+    console.log(vehicleId)
     await VehicleAdditional.update(
       { latitude, longitude },
       { where: { vehicleid: vehicleId.vehicleId } }
