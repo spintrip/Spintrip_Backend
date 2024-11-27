@@ -215,51 +215,53 @@ const searchForCabs = async (req, res) => {
     const minLongitude = longitude - searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
     const maxLongitude = longitude + searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
 
-    // Fetch all vehicles of type "cab" with their latitude and longitude
-    const cabs = await VehicleAdditional.findAll({
+    // Fetch vehicles with updated locations within the last 5 minutes
+    const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
+
+    const vehicles = await VehicleAdditional.findAll({
       attributes: ['vehicleid', 'latitude', 'longitude', 'address'],
       where: {
         latitude: { [Op.between]: [minLatitude, maxLatitude] },
         longitude: { [Op.between]: [minLongitude, maxLongitude] },
+        timestamp: { [Op.gte]: fiveMinutesAgo }, // Filter by last updated timestamp
       },
     });
 
-    if (!cabs.length) {
-      return res.status(404).json({ message: "No cabs available." });
+    if (!vehicles.length) {
+      return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
-    // Filter cabs within the search radius
-    const nearbyCabs = cabs
-      .map((cab) => {
+    // Filter vehicles by precise distance
+    const nearbyVehicles = vehicles
+      .map((vehicle) => {
         const distance = geolib.getPreciseDistance(
           { latitude, longitude },
-          { latitude: cab.latitude, longitude: cab.longitude }
+          { latitude: vehicle.latitude, longitude: vehicle.longitude }
         ) / 1000; // Convert meters to kilometers
 
         return {
-          vehicleId: cab.vehicleid,
-          address: cab.address,
-          latitude: cab.latitude,
-          longitude: cab.longitude,
+          vehicleId: vehicle.vehicleid,
+          address: vehicle.address,
+          latitude: vehicle.latitude,
+          longitude: vehicle.longitude,
           distance,
         };
       })
-      .filter((cab) => cab.distance <= searchRadius);
+      .filter((vehicle) => vehicle.distance <= searchRadius);
 
-    if (!nearbyCabs.length) {
-      return res.status(404).json({ message: "No cabs available within the specified radius." });
+    if (!nearbyVehicles.length) {
+      return res.status(404).json({ message: "No vehicles available within the specified radius." });
     }
 
     res.status(200).json({
-      message: "Cabs found",
-      nearbyCabs,
+      message: "Nearby vehicles found",
+      nearbyVehicles,
     });
   } catch (error) {
     console.error("Error searching for cabs:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 /**
  * Book a cab and notify nearby drivers
@@ -406,7 +408,6 @@ const addCab = async (req, res) => {
 };
 async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
   try {
-    // Log the received input for debugging
     console.log("Estimating price with input:", { origin, destination, vehicleId, trafficConditions });
 
     // Validate input
@@ -435,7 +436,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
       throw new Error("Failed to fetch distance and duration from Google Maps.");
     }
 
-    const { distance, duration } = rows[0].elements[0]; // Extract distance and duration
+    const { distance, duration } = rows[0].elements[0];
     const distanceInKm = distance.value / 1000; // Convert meters to kilometers
     const durationInMinutes = duration.value / 60; // Convert seconds to minutes
 
@@ -445,8 +446,8 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
       throw new Error("Pricing information not found for this vehicle.");
     }
 
-    const costPerHr = pricing.costperhr || 0; // Base cost per hour
-    const basePrice = distanceInKm * costPerHr; // Base price calculation
+    const costPerKm = pricing.costperhr || 0; // Use costperhr field as cost per km
+    const basePrice = distanceInKm * costPerKm; // Base price calculation
 
     // Initialize pricing multiplier
     let multiplier = 1.0;
@@ -476,6 +477,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
     throw new Error("Failed to estimate price.");
   }
 }
+
 
 module.exports = {
   searchForCabs,
