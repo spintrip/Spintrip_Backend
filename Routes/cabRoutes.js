@@ -97,7 +97,7 @@ router.post('/driver/keep-alive', authenticate, async (req, res) => {
     console.log(vehicleId)
     await VehicleAdditional.update(
       { latitude, longitude },
-      { where: { vehicleid: vehicleId.vehicleId } }
+      { where: { vehicleid: vehicleId.vehicleid } }
     );
 
     res.status(200).json({ message: 'Location updated successfully' });
