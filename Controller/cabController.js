@@ -137,7 +137,7 @@ const addDriver = async (req, res) => {
     });
     console.log(driver)
     sendOTP(phone, otp);
-    res.status(201).json({ message: "Driver added. OTP sent for verification.", driverId });
+    res.status(201).json({ message: "Driver added. OTP sent for verification.", driver });
   } catch (error) {
     console.error("Error adding driver:", error.message);
     res.status(500).json({ message: "Error adding driver", error: error.message });
