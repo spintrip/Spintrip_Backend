@@ -27,8 +27,8 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       location: {
-        type: DataTypes.GEOGRAPHY("POINT"),
-        allowNull: true, // Computed from latitude/longitude
+        type: DataTypes.GEOGRAPHY('POINT', 4326), // Use PostGIS geography type
+        allowNull: true,
       },
       address: DataTypes.TEXT,
       timestamp: {
@@ -46,15 +46,21 @@ module.exports = (sequelize, DataTypes) => {
         {
           name: "location_index",
           fields: ["location"], // Add index for spatial queries
-          using: "gist",
+          using: "gist", // Required for spatial indexing
         },
       ],
       hooks: {
         beforeSave: (vehicleAdditional, options) => {
           // Automatically update `location` based on `latitude` and `longitude`
           if (vehicleAdditional.latitude && vehicleAdditional.longitude) {
-            vehicleAdditional.location = sequelize.literal(
-              `ST_SetSRID(ST_MakePoint(${vehicleAdditional.longitude}, ${vehicleAdditional.latitude}), 4326)`
+            vehicleAdditional.location = sequelize.fn(
+              "ST_SetSRID",
+              sequelize.fn(
+                "ST_MakePoint",
+                vehicleAdditional.longitude,
+                vehicleAdditional.latitude
+              ),
+              4326
             );
           }
         },
