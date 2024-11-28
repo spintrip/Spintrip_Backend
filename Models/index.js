@@ -146,6 +146,9 @@ const associateModels = () => {
   SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
 
+  Vehicle.hasOne(CabToDriver, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  
 };
 
 associateModels();

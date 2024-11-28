@@ -177,29 +177,22 @@ const searchForCabs = async (req, res) => {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
-    // Fetch active vehicles mapped to drivers within the last 5 minutes
+    const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
+
+    // Fetch vehicles of type '3' (cabs) and ensure they are mapped to a driver
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: "3" }, // Filter cabs
+      where: { vehicletype: "3" }, // Ensure cab type
       include: [
+        {
+          model: CabToDriver, // Ensure vehicle is assigned to a driver
+          attributes: ["driverid"],
+          required: true, // Only include vehicles with a driver
+        },
         {
           model: VehicleAdditional,
           attributes: ["latitude", "longitude", "address", "timestamp"],
-          where: sequelize.where(
-            sequelize.fn(
-              "TIMESTAMPDIFF",
-              sequelize.literal("MINUTE"),
-              sequelize.fn("NOW"),
-              sequelize.col("timestamp")
-            ),
-            {
-              [Op.lte]: 5, // Active in the last 5 minutes
-            }
-          ),
-        },
-        {
-          model: CabToDriver, // Join with CabToDriver to ensure the vehicle has a driver
-          required: true,
+          where: { timestamp: { [Op.gte]: fiveMinutesAgo } }, // Active in last 5 minutes
         },
       ],
     });
@@ -208,27 +201,27 @@ const searchForCabs = async (req, res) => {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
-    // Filter vehicles based on geolocation distance
-    const nearbyVehicles = [];
-    for (const vehicle of vehicles) {
-      const additional = vehicle.VehicleAdditional;
+    // Filter vehicles by geolocation distance
+    const nearbyVehicles = vehicles
+      .map((vehicle) => {
+        const additional = vehicle.VehicleAdditional;
+        const distance = geolib.getPreciseDistance(
+          { latitude, longitude }, // User's location
+          { latitude: additional.latitude, longitude: additional.longitude } // Vehicle's location
+        ) / 1000; // Convert meters to kilometers
 
-      // Calculate the distance between user location and vehicle location
-      const distance = geolib.getPreciseDistance(
-        { latitude, longitude }, // User's location
-        { latitude: additional.latitude, longitude: additional.longitude } // Vehicle's location
-      ) / 1000; // Convert meters to kilometers
-
-      if (distance <= searchRadius) {
-        nearbyVehicles.push({
-          vehicleId: vehicle.vehicleid,
-          address: additional.address,
-          latitude: additional.latitude,
-          longitude: additional.longitude,
-          distance,
-        });
-      }
-    }
+        if (distance <= searchRadius) {
+          return {
+            vehicleId: vehicle.vehicleid,
+            address: additional.address,
+            latitude: additional.latitude,
+            longitude: additional.longitude,
+            distance,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean); // Remove null entries
 
     if (!nearbyVehicles.length) {
       return res.status(404).json({ message: "No vehicles available within the specified radius." });
