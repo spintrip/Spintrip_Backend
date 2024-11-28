@@ -181,7 +181,7 @@ const searchForCabs = async (req, res) => {
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: '3' }, // Ensure cab type
+      where: { vehicletype: "3" }, // Ensure cab type
       include: [
         {
           model: VehicleAdditional,
@@ -190,7 +190,6 @@ const searchForCabs = async (req, res) => {
         },
       ],
     });
-    console.log(vehicles)
     if (!vehicles.length) {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
@@ -330,7 +329,7 @@ const addCab = async (req, res) => {
 
     // Create Vehicle entry
     const vehicle = await Vehicle.create({
-      vehicletype: 3,
+      vehicletype: "3",
       chassisno: chassisNo,
       Rcnumber: rcNumber,
       Enginenumber: engineNumber,
