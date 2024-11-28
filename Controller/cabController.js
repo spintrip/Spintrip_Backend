@@ -168,31 +168,22 @@ const searchForCabs = async (req, res) => {
   const { fromLocation, searchRadius } = req.body;
 
   try {
+    // Validate input
     if (!fromLocation || !searchRadius) {
       return res.status(400).json({ message: "Missing required parameters: fromLocation or searchRadius" });
     }
 
     const { latitude, longitude } = fromLocation;
-
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
-    // Calculate bounds for latitude and longitude
-    const minLatitude = latitude - searchRadius / 111; // Approx. 1 degree latitude ≈ 111 km
-    const maxLatitude = latitude + searchRadius / 111;
-    const minLongitude = longitude - searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
-    const maxLongitude = longitude + searchRadius / (111 * Math.cos(latitude * (Math.PI / 180)));
-
     // Fetch vehicles with updated locations within the last 5 minutes
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
-
     const vehicles = await VehicleAdditional.findAll({
-      attributes: ['vehicleid', 'latitude', 'longitude', 'address'],
+      attributes: ["vehicleid", "latitude", "longitude", "address", "timestamp"],
       where: {
-        latitude: { [Op.between]: [minLatitude, maxLatitude] },
-        longitude: { [Op.between]: [minLongitude, maxLongitude] },
-        timestamp: { [Op.gte]: fiveMinutesAgo }, // Filter by last updated timestamp
+        timestamp: { [Op.gte]: fiveMinutesAgo }, // Recent updates only
       },
     });
 
@@ -204,8 +195,8 @@ const searchForCabs = async (req, res) => {
     const nearbyVehicles = vehicles
       .map((vehicle) => {
         const distance = geolib.getPreciseDistance(
-          { latitude, longitude },
-          { latitude: vehicle.latitude, longitude: vehicle.longitude }
+          { latitude, longitude }, // User's location
+          { latitude: vehicle.latitude, longitude: vehicle.longitude } // Vehicle's location
         ) / 1000; // Convert meters to kilometers
 
         return {
@@ -216,12 +207,13 @@ const searchForCabs = async (req, res) => {
           distance,
         };
       })
-      .filter((vehicle) => vehicle.distance <= searchRadius);
+      .filter((vehicle) => vehicle.distance <= searchRadius); // Keep only vehicles within radius
 
     if (!nearbyVehicles.length) {
       return res.status(404).json({ message: "No vehicles available within the specified radius." });
     }
 
+    // Return results
     res.status(200).json({
       message: "Nearby vehicles found",
       nearbyVehicles,
