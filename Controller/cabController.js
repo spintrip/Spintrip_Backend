@@ -112,7 +112,10 @@ const driverKeepAlive = async (req, res) => {
 const addDriver = async (req, res) => {
   const { name, phone } = req.body;
   const hostId = req.user.id;
-
+  const driver = await Driver.findOne({ where: { phone: phone } });
+  if(driver){
+    res.status(500).json({ message: "Driver already exists, please assign the driver.", driverId });
+  }
   try {
     const driverId = uuid.v4();
     const otp = generateOTP();
@@ -385,6 +388,23 @@ const addCab = async (req, res) => {
   }
 };
 
+const login = async (req, res) => {
+  const { phone } = req.body;
+
+  try {
+    const driver = await Driver.findOne({ where: { phone } });
+    if (!driver) return res.status(404).json({ message: 'Driver not found. Please sign up.' });
+
+    const otp = generateOTP();
+    await driver.update({ otp });
+
+    sendOTP(phone, otp);
+    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.' });
+  } catch (error) {
+    console.error('Error during driver login:', error);
+    res.status(500).json({ message: 'Error during login', error });
+  }
+};
 async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
   try {
     console.log("Estimating price with input:", { origin, destination, vehicleId, trafficConditions });
@@ -489,5 +509,6 @@ module.exports = {
   driverKeepAlive,
   addDriver,
   assignDriverToVehicle,
-  updateDriverDeviceToken
+  updateDriverDeviceToken,
+  login
 };

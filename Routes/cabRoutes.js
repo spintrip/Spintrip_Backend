@@ -5,7 +5,8 @@ const {
   driverKeepAlive,
   addDriver,
   assignDriverToVehicle,
-  updateDriverDeviceToken, 
+  updateDriverDeviceToken,
+  login, 
 } = require("../Controller/cabController");
 
 const router = express.Router();
@@ -17,5 +18,5 @@ router.post("/driver/keep-alive", authenticate, driverKeepAlive);
 router.post("/driver/update-device-token", authenticate, updateDriverDeviceToken); // Add route to update device token
 router.post("/add-driver", authenticate, addDriver);
 router.post("/assign-driver", authenticate, assignDriverToVehicle);
-
+router.post('/driver/login', login);
 module.exports = router;
