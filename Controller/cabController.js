@@ -177,7 +177,7 @@ const searchForCabs = async (req, res) => {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
-    // Fetch vehicles of type '3' (cabs) and their last updated locations
+    // Fetch vehicles of type '3' (cabs) mapped to drivers and their last updated locations
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
@@ -188,8 +188,14 @@ const searchForCabs = async (req, res) => {
           attributes: ["latitude", "longitude", "address", "timestamp"],
           where: { timestamp: { [Op.gte]: fiveMinutesAgo } }, // Active in last 5 minutes
         },
+        {
+          model: CabToDriver,
+          attributes: ["driverid"],
+          required: true, // Ensures only vehicles with associated drivers are included
+        },
       ],
     });
+
     if (!vehicles.length) {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
@@ -212,6 +218,7 @@ const searchForCabs = async (req, res) => {
           latitude: additional.latitude,
           longitude: additional.longitude,
           distance,
+          driverId: vehicle.CabToDriver.driverid, // Include driver info if needed
         });
       }
     }
@@ -229,6 +236,7 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 /**
  * Book a cab and notify nearby drivers
