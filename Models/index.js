@@ -8,7 +8,6 @@ const DB_PASSWORD = process.env.DB_PASSWORD;
 const DB_PORT = process.env.DB_PORT;
 const DB_NAME = process.env.DB_NAME;
 
-// Initialize Sequelize
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
   dialect: 'postgres',
   pool: {
@@ -19,6 +18,16 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
   },
   logging: false, // Disable logging in production
 });
+
+// Enable PostGIS Extension if not already enabled
+(async () => {
+  try {
+    await sequelize.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
+    console.log('PostGIS extension enabled');
+  } catch (error) {
+    console.error('Error enabling PostGIS extension:', error.message);
+  }
+})();
 
 // Test the database connection
 sequelize.authenticate()
@@ -148,7 +157,10 @@ const associateModels = () => {
 
   Vehicle.hasOne(CabToDriver, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-  
+  VehicleAdditional.hasOne(CabToDriver, { sourceKey: 'vehicleid', foreignKey: 'vehicleid' });
+  CabToDriver.belongsTo(VehicleAdditional, { targetKey: 'vehicleid', foreignKey: 'vehicleid' });
+
+
 };
 
 associateModels();

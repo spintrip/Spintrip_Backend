@@ -152,57 +152,57 @@ const searchForCabs = async (req, res) => {
 
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
 
-    const vehicles = await Vehicle.findAll({
-      attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: "3" }, // Ensure cab type
+    // PostGIS spatial query
+    const nearbyVehicles = await VehicleAdditional.findAll({
+      attributes: [
+        'vehicleid',
+        'latitude',
+        'longitude',
+        [
+          sequelize.literal(
+            `ST_Distance(
+              geography(location),
+              geography(ST_MakePoint(${longitude}, ${latitude}))
+            ) / 1000`
+          ),
+          'distance', // Distance in kilometers
+        ],
+      ],
       include: [
         {
-          model: VehicleAdditional,
-          attributes: ["latitude", "longitude", "address", "timestamp"],
-          where: { timestamp: { [Op.gte]: fiveMinutesAgo } },
-        },
-        {
           model: CabToDriver,
-          attributes: ["driverid"],
-          required: true, // Ensure driver assignment
+          attributes: ['driverid'],
+          required: true, // Ensure the vehicle has a driver assigned
         },
       ],
+      where: {
+        timestamp: { [Op.gte]: fiveMinutesAgo },
+        [Op.and]: sequelize.literal(
+          `ST_DWithin(
+            geography(location),
+            geography(ST_MakePoint(${longitude}, ${latitude})),
+            ${searchRadius * 1000}
+          )`
+        ),
+      },
+      order: [[sequelize.literal('distance'), 'ASC']],
     });
 
-    if (!vehicles.length) {
-      return res.status(404).json({ message: "No active vehicles found within the specified radius." });
-    }
-
-    const nearbyVehicles = vehicles
-      .map((vehicle) => {
-        const additional = vehicle.VehicleAdditional;
-        const distance = geolib.getPreciseDistance(
-          { latitude, longitude },
-          { latitude: parseFloat(additional.latitude), longitude: parseFloat(additional.longitude) }
-        ) / 1000;
-
-        if (distance <= searchRadius) {
-          return {
-            vehicleId: vehicle.vehicleid,
-            latitude: additional.latitude,
-            longitude: additional.longitude,
-            distance,
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
-
     if (!nearbyVehicles.length) {
-      return res.status(404).json({ message: "No vehicles available within the specified radius." });
+      return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
     res.status(200).json({
       message: "Nearby vehicles found",
-      nearbyVehicles,
+      nearbyVehicles: nearbyVehicles.map((vehicle) => ({
+        vehicleId: vehicle.vehicleid,
+        latitude: vehicle.latitude,
+        longitude: vehicle.longitude,
+        distance: parseFloat(vehicle.get('distance')), // Sequelize raw attribute
+      })),
     });
   } catch (error) {
-    console.error("Error searching for cabs:", error.message);
+    console.error("Error searching for cabs:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
