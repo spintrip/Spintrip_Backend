@@ -1,7 +1,6 @@
 const express = require("express");
 const { authenticate } = require("../Middleware/authMiddleware");
 const {
-  driverSignup,
   verifyDriverOtp,
   driverKeepAlive,
   addDriver,
