@@ -168,7 +168,6 @@ const searchForCabs = async (req, res) => {
   const { fromLocation, searchRadius } = req.body;
 
   try {
-    // Validate input
     if (!fromLocation || !searchRadius) {
       return res.status(400).json({ message: "Missing required parameters: fromLocation or searchRadius" });
     }
@@ -178,12 +177,11 @@ const searchForCabs = async (req, res) => {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
-    // Fetch vehicles of type "cab" (vehicleType = 3) with their additional details
-    const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000); // Only consider recently updated locations
+    const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
 
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: 3 }, // Filter for cabs
+      where: { vehicletype: 3 },
       include: [
         {
           model: VehicleAdditional,
@@ -197,30 +195,29 @@ const searchForCabs = async (req, res) => {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
-    // Filter vehicles based on the user's location and radius
-    const nearbyVehicles = vehicles
-      .map((vehicle) => {
-        const additional = vehicle.VehicleAdditional;
-        const distance = geolib.getPreciseDistance(
-          { latitude, longitude }, // User's location
-          { latitude: additional.latitude, longitude: additional.longitude } // Vehicle's location
-        ) / 1000; // Convert meters to kilometers
+    const nearbyVehicles = [];
+    for (const vehicle of vehicles) {
+      const additional = vehicle.VehicleAdditional;
+      const { distance } = await getDistanceAndDuration(
+        { latitude, longitude },
+        { latitude: additional.latitude, longitude: additional.longitude }
+      );
 
-        return {
+      if (distance <= searchRadius) {
+        nearbyVehicles.push({
           vehicleId: vehicle.vehicleid,
           address: additional.address,
           latitude: additional.latitude,
           longitude: additional.longitude,
           distance,
-        };
-      })
-      .filter((vehicle) => vehicle.distance <= searchRadius); // Keep only vehicles within the radius
+        });
+      }
+    }
 
     if (!nearbyVehicles.length) {
       return res.status(404).json({ message: "No vehicles available within the specified radius." });
     }
 
-    // Return the filtered results
     res.status(200).json({
       message: "Nearby vehicles found",
       nearbyVehicles,
