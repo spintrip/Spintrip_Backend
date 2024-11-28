@@ -177,32 +177,34 @@ const searchForCabs = async (req, res) => {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
+    // Fetch vehicles of type '3' (cabs) and their last updated locations
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
-
-    // Fetch vehicles of type '3' (cabs) with their additional details
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: '3' }, // Ensure vehicletype is compared as a string
+      where: { vehicletype: '3' }, // Ensure cab type
       include: [
         {
           model: VehicleAdditional,
           attributes: ["latitude", "longitude", "address", "timestamp"],
-          where: { timestamp: { [Op.gte]: fiveMinutesAgo } },
+          where: { timestamp: { [Op.gte]: fiveMinutesAgo } }, // Active in last 5 minutes
         },
       ],
     });
-
+    console.log(vehicles)
     if (!vehicles.length) {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
+    // Filter vehicles based on the calculated distance
     const nearbyVehicles = [];
     for (const vehicle of vehicles) {
       const additional = vehicle.VehicleAdditional;
-      const { distance } = await getDistanceAndDuration(
-        { latitude, longitude },
-        { latitude: additional.latitude, longitude: additional.longitude }
-      );
+
+      // Calculate the distance between user location and vehicle location
+      const distance = geolib.getPreciseDistance(
+        { latitude, longitude }, // User's location
+        { latitude: additional.latitude, longitude: additional.longitude } // Vehicle's location
+      ) / 1000; // Convert meters to kilometers
 
       if (distance <= searchRadius) {
         nearbyVehicles.push({
@@ -228,8 +230,6 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 /**
  * Book a cab and notify nearby drivers
