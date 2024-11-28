@@ -115,7 +115,7 @@ const addDriver = async (req, res) => {
   const hostId = req.user.id;
   const driver = await Driver.findOne({ where: { phone: phone } });
   if(driver){
-    res.status(500).json({ message: "Driver already exists, please assign the driver.", driverId });
+    res.status(500).json({ message: "Driver already exists, please assign the driver."});
   }
   try {
     const driverId = uuid.v4();
