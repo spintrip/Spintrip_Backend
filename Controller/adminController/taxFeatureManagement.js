@@ -74,13 +74,13 @@ const deleteTaxById = async (req, res) => {
 const createFeature = async (req, res) => {
   try {
     const { featureName } = req.body;
-
+    const featureId = uuid.v4();
     const existingFeature = await Feature.findOne({ where: { featureName } });
     if (existingFeature) {
       return res.status(400).json({ message: 'Feature already exists' });
     }
 
-    const newFeature = await Feature.create({ featureName });
+    const newFeature = await Feature.create({ featureId, featureName });
     res.status(201).json({ message: 'Feature created successfully', newFeature });
   } catch (error) {
     console.error('Error creating feature:', error.message);

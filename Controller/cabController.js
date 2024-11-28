@@ -409,7 +409,7 @@ const login = async (req, res) => {
     await driver.update({ otp });
 
     sendOTP(phone, otp);
-    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.' });
+    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.', otp:otp });
   } catch (error) {
     console.error('Error during driver login:', error);
     res.status(500).json({ message: 'Error during login', error });
