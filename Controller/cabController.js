@@ -117,7 +117,7 @@ const addDriver = async (req, res) => {
     const driverId = uuid.v4();
     const otp = generateOTP();
 
-    await Driver.create({
+    const driver = await Driver.create({
       id: driverId,
       hostid: hostId,
       name,
@@ -125,7 +125,7 @@ const addDriver = async (req, res) => {
       otp,
       password: "1234",
     });
-
+    console.log(driver)
     sendOTP(phone, otp);
     res.status(201).json({ message: "Driver added. OTP sent for verification.", driverId });
   } catch (error) {
