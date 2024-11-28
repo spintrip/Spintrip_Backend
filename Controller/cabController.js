@@ -179,9 +179,10 @@ const searchForCabs = async (req, res) => {
 
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
 
+    // Fetch vehicles of type '3' (cabs) with their additional details
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: 3 },
+      where: { vehicletype: '3' }, // Ensure vehicletype is compared as a string
       include: [
         {
           model: VehicleAdditional,
@@ -227,6 +228,7 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 /**
