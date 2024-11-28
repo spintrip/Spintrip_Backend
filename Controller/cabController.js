@@ -501,6 +501,18 @@ const updateDriverDeviceToken = async (req, res) => {
     res.status(500).json({ message: "Error updating device token", error: error.message });
   }
 };
+const getDriver = async (req, res) => {
+  const hostId = req.user.id;
+
+  try {
+    const drivers = await Driver.findAll({ where: { hostid: hostId } });
+    res.status(200).json({ drivers });
+  } catch (error) {
+    console.error('Error fetching drivers:', error);
+    res.status(500).json({ message: 'Error fetching drivers', error });
+  }
+}
+
 module.exports = {
   searchForCabs,
   bookCab,
@@ -511,5 +523,6 @@ module.exports = {
   addDriver,
   assignDriverToVehicle,
   updateDriverDeviceToken,
-  login
+  login,
+  getDriver
 };

@@ -7,6 +7,7 @@ const {
   assignDriverToVehicle,
   updateDriverDeviceToken,
   login, 
+  getDriver
 } = require("../Controller/cabController");
 
 const router = express.Router();
@@ -19,4 +20,5 @@ router.post("/driver/update-device-token", authenticate, updateDriverDeviceToken
 router.post("/add-driver", authenticate, addDriver);
 router.post("/assign-driver", authenticate, assignDriverToVehicle);
 router.post('/driver/login', login);
+router.get('/host/drivers', authenticate, getDriver);
 module.exports = router;
