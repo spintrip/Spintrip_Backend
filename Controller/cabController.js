@@ -16,6 +16,7 @@ const {
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
+const { sendOTP, generateOTP } = require('../Controller/hostController');
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -52,42 +53,6 @@ async function getDistanceAndDuration(origin, destination) {
     throw new Error("Failed to fetch distance and duration");
   }
 }
-/**
- * Driver Signup with OTP Verification
- */
-const driverSignup = async (req, res) => {
-  const { phone, name } = req.body;
-
-  try {
-    const hostId = req.user.id; // Get host ID from the authenticated token
-    const host = await Host.findByPk(hostId);
-    if (!host) return res.status(404).json({ message: "Host not found" });
-
-    const existingDriver = await Driver.findOne({ where: { phone } });
-    if (existingDriver) {
-      return res.status(400).json({ message: "Driver already exists. Please log in." });
-    }
-
-    const driverId = uuid.v4();
-    const otp = generateOTP();
-
-    // Create driver with default password as `1234`
-    await Driver.create({
-      id: driverId,
-      phone,
-      name,
-      hostid: hostId,
-      otp,
-      password: "1234",
-    });
-
-    sendOTP(phone, otp);
-    res.status(201).json({ message: "Driver added. OTP sent for verification.", driverId });
-  } catch (error) {
-    console.error("Error during driver signup:", error.message);
-    res.status(500).json({ message: "Error adding driver", error: error.message });
-  }
-};
 
 /**
  * Driver OTP Verification
@@ -520,7 +485,6 @@ module.exports = {
   bookCab,
   addCab,
   estimatePrice,
-  driverSignup,
   verifyDriverOtp,
   driverKeepAlive,
   addDriver,

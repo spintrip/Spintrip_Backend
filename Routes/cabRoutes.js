@@ -12,7 +12,6 @@ const {
 const router = express.Router();
 
 // Driver Routes
-router.post("/driver/signup", authenticate, driverSignup);
 router.post("/driver/verify-otp", verifyDriverOtp);
 router.post("/driver/keep-alive", authenticate, driverKeepAlive);
 // Host Routes
