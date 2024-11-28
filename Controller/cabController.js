@@ -184,7 +184,6 @@ const searchForCabs = async (req, res) => {
         if (distance <= searchRadius) {
           return {
             vehicleId: vehicle.vehicleid,
-            address: additional.address,
             latitude: additional.latitude,
             longitude: additional.longitude,
             distance,
