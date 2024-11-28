@@ -177,16 +177,29 @@ const searchForCabs = async (req, res) => {
       return res.status(400).json({ message: "Invalid location coordinates." });
     }
 
-    // Fetch vehicles of type '3' (cabs) and their last updated locations
-    const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
+    // Fetch active vehicles mapped to drivers within the last 5 minutes
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
-      where: { vehicletype: "3" }, // Ensure cab type
+      where: { vehicletype: "3" }, // Filter cabs
       include: [
         {
           model: VehicleAdditional,
           attributes: ["latitude", "longitude", "address", "timestamp"],
-          where: { timestamp: { [Op.gte]: fiveMinutesAgo } }, // Active in last 5 minutes
+          where: sequelize.where(
+            sequelize.fn(
+              "TIMESTAMPDIFF",
+              sequelize.literal("MINUTE"),
+              sequelize.fn("NOW"),
+              sequelize.col("timestamp")
+            ),
+            {
+              [Op.lte]: 5, // Active in the last 5 minutes
+            }
+          ),
+        },
+        {
+          model: CabToDriver, // Join with CabToDriver to ensure the vehicle has a driver
+          required: true,
         },
       ],
     });
@@ -195,23 +208,9 @@ const searchForCabs = async (req, res) => {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
-    // Fetch all vehicle IDs that are mapped in CabToDriver
-    const cabToDriverMappings = await CabToDriver.findAll({
-      attributes: ["vehicleid"],
-    });
-
-    const mappedVehicleIds = cabToDriverMappings.map((mapping) => mapping.vehicleid);
-
-    // Filter vehicles to include only those that exist in CabToDriver
-    const filteredVehicles = vehicles.filter((vehicle) => mappedVehicleIds.includes(vehicle.vehicleid));
-
-    if (!filteredVehicles.length) {
-      return res.status(404).json({ message: "No vehicles with drivers found within the specified radius." });
-    }
-
-    // Filter vehicles based on the calculated distance
+    // Filter vehicles based on geolocation distance
     const nearbyVehicles = [];
-    for (const vehicle of filteredVehicles) {
+    for (const vehicle of vehicles) {
       const additional = vehicle.VehicleAdditional;
 
       // Calculate the distance between user location and vehicle location
@@ -244,6 +243,7 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 /**
  * Book a cab and notify nearby drivers
