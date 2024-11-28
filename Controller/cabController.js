@@ -87,14 +87,20 @@ const driverKeepAlive = async (req, res) => {
       return res.status(400).json({ message: "Missing latitude or longitude" });
     }
 
-    // Update driver's location
+    if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+      return res.status(400).json({ message: "Invalid latitude" });
+    }
+    if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+      return res.status(400).json({ message: "Invalid longitude" });
+    }
+
     const vehicleMapping = await CabToDriver.findOne({ where: { driverid: driverId } });
     if (!vehicleMapping) {
       return res.status(404).json({ message: "Driver is not assigned to a vehicle" });
     }
 
     await VehicleAdditional.update(
-      { latitude, longitude },
+      { latitude: parseFloat(latitude), longitude: parseFloat(longitude), timestamp: new Date() },
       { where: { vehicleid: vehicleMapping.vehicleid } }
     );
 
@@ -179,20 +185,19 @@ const searchForCabs = async (req, res) => {
 
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
 
-    // Fetch vehicles of type '3' (cabs) and ensure they are mapped to a driver
     const vehicles = await Vehicle.findAll({
       attributes: ["vehicleid", "vehicletype"],
       where: { vehicletype: "3" }, // Ensure cab type
       include: [
         {
-          model: CabToDriver, // Ensure vehicle is assigned to a driver
-          attributes: ["driverid"],
-          required: true, // Only include vehicles with a driver
-        },
-        {
           model: VehicleAdditional,
           attributes: ["latitude", "longitude", "address", "timestamp"],
-          where: { timestamp: { [Op.gte]: fiveMinutesAgo } }, // Active in last 5 minutes
+          where: { timestamp: { [Op.gte]: fiveMinutesAgo } },
+        },
+        {
+          model: CabToDriver,
+          attributes: ["driverid"],
+          required: true, // Ensure driver assignment
         },
       ],
     });
@@ -201,14 +206,13 @@ const searchForCabs = async (req, res) => {
       return res.status(404).json({ message: "No active vehicles found within the specified radius." });
     }
 
-    // Filter vehicles by geolocation distance
     const nearbyVehicles = vehicles
       .map((vehicle) => {
         const additional = vehicle.VehicleAdditional;
         const distance = geolib.getPreciseDistance(
-          { latitude, longitude }, // User's location
-          { latitude: additional.latitude, longitude: additional.longitude } // Vehicle's location
-        ) / 1000; // Convert meters to kilometers
+          { latitude, longitude },
+          { latitude: parseFloat(additional.latitude), longitude: parseFloat(additional.longitude) }
+        ) / 1000;
 
         if (distance <= searchRadius) {
           return {
@@ -221,7 +225,7 @@ const searchForCabs = async (req, res) => {
         }
         return null;
       })
-      .filter(Boolean); // Remove null entries
+      .filter(Boolean);
 
     if (!nearbyVehicles.length) {
       return res.status(404).json({ message: "No vehicles available within the specified radius." });
@@ -236,7 +240,6 @@ const searchForCabs = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 /**
  * Book a cab and notify nearby drivers
