@@ -12,7 +12,6 @@ const {
   CabBookingAccepted,
   Driver, 
   CabToDriver,
-  DriverKeepAlive
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
@@ -522,6 +521,181 @@ const getDriver = async (req, res) => {
   }
 }
 
+/**
+ * Create a soft booking and notify nearby drivers
+ */
+const createSoftBooking = async (req, res) => {
+  const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Validate input
+    if (!startLocation || !endLocation || !vehicleId) {
+      return res.status(400).json({ message: "Missing required parameters." });
+    }
+
+    // Estimate price internally
+    const { estimatedPrice, distance } = await estimatePrice({
+      origin: startLocation,
+      destination: endLocation,
+      vehicleId,
+    });
+
+    if (!estimatedPrice) {
+      return res.status(500).json({ message: "Failed to estimate price." });
+    }
+
+    const bookingId = uuid.v4();
+
+    // Create a soft booking entry in the database
+    await CabBookingRequest.create({
+      bookingId,
+      userId,
+      vehicleId,
+      startLocationLatitude: startLocation.latitude,
+      startLocationLongitude: startLocation.longitude,
+      endLocationLatitude: endLocation.latitude,
+      endLocationLongitude: endLocation.longitude,
+      estimate_price: estimatedPrice,
+      status: "soft_booked", // Soft booking status
+    });
+
+    // Search for nearby cabs
+    const driversResponse = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
+
+    if (driversResponse.status !== 200 || !driversResponse.nearbyVehicles) {
+      return res.status(404).json({ message: "No drivers available nearby." });
+    }
+
+    const nearbyDrivers = driversResponse.nearbyVehicles.map((vehicle) => vehicle.driverid);
+
+    // Notify drivers asynchronously
+    for (const driverId of nearbyDrivers) {
+      await notifyDriver(driverId, bookingId);
+    }
+
+    res.status(201).json({
+      message: "Soft booking created. Waiting for driver to accept.",
+      bookingId,
+      estimatedPrice,
+    });
+  } catch (error) {
+    console.error("Error creating soft booking:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * Notify a driver about a booking
+ */
+async function notifyDriver(driverId, bookingId) {
+  try {
+    // Simulate sending a notification (replace with actual notification logic)
+    const notification = {
+      text: "New booking request nearby",
+      metadata: { bookingId },
+    };
+    console.log(`Notifying driver ${driverId}:`, notification);
+
+    // Example: Publish notification to a message broker or push notification service
+    // await publishMessage(`driver-${driverId}`, notification);
+
+    return true;
+  } catch (error) {
+    console.error(`Error notifying driver ${driverId}:`, error.message);
+    return false;
+  }
+}
+
+/**
+ * Accept a soft booking
+ */
+const acceptBooking = async (req, res) => {
+  const { bookingId } = req.body;
+  const driverId = req.user.id; // Assuming driver's identity is verified through JWT or similar
+
+  try {
+    // Fetch the soft booking
+    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: "soft_booked" } });
+    if (!booking) {
+      return res.status(404).json({ message: "Soft booking not found or already taken." });
+    }
+
+    // Update booking to confirmed
+    await CabBookingRequest.update(
+      { status: "confirmed", driverId },
+      { where: { bookingId } }
+    );
+
+    // Generate an OTP for the trip
+    const tripOtp = generateOTP();
+
+    // Save the confirmed booking details
+    await CabBookingAccepted.create({
+      bookingId,
+      driverId,
+      userId: booking.userId,
+      tripOtp,
+    });
+
+    // Notify the user (replace with actual notification logic)
+    console.log(`Notifying user ${booking.userId}: Booking confirmed with OTP ${tripOtp}`);
+
+    res.status(200).json({
+      message: "Booking accepted successfully",
+      bookingId,
+      tripOtp,
+    });
+  } catch (error) {
+    console.error("Error accepting booking:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+const checkBookingStatus = async (req, res) => {
+  const { bookingId } = req.params;
+
+  try {
+    const booking = await CabBookingRequest.findOne({
+      where: { bookingId },
+      include: [{ model: CabBookingAccepted, attributes: ["tripOtp"] }],
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found." });
+    }
+
+    res.status(200).json({
+      status: booking.status,
+      driverId: booking.driverId || null,
+      tripOtp: booking.CabBookingAccepted?.tripOtp || null,
+    });
+  } catch (error) {
+    console.error("Error checking booking status:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+const checkPendingBookings = async (req, res) => {
+  const driverId = req.user.id; // Driver's ID from JWT authentication
+
+  try {
+    // Fetch all pending bookings where the driver has not yet accepted
+    const pendingBookings = await CabBookingRequest.findAll({
+      where: { status: "soft_booked", driverId: null },
+    });
+
+    if (!pendingBookings.length) {
+      return res.status(404).json({ message: "No pending bookings found." });
+    }
+
+    res.status(200).json({
+      message: "Pending bookings found.",
+      bookings: pendingBookings,
+    });
+  } catch (error) {
+    console.error("Error fetching pending bookings:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 module.exports = {
   searchForCabs,
   bookCab,
@@ -533,5 +707,9 @@ module.exports = {
   assignDriverToVehicle,
   updateDriverDeviceToken,
   login,
-  getDriver
+  getDriver,
+  checkBookingStatus,
+  acceptBooking,
+  createSoftBooking,
+  checkPendingBookings
 };
