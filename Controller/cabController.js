@@ -23,38 +23,6 @@ const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 /**
- * Get distance and duration using Google Maps API
- */
-
-async function getDistanceAndDuration(origin, destination) {
-  try {
-    const response = await axios.get(GOOGLE_MAPS_API_URL, {
-      params: {
-        origins: `${origin.latitude},${origin.longitude}`,
-        destinations: `${destination.latitude},${destination.longitude}`,
-        key: GOOGLE_MAPS_API_KEY,
-      },
-    });
-
-    const { rows } = response.data;
-
-    if (rows[0].elements[0].status !== "OK") {
-      throw new Error(`Google API error: ${rows[0].elements[0].status}`);
-    }
-
-    const { distance, duration } = rows[0].elements[0];
-
-    return {
-      distance: distance.value / 1000, // Convert meters to kilometers
-      duration: duration.value / 60, // Convert seconds to minutes
-    };
-  } catch (error) {
-    console.error("Error fetching data from Google Maps API:", error.message);
-    throw new Error("Failed to fetch distance and duration");
-  }
-}
-
-/**
  * Driver OTP Verification
  */
 const verifyDriverOtp = async (req, res) => {
@@ -245,8 +213,7 @@ const searchForCabs = async (req, res) => {
  */
 const bookCab = async (req, res) => {
   const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
-  const userId = req.user.id;
-
+  const userId = req.user.id
   try {
     // Validate input
     if (!startLocation || !endLocation || !vehicleId) {
@@ -254,7 +221,7 @@ const bookCab = async (req, res) => {
     }
 
     // Estimate price internally
-    const { estimatedPrice, distance } = await estimatePrice({
+    const { estimatedPrice } = await estimatePrice({
       origin: startLocation,
       destination: endLocation,
       vehicleId,
@@ -414,9 +381,12 @@ const login = async (req, res) => {
     res.status(500).json({ message: 'Error during login', error });
   }
 };
-async function estimatePrice({ origin, destination, vehicleId, trafficConditions }) {
+/**
+ * Estimate price using Google Maps API for distance and traffic conditions
+ */
+const estimatePrice = async ({ origin, destination, vehicleId }) => {
   try {
-    console.log("Estimating price with input:", { origin, destination, vehicleId, trafficConditions });
+    console.log("Estimating price with input:", { origin, destination, vehicleId });
 
     // Validate input
     if (!origin || !destination || !vehicleId) {
@@ -426,7 +396,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
       throw new Error("Invalid origin or destination coordinates.");
     }
 
-    // Fetch distance and duration from Google Maps API
+    // Fetch distance, duration, and traffic information from Google Maps API
     const response = await axios.get(GOOGLE_MAPS_API_URL, {
       params: {
         origins: `${origin.latitude},${origin.longitude}`,
@@ -448,21 +418,24 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
     const distanceInKm = distance.value / 1000; // Convert meters to kilometers
     const durationInMinutes = duration.value / 60; // Convert seconds to minutes
 
-    // Fetch pricing from the database
+    // Fetch pricing information for the vehicle
     const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
     if (!pricing) {
       throw new Error("Pricing information not found for this vehicle.");
     }
 
-    const costPerKm = pricing.costperhr || 20; // Use costperhr field as cost per km
+    const costPerKm = pricing.costperhr || 20; // Use costperhr as cost per km
     const basePrice = distanceInKm * costPerKm; // Base price calculation
 
     // Initialize pricing multiplier
     let multiplier = 1.0;
 
-    // Apply traffic multiplier
-    if (trafficConditions === "HEAVY") {
-      multiplier *= 1.3; // Increase price by 30% if traffic is heavy
+    // Determine traffic conditions based on duration-to-distance ratio
+    const trafficRatio = durationInMinutes / distanceInKm; // Average time per kilometer
+    if (trafficRatio > 2.5) {
+      multiplier *= 1.3; // Heavy traffic increases price by 30%
+    } else if (trafficRatio > 1.5) {
+      multiplier *= 1.1; // Moderate traffic increases price by 10%
     }
 
     // Apply night-time multiplier (22:00 - 06:00)
@@ -471,7 +444,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
       multiplier *= 1.1; // Increase price by 10% during night hours
     }
 
-    const estimatedPrice = Math.round(basePrice * multiplier); // Calculate final price
+    const estimatedPrice = Math.round(basePrice * multiplier); // Final price calculation
 
     return {
       distance: distanceInKm,
@@ -484,7 +457,7 @@ async function estimatePrice({ origin, destination, vehicleId, trafficConditions
     console.error("Error estimating price:", error.message);
     throw new Error("Failed to estimate price.");
   }
-}
+};
 
 const updateDriverDeviceToken = async (req, res) => {
   try {
@@ -713,26 +686,62 @@ const endTrip = async (req, res) => {
   const { bookingId } = req.body;
   const driverId = req.user.id;
 
+  const transaction = await sequelize.transaction(); // Start a transaction
   try {
-    // Fetch the booking details
-    const booking = await Booking.findOne({ where: { Bookingid: bookingId, status: 1 } }); // status 1 = confirmed
+    // Fetch the confirmed booking
+    const booking = await Booking.findOne({
+      where: { Bookingid: bookingId, status: 1 }, // status 1 = confirmed
+      transaction,
+    });
+
     if (!booking) {
       return res.status(404).json({ message: "Booking not found or already completed." });
     }
 
-    // Fetch vehicle location
-    const vehicle = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
+    // Validate that the driver is authorized for this booking
+    const assignedDriver = await CabToDriver.findOne({
+      where: { driverid: driverId, vehicleid: booking.vehicleid },
+      transaction,
+    });
+
+    if (!assignedDriver) {
+      return res.status(403).json({ message: "Driver not authorized for this booking." });
+    }
+
+    // Fetch the soft booking details to get the drop location
+    const softBooking = await CabBookingRequest.findOne({
+      where: { bookingId },
+      attributes: ["endLocationLatitude", "endLocationLongitude"],
+      transaction,
+    });
+
+    if (!softBooking) {
+      return res.status(404).json({ message: "Soft booking not found for this trip." });
+    }
+
+    const { endLocationLatitude, endLocationLongitude } = softBooking;
+    if (!endLocationLatitude || !endLocationLongitude) {
+      return res.status(400).json({ message: "Invalid or missing drop location in soft booking." });
+    }
+
+    // Fetch the vehicle's current location
+    const vehicle = await VehicleAdditional.findOne({
+      where: { vehicleid: booking.vehicleid },
+      attributes: ["latitude", "longitude"],
+      transaction,
+    });
+
     if (!vehicle) {
       return res.status(404).json({ message: "Vehicle location not found." });
     }
 
-    // Calculate distance between vehicle and user drop location
+    // Calculate the distance between the vehicle's current location and the drop location
     const distance = geolib.getDistance(
       { latitude: vehicle.latitude, longitude: vehicle.longitude },
-      { latitude: booking.endLocationLatitude, longitude: booking.endLocationLongitude }
+      { latitude: endLocationLatitude, longitude: endLocationLongitude }
     ) / 1000; // Convert meters to kilometers
 
-    // Allow trip ending only if vehicle is within 0.5 km of drop location
+    // Ensure the vehicle is within 0.5 km of the drop location to allow ending the trip
     if (distance > 0.5) {
       return res.status(400).json({ message: "Vehicle is not near the drop location." });
     }
@@ -740,21 +749,23 @@ const endTrip = async (req, res) => {
     // Update the booking as completed
     await Booking.update(
       {
-        status: 2, // 2 indicates "completed"
+        status: 2, // 2 = completed
         endTripDate: new Date(),
         endTripTime: new Date(),
       },
-      { where: { Bookingid: bookingId } }
+      { where: { Bookingid: bookingId }, transaction }
     );
 
-    // Clean up soft booking data
-    await CabBookingRequest.destroy({ where: { bookingId } });
+    // Remove the soft booking entry
+    await CabBookingRequest.destroy({ where: { bookingId }, transaction });
 
+    await transaction.commit(); // Commit the transaction
     res.status(200).json({
       message: "Trip ended successfully.",
       bookingId,
     });
   } catch (error) {
+    await transaction.rollback(); // Rollback the transaction on error
     console.error("Error ending trip:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
