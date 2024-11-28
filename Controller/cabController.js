@@ -621,7 +621,7 @@ const acceptBooking = async (req, res) => {
       return res.status(404).json({ message: "Soft booking not found or already taken." });
     }
 
-    // Update booking to confirmed
+    // Update soft booking to confirmed
     await CabBookingRequest.update(
       { status: "confirmed", driverId },
       { where: { bookingId } }
@@ -629,6 +629,17 @@ const acceptBooking = async (req, res) => {
 
     // Generate an OTP for the trip
     const tripOtp = generateOTP();
+
+    // Save the confirmed booking in `Booking` table
+    const newBooking = await Booking.create({
+      Bookingid: bookingId,
+      Date: new Date(),
+      vehicleid: booking.vehicleId,
+      id: booking.userId,
+      status: 1, // 1 indicates "confirmed"
+      amount: booking.estimate_price,
+      startTripDate: new Date(),
+    });
 
     // Save the confirmed booking details
     await CabBookingAccepted.create({
@@ -645,12 +656,14 @@ const acceptBooking = async (req, res) => {
       message: "Booking accepted successfully",
       bookingId,
       tripOtp,
+      booking: newBooking,
     });
   } catch (error) {
     console.error("Error accepting booking:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 const checkBookingStatus = async (req, res) => {
   const { bookingId } = req.params;
 
@@ -696,6 +709,57 @@ const checkPendingBookings = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+const endTrip = async (req, res) => {
+  const { bookingId } = req.body;
+  const driverId = req.user.id;
+
+  try {
+    // Fetch the booking details
+    const booking = await Booking.findOne({ where: { Bookingid: bookingId, status: 1 } }); // status 1 = confirmed
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found or already completed." });
+    }
+
+    // Fetch vehicle location
+    const vehicle = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle location not found." });
+    }
+
+    // Calculate distance between vehicle and user drop location
+    const distance = geolib.getDistance(
+      { latitude: vehicle.latitude, longitude: vehicle.longitude },
+      { latitude: booking.endLocationLatitude, longitude: booking.endLocationLongitude }
+    ) / 1000; // Convert meters to kilometers
+
+    // Allow trip ending only if vehicle is within 0.5 km of drop location
+    if (distance > 0.5) {
+      return res.status(400).json({ message: "Vehicle is not near the drop location." });
+    }
+
+    // Update the booking as completed
+    await Booking.update(
+      {
+        status: 2, // 2 indicates "completed"
+        endTripDate: new Date(),
+        endTripTime: new Date(),
+      },
+      { where: { Bookingid: bookingId } }
+    );
+
+    // Clean up soft booking data
+    await CabBookingRequest.destroy({ where: { bookingId } });
+
+    res.status(200).json({
+      message: "Trip ended successfully.",
+      bookingId,
+    });
+  } catch (error) {
+    console.error("Error ending trip:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   searchForCabs,
   bookCab,
@@ -711,5 +775,6 @@ module.exports = {
   checkBookingStatus,
   acceptBooking,
   createSoftBooking,
-  checkPendingBookings
+  checkPendingBookings,
+  endTrip
 };

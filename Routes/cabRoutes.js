@@ -13,6 +13,7 @@ const {
   checkBookingStatus,
   acceptBooking,
   createSoftBooking,
+  endTrip,
 } = require("../Controller/cabController");
 
 const router = express.Router();
@@ -22,6 +23,7 @@ router.post("/driver/verify-otp", verifyDriverOtp);
 router.post("/driver/keep-alive", authenticate, driverKeepAlive);
 router.post("/driver/login", login);
 router.post("/driver/update-device-token", authenticate, updateDriverDeviceToken);
+router.post("/driver/end-trip", authenticate, endTrip);
 
 // Host Routes
 router.post("/add-driver", authenticate, addDriver);
