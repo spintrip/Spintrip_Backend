@@ -1,20 +1,21 @@
 const axios = require('axios');
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../../Models');
   const {
     sendBookingConfirmationEmail,
     sendBookingCompletionEmail,
     sendBookingCancellationEmail
-  } = require('./emailController');
+  } = require('../emailController');
+
+
   const generateOTP = () => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     return otp;
   };
+
   const sendOTP = async(phone, otp) => {
     console.log(`Sending OTP ${otp} to phone number ${phone}`);
-    const url = `https://2factor.in/API/V1/${process.env.SMS_API_KEY}/SMS/${phone}//${otp}/`;
-    
-  
+    const url = `https://2factor.in/API/V1/${process.env.SMS_API_KEY}/SMS/${phone}//${otp}/`;    
     try {
       const response = await axios.get(url);
       console.log('OTP sent successfully:', response.data);
@@ -163,10 +164,117 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
       res.status(500).json({ message: 'Server error' });
     }
   }
-  module.exports = {
-    generateOTP,
-    sendOTP,
-    tripstart,
-    bookingcompleted,
-    cancelbooking
-   }
+
+  const hostBookings = async(req , res) => {
+    try {
+      const hostid = req.user.id;
+      let bookings = await Booking.findAll({
+        include: [
+          {
+            model: Vehicle,
+            where: { hostId: hostid },
+            attributes: ['chassisno', 'Rcnumber', 'Enginenumber'],
+          },
+          {
+            model: UserAdditional,
+            attributes: ['FullName'] // Assuming 'FullName' is the column name in 'UserAdditional'
+          }
+        ],
+      });
+      if (bookings) {
+        const featureList = await Feature.findAll();
+        const featureMap = featureList.reduce((map, feature) => {
+          map[feature.id] = feature.featureName;
+          return map;
+        }, {});
+        const hostBooking = bookings.map(async (booking) => {
+          const vehicle = await Vehicle.findOne({
+            where: {
+              vehicleid: booking.vehicleid,
+            }
+          });
+          if (!vehicle) {
+            return;
+          }
+          const featureDetails = (booking.features || []).map(featureId => ({
+            featureId,
+            featureName: featureMap[featureId] || 'Unknown Feature'
+          }));
+          let bk = {
+            bookingId: booking.Bookingid,
+            vehicleid: booking.vehicleid,
+            id: booking.id,
+            bookedBy: booking.UserAdditional ? booking.UserAdditional.FullName : null,
+            status: booking.status,
+            amount: booking.amount,
+            startTripDate: booking.startTripDate,
+            endTripDate: booking.endTripDate,
+            startTripTime: booking.startTripTime,
+            endTripTime: booking.endTripTime,
+            cancelDate: booking.cancelDate,
+            cancelReason: booking.cancelReason,
+            features: featureDetails,
+            createdAt: booking.createdAt,
+          }
+          return { ...bk };
+        });
+        const hostBookings = await Promise.all(hostBooking);
+        res.status(201).json({ hostBookings: hostBookings });
+      }
+      else {
+        res.status(400).json({ message: 'No bookings found' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+ const postHostRating = async(req, res) => {
+    try {
+      let { bookingId, rating } = req.body;
+      if (!rating) {
+        rating = 5;
+      }
+      const userId = req.user.id;
+      const booking = await Booking.findOne({
+        where: {
+          Bookingid: bookingId,
+          //id: userId,
+        }
+      });
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+      const user = await User.findOne({
+        where: {
+          id: booking.id,
+        }
+      });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      const bookingCount = await Booking.count({
+        where: {
+          id: booking.id,
+          status: 3,
+        }
+      });
+      let new_rating;
+      if( bookingCount == 1 ){
+        new_rating = parseFloat(rating);     
+      }
+      else{
+        new_rating = (parseFloat(rating) + parseFloat(user.rating * (bookingCount - 1))) / (bookingCount);
+      }
+      user.update({ rating: new_rating });
+      res.status(201).json('Thank you for your response');
+    }
+    catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+  module.exports = { generateOTP, sendOTP, tripstart, bookingcompleted, cancelbooking, hostBookings, postHostRating};

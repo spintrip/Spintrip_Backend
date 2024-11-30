@@ -16,7 +16,7 @@ const {
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
-const { sendOTP, generateOTP } = require('../Controller/hostController');
+const { sendOTP, generateOTP } = require('./hostcontroller/hostBooking');
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";

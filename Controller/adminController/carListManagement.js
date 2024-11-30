@@ -24,7 +24,7 @@ const getAllvehicles = async (req, res) => {
 // Get a car by ID with additional information
 const getvehicleById = async (req, res) => {
   try {
-    const vehicle = await VehiclefindByPk(req.params.id);
+    const vehicle = await Vehicle.findByPk(req.params.id);
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }

@@ -1,5 +1,5 @@
 const { Tax, Feature } = require('../../Models');
-
+const uuid = require('uuid');
 // Create a new tax record
 const createTax = async (req, res) => {
   try {
@@ -80,7 +80,7 @@ const createFeature = async (req, res) => {
       return res.status(400).json({ message: 'Feature already exists' });
     }
 
-    const newFeature = await Feature.create({ featureId, featureName });
+    const newFeature = await Feature.create({ id: featureId, featureName });
     res.status(201).json({ message: 'Feature created successfully', newFeature });
   } catch (error) {
     console.error('Error creating feature:', error.message);

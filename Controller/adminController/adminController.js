@@ -7,6 +7,10 @@ const { createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePr
 const { createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById } = require('./taxFeatureManagement');
 const { viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats } = require('./supportChatManagement');
 const { sendNotification } = require('./notificationManagement');
+const {allTransactions, getTransactionById, updateTransactionById, deleteTransactionById} = require('./adminTransactions');
+const {getDevice, getDeviceById, postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById} = require('./adminDevice');
+const {pendingProfile, approveProfile, rejectProfile} = require('./adminProfileManagement');
+const {pendingCarProfile, approveCarProfile, rejectCarProfile} = require('./adminCarManagement');
 
 module.exports = {
   adminLogin, verifyOTP, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
@@ -17,5 +21,7 @@ module.exports = {
   createOrUpdateBrand, getAllBrands, updateBrandById, adminSignup,getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
-  sendNotification, adminProfile
+  sendNotification, adminProfile, allTransactions, getTransactionById, updateTransactionById, deleteTransactionById,
+  getDevice, getDeviceById, postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById,
+  pendingProfile, approveProfile, rejectProfile, pendingCarProfile, approveCarProfile, rejectCarProfile
 };
