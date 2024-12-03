@@ -1,11 +1,16 @@
 const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const uuid = require('uuid');
-
+const path = require('path');
+const noImgPath = path.resolve(__dirname, "../assets/no_image.webp")
 
   //Listing
  const getListing = async(req, res) => {
     const hostid = req.user.userid;
     const host = await Host.findOne({ where: { id: hostid } });
+    const checkData = (value) => { return value !== null && value !== undefined ?  value : "Not Provided"};
+    const checkImage = (value) => {
+      return (value !== null && value !== undefined ? value : noImgPath) ;
+    }
     if (host) {
       try {
         const listing = await Listing.findAll({ where: { hostid: hostid } });
@@ -19,23 +24,23 @@ const uuid = require('uuid');
             id: lstg.id,
             vehicleid: lstg.vehicleid,
             hostId: lstg.hostid,
-            details: lstg.details,
-            startDate: lstg.start_date,
-            startTime: lstg.start_time,
-            endDate: lstg.end_date,
-            endTime: lstg.end_time,
-            pauseTimeStartDate: lstg.pausetime_start_date,
-            pauseTimeEndDate: lstg.pausetime_end_date,
-            pauseTimeStartTime: lstg.pausetime_start_time,
-            pauseTimeEndTime: lstg.pausetime_end_time,
-            bookingId: lstg.bookingId,
-            rcNumber: vehicle.Rcnumber,
-            vehicletype: vehicle.vehicletype,
-            vehicleImage1: vehicleAdditional.vehicleimage1,
-            vehicleImage2: vehicleAdditional.vehicleimage2,
-            vehicleImage3: vehicleAdditional.vehicleimage3,
-            vehicleImage4: vehicleAdditional.vehicleimage4,
-            vehicleImage5: vehicleAdditional.vehicleimage5,
+            details: checkData(lstg.details),
+            startDate: checkData(lstg.start_date),
+            startTime: checkData(lstg.start_time),
+            endDate: checkData(lstg.end_date),
+            endTime: checkData(lstg.end_time),
+            pauseTimeStartDate: checkData(lstg.pausetime_start_date),
+            pauseTimeEndDate: checkData(lstg.pausetime_end_date),
+            pauseTimeStartTime: checkData(lstg.pausetime_start_time),
+            pauseTimeEndTime: checkData(lstg.pausetime_end_time),
+            bookingId: checkData(lstg.bookingId),
+            rcNumber: checkData(vehicle.Rcnumber),
+            vehicletype: checkData(vehicle.vehicletype),
+            vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
+            vehicleImage2: checkImage(vehicleAdditional.vehicleimage2),
+            vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
+            vehicleImage4: checkImage(vehicleAdditional.vehicleimage4),
+            vehicleImage5: checkImage(vehicleAdditional.vehicleimage5),
           }
           return { ...lk };
         });

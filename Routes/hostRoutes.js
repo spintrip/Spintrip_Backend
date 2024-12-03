@@ -2,38 +2,15 @@ const express = require('express');
 const { authenticate } = require('../Middleware/authMiddleware');
 const { getAllBlogs } = require('../Controller/blogController');
 const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
-const { addCab } = require('../Controller/cabController'); // Import the addCab function
 const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateProfile, verifyProfile, 
   verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
   postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking,
   hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
   postMonthlyData,postGetFeedback, postGetVehicleReg
   } = require('../Controller/hostcontroller/hostController');
-
-const { 
-  sendBookingConfirmationEmail, 
-  sendBookingApprovalEmail, 
-  sendTripStartEmail, 
-  sendTripEndEmail, 
-  sendPaymentConfirmationEmail,
-  sendBookingCancellationEmail,
-  sendBookingCompletionEmail
-} = require('../Controller/emailController');
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-const s3 = require('../s3Config');
-const { S3Client, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const { Upload } = require('@aws-sdk/lib-storage');
-const fs = require('fs');
-const path = require('path');
-const { parseString } = require('xml2js');
-const sharp = require('sharp');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const router = express.Router();
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
-const csv = require('csv-parser');
 
 router.get('/get-brand', getBrand);
 

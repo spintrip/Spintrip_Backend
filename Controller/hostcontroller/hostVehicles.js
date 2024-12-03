@@ -5,6 +5,8 @@ const s3 = require('../../s3Config');
 const path = require('path');
 const uuid = require('uuid');
 const { parseString } = require('xml2js');
+const { npm } = require('winston/lib/winston/config');
+const noImgPath = path.resolve(__dirname, '../assets/no_image.webp');
 
 
 const vehicleImageStorage = multerS3({
@@ -64,7 +66,35 @@ const postVehicle = async (req, res) => {
       address,
       timeStamp,
     } = req.body;
+    
+    const requiredFields = {
+      vehicleModel,
+      type,
+      brand,
+      variant,
+      color,
+      bodyType,
+      chassisNo,
+      rcNumber,
+      engineNumber,
+      registrationYear,
+      city,
+      latitude,
+      longitude,
+      address,
+    }
 
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => value == "" || value == null)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      // Return a 400 error with the missing fields
+      return res.status(400).json({
+        message: 'Missing required fields',
+        missingFields,
+      });
+    }
     const host = await Host.findByPk(req.user.id);
 
     if (!host) {
@@ -75,9 +105,9 @@ const postVehicle = async (req, res) => {
 
     const vehicle = await Vehicle.create({
       vehicletype,
-      chassisno: chassisNo,
+      chassisno: chassisNo || '0',
       Rcnumber: rcNumber,
-      Enginenumber: engineNumber,
+      Enginenumber: engineNumber || '0',
       Registrationyear: registrationYear,
       vehicleid: vehicleId,
       hostId: req.user.id,
@@ -176,6 +206,8 @@ const putVehicleAdditional = async (req, res) => {
       costperhr,
       additionalInfo
     } = req.body;
+
+    
 
     const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
     if (!vehicle) {
@@ -313,6 +345,9 @@ const getVehicleAdditional = async (req, res) => {
     }
 
     const safeBoolean = (value) => (value !== null && value !== undefined ? value : false);
+    const checkImage = (value) => {
+      return (value !== null && value !== undefined ? value : noImgPath) ;
+    }
 
     let booleanSpecs = [];
     let additional = {};
@@ -329,13 +364,13 @@ const getVehicleAdditional = async (req, res) => {
       // Bike-specific fields
       const bikeDetails = await Bike.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        bikeModel: bikeDetails?.bikemodel || null,
-        horsePower: bikeDetails?.HorsePower || null,
-        type: null,
-        brand: bikeDetails?.brand || null,
-        variant: bikeDetails?.variant || null,
-        color: bikeDetails?.color || null,
-        bodyType: null,
+        bikeModel: bikeDetails?.bikemodel || "None",
+        horsePower: bikeDetails?.HorsePower || "None",
+        type: "Not Provided",
+        brand: bikeDetails?.brand || "None",
+        variant: bikeDetails?.variant || "None",
+        color: bikeDetails?.color || "None",
+        bodyType: "None",
       };
 
       // Populate booleanSpecs for bikes
@@ -351,13 +386,13 @@ const getVehicleAdditional = async (req, res) => {
       // Car-specific fields
       const carDetails = await Car.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        carModel: carDetails?.carmodel || null,
-        horsePower: carDetails?.HorsePower || null,
-        type: null,
-        brand: carDetails?.brand || null,
-        variant: carDetails?.variant || null,
-        color: carDetails?.color || null,
-        bodyType: null,
+        carModel: carDetails?.carmodel || "None",
+        horsePower: carDetails?.HorsePower || "None",
+        type: "Not Provided",
+        brand: carDetails?.brand || "None",
+        variant: carDetails?.variant || "None",
+        color: carDetails?.color || "None",
+        bodyType: "None",
       };
 
       // Populate booleanSpecs for cars
@@ -396,12 +431,13 @@ const getVehicleAdditional = async (req, res) => {
       rcNumber: vehicle.Rcnumber,
       registrationYear: vehicle.Registrationyear,
     };
-    const vehicleImages = [];
-    if (vehicleAdditional.vehicleimage1) vehicleImages.push(vehicleAdditional.vehicleimage1);
-    if (vehicleAdditional.vehicleimage2) vehicleImages.push(vehicleAdditional.vehicleimage2);
-    if (vehicleAdditional.vehicleimage3) vehicleImages.push(vehicleAdditional.vehicleimage3);
-    if (vehicleAdditional.vehicleimage4) vehicleImages.push(vehicleAdditional.vehicleimage4);
-    if (vehicleAdditional.vehicleimage5) vehicleImages.push(vehicleAdditional.vehicleimage5);
+    const vehicleImages = [
+      checkImage(vehicleAdditional.vehicleimage1),
+      checkImage(vehicleAdditional.vehicleimage2),
+      checkImage(vehicleAdditional.vehicleimage3),
+      checkImage(vehicleAdditional.vehicleimage4),
+      checkImage(vehicleAdditional.vehicleimage5)
+    ];
     if (vehicleImages) {
       res.status(200).json({
         message: "vehicle Additional data",

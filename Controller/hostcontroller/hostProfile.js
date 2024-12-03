@@ -4,6 +4,7 @@ const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const fs = require('fs');
 const path = require('path');
+const noProfileImg = path.resolve(__dirname , '../assets/no_profile.webp')
 
 
 
@@ -31,24 +32,53 @@ const hostProfile = async(req, res) => {
       }
       const user = await User.findOne({ where: { id: hostId } });
       const vehicle = await Vehicle.findAll({ where: { hostId: host.id } })
+      const checkData = (value) => {
+        return value !== null && value !== undefined ? value : 'Not Provided';
+      } 
+      const checkProfileImg = (value) => {
+        return value !== null && value !== undefined ? value : noProfileImg;
+      } 
       let additionalInfo = await HostAdditional.findByPk(hostId);
       console.log(additionalInfo);
+      let hostDetails = {
+        id: host.id,
+        onlyVerifiedUsers: host.onlyVerifiedUsers,
+        createdAt: host.createdAt,
+        updatedAt: host.updatedAt,
+        userId : checkData(host.userId)
+      }
+
+      const processedVehicles = vehicle.map((vehicleDetail) => ({
+        vehicleid: checkData(vehicleDetail?.vehicleid),
+        vehicletype: checkData(vehicleDetail?.vehicletype),
+        chassisno: checkData(vehicleDetail?.chassisno),
+        Rcnumber: checkData(vehicleDetail?.Rcnumber),
+        Enginenumber: checkData(vehicleDetail?.Enginenumber),
+        Registrationyear: checkData(vehicleDetail?.Registrationyear),
+        timestamp: checkData(vehicleDetail?.timestamp),
+        rating: checkData(vehicleDetail?.rating),
+        activated: checkData(vehicleDetail?.activated),
+        hostId: checkData(vehicleDetail?.hostId),
+        createdAt: checkData(vehicleDetail?.createdAt),
+        updatedAt: checkData(vehicleDetail?.updatedAt),
+      }));
+
       let profile = {
         id: additionalInfo.id,
-        GSTnumber: additionalInfo.GSTnumber,
-        PANnumber: additionalInfo.PANnumber,
-        FullName: additionalInfo.FullName,
-        email: additionalInfo.Email,
-        aadharNumber: additionalInfo.AadharVfid,
-        address: additionalInfo.Address,
-        verificationStatus: additionalInfo.verification_status,
+        GSTnumber: checkData(additionalInfo.GSTnumber),
+        PANnumber: checkData(additionalInfo.PANnumber),
+        FullName: checkData(additionalInfo.FullName),
+        email: checkData(additionalInfo.Email),
+        aadharNumber: checkData(additionalInfo.AadharVfid),
+        address: checkData(additionalInfo.Address),
+        verificationStatus: checkData(additionalInfo.verification_status),
         phone: user.phone,
-        profilePic: additionalInfo.profilepic, 
-        aadharFile:   additionalInfo.aadhar,
-        businessName: additionalInfo.businessName,
+        profilePic: checkProfileImg(additionalInfo.profilepic), 
+        aadharFile:   checkProfileImg(additionalInfo.aadhar),
+        businessName: checkData(additionalInfo.businessName),
       }
       // You can include more fields as per your User model
-      res.json({ hostDetails: host, vehicle, profile });
+      res.json({ hostDetails, vehicle : processedVehicles, profile });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
@@ -92,41 +122,6 @@ const updateProfile = async(req , res) => {
     }
   };
 
-// Put Verify
-//router.put('/verify', authenticate, upload.fields([{ name: 'aadharFile', maxCount: 1 },{ name: 'profilePic', maxCount: 1 }]), async (req, res) => {
-//     const verifyProfile = upload.fields([{ name: 'aadharFile', maxCount: 1 },{ name: 'profilePic', maxCount: 1 }]), async(req, res) => {
-//     try {
-//       const userId = req.user.id;
-//       const user = await User.findByPk(userId);
-//       if (!user) {
-//         return res.status(404).json({ message: 'User not found' });
-//       }
-  
-//       let files = [];
-//       if (req.files) {
-//         if (req.files['aadharFile']) files.push(req.files['aadharFile'][0]);
-//         if (req.files['profilePic']) files.push(req.files['profilePic'][0]);
-//       }
-//       const { profilePic, aadharFile } = req.files;
-//       console.log(profilePic);
-//       if (profilePic) {
-//         await HostAdditional.update({
-//           profilepic: profilePic ? profilePic[0].location : null,
-//         }, { where: { id: userId } });
-//       }
-  
-//       if (aadharFile) {
-//         await HostAdditional.update({
-//           aadhar: aadharFile ? aadharFile[0].location : null,
-//         }, { where: { id: userId } });
-//         console.log(aadharFile)
-//       }
-//       res.status(200).json({ message: 'Profile Updated successfully' });
-//     } catch (error) {
-//       console.log(error);
-//       res.status(500).json({ message: 'Error updating profile', error: error });
-//     }
-//   };
 
 const verifyProfileHandler = upload.fields([
   { name: 'aadharFile', maxCount: 1 },

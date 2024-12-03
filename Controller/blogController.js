@@ -18,6 +18,10 @@ const s3Config = multerS3({
 
 const upload = multer({ storage: s3Config });
 
+const checkData = (value) => {
+  return value !==null && value !== undefined ? value : "Not Provided";
+}
+
 const createBlog = async (req, res) => {
   try {
     const blogId = uuid.v4();
@@ -43,7 +47,19 @@ const createBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.findAll();
+    const processedBlogs = await Blog.findAll();
+    const blogs = processedBlogs.map(chat => ({
+      blogId: checkData(chat.blogId),
+      blogName: checkData(chat.blogName),
+      blogAuthor: checkData(chat.blogAuthor),
+      description: checkData(chat.description),
+      keywords: checkData(chat.keywords),
+      blogImage1: checkData(chat.blogImage1),
+      blogImage2: checkData(chat.blogImage2),
+      timestamp: checkData(chat.timestamp),
+      createdAt: checkData(chat.createdAt),
+      updatedAt: checkData(chat.updatedAt)
+    }))
     res.status(200).json(blogs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -53,7 +69,19 @@ const getAllBlogs = async (req, res) => {
 const getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
-    const blog = await Blog.findOne({ where: { blogId: id } });
+    const processedBlog = await Blog.findOne({ where: { blogId: id } });
+    const blog = {
+      blogId: checkData(processedBlog.blogId),
+      blogName: checkData(processedBlog.blogName),
+      blogAuthor: checkData(processedBlog.blogAuthor),
+      description: checkData(processedBlog.description),
+      keywords: checkData(processedBlog.keywords),
+      blogImage1: checkData(processedBlog.blogImage1),
+      blogImage2: checkData(processedBlog.blogImage2),
+      timestamp: checkData(processedBlog.timestamp),
+      createdAt: checkData(processedBlog.createdAt),
+      updatedAt: checkData(processedBlog.updatedAt)
+    }
     if (blog) {
       res.status(200).json(blog);
     } else {

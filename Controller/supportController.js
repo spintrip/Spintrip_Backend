@@ -46,9 +46,22 @@ const escalateSupportTicket = async (req, res) => {
 };
 
 const viewSupportChats = async (req, res) => {
+  const checkData = (value) => {
+    return value !== null && value !== undefined ? value : "Not Available"
+  }
   try {
     const { supportId } = req.body;
-    const supportChats = await SupportChat.findAll({ where: {supportId: supportId}});
+    const supportChatsData = await SupportChat.findAll({ where: {supportId: supportId}});
+    const supportChats = supportChatsData.map((chat) => ({
+      id: checkData(chat.id),
+      supportId: checkData(chat.supportId),
+      userId: checkData(chat.userId),
+      adminId: checkData(chat.adminId),
+      senderId: checkData(chat.senderId),
+      message: checkData(chat.message),
+      createdAt: checkData(chat.createdAt),
+      updatedAt: checkData(chat.updatedAt)
+      }))
     if (!supportChats) {
       return res.status(404).json({ error: 'Ticket not found' });
     }

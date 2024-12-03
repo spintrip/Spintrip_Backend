@@ -458,6 +458,27 @@ const estimatePrice = async ({ origin, destination, vehicleId }) => {
   }
 };
 
+const getEstimate =  async (req, res) => {
+  try {
+    // Extract data from the request body
+    const { origin, destination, vehicleId, trafficConditions } = req.body;
+
+    // Validate the input
+    if (!origin || !destination || !vehicleId) {
+      return res.status(400).json({ message: "Missing required parameters: origin, destination, or vehicleId." });
+    }
+
+    // Call the estimatePrice function with the required parameters
+    const result = await estimatePrice({ origin, destination, vehicleId, trafficConditions });
+
+    // Return the result to the client
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in /get-estimate route:", error.message);
+    res.status(500).json({ message: "Failed to estimate price.", error: error.message });
+  }
+};
+
 const updateDriverDeviceToken = async (req, res) => {
   try {
     const driverId = req.user.id; // Extract driver ID from authenticated user
@@ -774,7 +795,7 @@ module.exports = {
   searchForCabs,
   bookCab,
   addCab,
-  estimatePrice,
+  getEstimate,
   verifyDriverOtp,
   driverKeepAlive,
   addDriver,
