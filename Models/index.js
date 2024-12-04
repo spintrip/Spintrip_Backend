@@ -149,10 +149,10 @@ const associateModels = () => {
   carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
 
   // Support and SupportChat associations
-  Support.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  Support.belongsTo(UserAdditional, { foreignKey: 'userId', onDelete: 'CASCADE' });
   Support.hasMany(SupportChat, { foreignKey: 'supportId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Support, { foreignKey: 'supportId', onDelete: 'CASCADE' });
-  SupportChat.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  SupportChat.belongsTo(UserAdditional, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
 
   Vehicle.hasOne(CabToDriver, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });

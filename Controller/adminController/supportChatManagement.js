@@ -1,10 +1,10 @@
-const { SupportTicket, Chat, User } = require('../../Models');
-
+const { Support, User, UserAdditional, SupportChat } = require('../../Models');
+const uuid = require('uuid');
 // View all support tickets
 const viewAllSupportTickets = async (req, res) => {
   try {
-    const tickets = await SupportTicket.findAll({
-      include: [{ model: User, attributes: ['id', 'FullName', 'Email'] }],
+    const tickets = await Support.findAll({
+      include: [{ model: UserAdditional, attributes: ['id', 'FullName', 'Email'] }],
       order: [['createdAt', 'DESC']],
     });
     if (tickets.length === 0) {
@@ -21,17 +21,20 @@ const viewAllSupportTickets = async (req, res) => {
 const replyToSupportTicket = async (req, res) => {
   try {
     const { ticketId, message, userId } = req.body;
-    const ticket = await SupportTicket.findByPk(ticketId);
+    const ticket = await Support.findByPk(ticketId);
 
     if (!ticket) {
       return res.status(404).json({ message: 'Support ticket not found' });
     }
-
-    const chatMessage = await Chat.create({
-      ticketId,
-      message,
-      userId,
-      role: 'support',
+    const id = uuid.v4();
+    const chatMessage = await SupportChat.create({
+      id,
+      supportId: ticketId,
+      message: message,
+      userId: ticket.senderId,
+      senderId: req.user.id,
+      adminId: req.user.id,
+      // role: 'support',
     });
 
     res.status(200).json({ message: 'Reply added successfully', chatMessage });
@@ -45,7 +48,7 @@ const replyToSupportTicket = async (req, res) => {
 const escalateSupportTicket = async (req, res) => {
   try {
     const { ticketId, escalationReason } = req.body;
-    const ticket = await SupportTicket.findByPk(ticketId);
+    const ticket = await Support.findByPk(ticketId);
 
     if (!ticket) {
       return res.status(404).json({ message: 'Support ticket not found' });
@@ -66,7 +69,7 @@ const escalateSupportTicket = async (req, res) => {
 const resolveSupportTicket = async (req, res) => {
   try {
     const { ticketId, resolutionMessage } = req.body;
-    const ticket = await SupportTicket.findByPk(ticketId);
+    const ticket = await Support.findByPk(ticketId);
 
     if (!ticket) {
       return res.status(404).json({ message: 'Support ticket not found' });
@@ -87,16 +90,15 @@ const resolveSupportTicket = async (req, res) => {
 const viewAllChats = async (req, res) => {
   try {
     const { ticketId } = req.params;
-    const ticket = await SupportTicket.findByPk(ticketId);
+    const ticket = await Support.findByPk(ticketId);
 
     if (!ticket) {
       return res.status(404).json({ message: 'Support ticket not found' });
     }
-
-    const chats = await Chat.findAll({
-      where: { ticketId },
+    const chats = await SupportChat.findAll({
+      where: { supportId: ticketId },
       order: [['createdAt', 'ASC']],
-      include: [{ model: User, attributes: ['FullName', 'Email'] }],
+      include: [{ model: UserAdditional, attributes: ['FullName', 'Email'] }],
     });
 
     res.status(200).json({ message: 'Chats retrieved successfully', chats });

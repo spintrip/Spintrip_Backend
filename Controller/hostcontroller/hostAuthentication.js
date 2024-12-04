@@ -24,6 +24,14 @@ const hostSignup = async (req, res) => {
       // const hashedPassword = bcrypt.hashSync("my-password", salt);
       const hashedPassword = await bcrypt.hash(password, salt);
       const userId = uuid.v4();
+      const user1 = await User.findOne({ where: { phone:phone } });
+      if (user1) {
+        const host1 = await Host.findOne({ where: { id: user1.id } });
+        if(host1){
+        return res.status(404).json({ message: 'Host Already exists' });
+        }
+      }
+      
       const user = await User.create({ id: userId, phone, password: hashedPassword, role: 'Host' });
       const host = await Host.create({
         id: user.id,

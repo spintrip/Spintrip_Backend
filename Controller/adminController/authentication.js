@@ -20,6 +20,11 @@ const adminSignup = async (req, res) =>{
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    const admin1 = await Admin.findOne({ where: { id: user.id } });
+
+    if (admin1) {
+      return res.status(404).json({ message: 'Admin Already exists' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 

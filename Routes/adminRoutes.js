@@ -180,6 +180,7 @@ router.post('/support-tickets/reply', authenticate, replyToSupportTicket);
 router.post('/support-tickets/escalate', authenticate, escalateSupportTicket);
 router.post('/support-tickets/resolve', authenticate, resolveSupportTicket);
 router.get('/chats', authenticate, viewAllChats);
+router.get('/support-chats/:ticketId', authenticate, viewAllChats);
 
 // Notification routes
 router.post('/notifications', authenticate, sendNotification);

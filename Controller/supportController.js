@@ -7,7 +7,6 @@ const createSupportTicket = async (req, res) => {
     const { subject, message } = req.body;
     console.log(message)
     const userId = req.user.id; // Assuming user ID is obtained from JWT or session
-    console.log(userId)
     id = uuid.v4();
     const supportTicket = await Support.create({ id:id, userId:userId, subject:subject, message:message });
     await SupportChat.create({ id:id, supportId: supportTicket.id, senderId: userId, message: message });
