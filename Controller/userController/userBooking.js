@@ -517,7 +517,7 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
                 longitude: checkData(vehicleAdditional.longitude),
                 cancelDate: checkData(booking.cancelDate),
                 cancelReason: checkData(booking.cancelReason),
-                features: checkImage(featureDetails),
+                features: featureDetails,
                 createdAt: checkData(booking.createdAt)
             
           };
