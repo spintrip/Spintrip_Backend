@@ -1,8 +1,8 @@
-const {CarAdditional, Admin, Car} = require('../../Models');
+const {CarAdditional, Admin, Vehicle, VehicleAdditional} = require('../../Models');
 const fs = require('fs');
 const path = require('path');
 
-const pendingCarProfile = async (req, res) => {
+const pendingVehicleProfile = async (req, res) => {
     try {
       const adminId = req.user.id;
       const admin = await Admin.findByPk(adminId);
@@ -11,22 +11,22 @@ const pendingCarProfile = async (req, res) => {
         return res.status(404).json({ message: 'Admin not found' });
       }
   
-      let pendingProfiles = await CarAdditional.findAll({
+      let pendingProfiles = await VehicleAdditional.findAll({
         where: 
             { verification_status: 1 }
       });
   
       if (pendingProfiles.length === 0) {
-        return res.status(200).json({ message: 'No car approval required' });
+        return res.status(200).json({ message: 'No vehicle approval required' });
       }
   
       const updatedProfiles = await Promise.all(
         pendingProfiles.map(async (profile) => {
-          const car = await Car.findByPk(profile.vehicleid);
+          const vehicle = await Vehicle.findByPk(profile.vehicleid);
           
           return {
             ...profile.toJSON(),
-            car: car ? car.toJSON() : null
+            vehicle: vehicle ? vehicle.toJSON() : null
           };
         })
       );
@@ -38,7 +38,7 @@ const pendingCarProfile = async (req, res) => {
     }
   };
 
-  const approveCarProfile = async (req, res) => {
+  const approveVehicleProfile = async (req, res) => {
     try {
       const adminId = req.user.id;
       const admin = await Admin.findByPk(adminId);
@@ -46,14 +46,14 @@ const pendingCarProfile = async (req, res) => {
         return res.status(404).json({ message: 'Admin not found' });
       }
       const vehicleid = req.body.vehicleid;
-      await CarAdditional.update({ verification_status: 2 }, { where: { vehicleid: vehicleid } });
-      res.status(200).json({ message: 'Car Profile approved successfully' });
+      await VehicleAdditional.update({ verification_status: 2 }, { where: { vehicleid: vehicleid } });
+      res.status(200).json({ message: 'Vehicle Profile approved successfully' });
     } catch (error) {
       console.log(error);
       }
     };
   
-  const rejectCarProfile = async (req, res) => {
+  const rejectVehicleProfile = async (req, res) => {
     try {
       const adminId = req.user.id;
       const admin = await Admin.findByPk(adminId);
@@ -70,4 +70,4 @@ const pendingCarProfile = async (req, res) => {
     }
   };
 
-  module.exports = {pendingCarProfile, approveCarProfile, rejectCarProfile};
+  module.exports = {pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile};

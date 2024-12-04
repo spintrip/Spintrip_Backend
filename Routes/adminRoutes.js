@@ -12,7 +12,7 @@ const {
   sendNotification, adminProfile, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
   allTransactions, getTransactionById, updateTransactionById, deleteTransactionById,getDevice, getDeviceById,
   postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById, pendingProfile, approveProfile, 
-  rejectProfile, pendingCarProfile, approveCarProfile, rejectCarProfile
+  rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
 
@@ -122,13 +122,13 @@ router.get('/pending-profile', authenticate, pendingProfile);
 
 
 router.put('/approve-profile', authenticate, approveProfile);
-router.get('/pending-carprofile', authenticate, pendingCarProfile);
+router.get('/pending-vehicleprofile', authenticate, pendingVehicleProfile);
 
-router.put('/approve-carprofile', authenticate, approveCarProfile);
+router.put('/approve-vehicleprofile', authenticate, approveVehicleProfile);
 
-router.put('/reject-profile', authenticate, rejectCarProfile);
+router.put('/reject-profile', authenticate, rejectProfile);
 
-router.put('/reject-carprofile', authenticate, rejectProfile);
+router.put('/reject-vehicleprofile', authenticate, rejectVehicleProfile);
 
 // vehicles routes
 router.get('/vehicles', authenticate, getAllvehicles);

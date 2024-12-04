@@ -10,7 +10,7 @@ const { sendNotification } = require('./notificationManagement');
 const {allTransactions, getTransactionById, updateTransactionById, deleteTransactionById} = require('./adminTransactions');
 const {getDevice, getDeviceById, postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById} = require('./adminDevice');
 const {pendingProfile, approveProfile, rejectProfile} = require('./adminProfileManagement');
-const {pendingCarProfile, approveCarProfile, rejectCarProfile} = require('./adminCarManagement');
+const {pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile} = require('./adminCarManagement');
 
 module.exports = {
   adminLogin, verifyOTP, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
@@ -23,5 +23,5 @@ module.exports = {
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
   sendNotification, adminProfile, allTransactions, getTransactionById, updateTransactionById, deleteTransactionById,
   getDevice, getDeviceById, postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById,
-  pendingProfile, approveProfile, rejectProfile, pendingCarProfile, approveCarProfile, rejectCarProfile
+  pendingProfile, approveProfile, rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile
 };
