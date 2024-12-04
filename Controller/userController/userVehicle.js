@@ -5,11 +5,25 @@ const { Op } = require('sequelize');
 const moment = require('moment');
 const path = require('path');
 const csv = require('csv-parser');
-const {checkData, checkImage, checkStatus} = require('./userProfile')
+const {checkData, checkStatus} = require('./userProfile');
+const noVehicleImg = path.resolve(__dirname, '../assets/no_image.webp');
 
 const checkBool = (value) => {
-    return value !=null && value !==undefined ? value : false;
+    return value !== null && value !==undefined ? value : false;
 }
+
+const checkImage = (value) => {
+  return value !== null && value !==undefined ? value : noVehicleImg;
+}
+const checkRating = (value) => {
+  // Check if the value is a number and not null/undefined
+  if (value !== null && value !== undefined && !isNaN(parseFloat(value))) {
+    return parseFloat(value);
+  }
+  // Return 0.0 for any invalid rating
+  return 0.0;
+}
+
 
 const fs = require('fs');
 function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -143,7 +157,7 @@ const razorpay = new Razorpay({
         Enginenumber: checkData(vehicle.Enginenumber),
         Registrationyear: checkData(vehicle.Registrationyear),
         timestamp: checkData(vehicle.timestamp),
-        rating: checkData(vehicle.rating),
+        rating: vehicle.rating,
         activated: checkBool(vehicle.activated),
         hostId: checkData(vehicle.hostId),
         createdAt: checkData(vehicle.createdAt),

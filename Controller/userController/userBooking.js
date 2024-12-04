@@ -498,7 +498,7 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
           }));
   
           return {
-                bookingId: checkData(booking.bookingId),
+                bookingId: booking.Bookingid,
                 vehicleid: checkData(booking.vehicleid),
                 id: checkData(booking.id),
                 status: checkData(booking.status),

@@ -2,17 +2,17 @@
  const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../../Models');
  const path = require('path');
- const noImgPath = path.resolve(__dirname, '../assets/no_profile.webp') 
+ const noImgPath = path.resolve(__dirname, '../assets/no_profile.webp'); 
   
  
  const checkData = (value) => {
-    return value !=null && value !==undefined ? value : "Not Provided";
+    return value !== null && value !== undefined ? value : "Not Provided";
   }
   const checkImage = (value) => {
-    return value !=null && value !==undefined && value.length > 0 ? value : noImgPath;
+    return value !== null && value !==undefined && value.length > 0 ? value : noImgPath;
   }
   const checkStatus = (value) => {
-    return value !=null && value !==undefined ? value : 0;
+    return value !== null && value !== undefined  ? value : 0;
   }
 
 
