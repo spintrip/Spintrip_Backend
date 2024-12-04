@@ -1,8 +1,7 @@
 const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const uuid = require('uuid');
 const path = require('path');
-const noImgPath = path.resolve(__dirname, "../assets/no_image.webp")
-
+const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
   //Listing
  const getListing = async(req, res) => {
     const hostid = req.user.userid;

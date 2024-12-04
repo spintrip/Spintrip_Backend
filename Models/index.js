@@ -86,10 +86,10 @@ const associateModels = () => {
   } = sequelize.models;
 
   // User and related associations
-  User.hasOne(Admin, { foreignKey: 'userId', onDelete: 'SET NULL' });
-  User.hasOne(Host, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  User.hasOne(Admin, { foreignKey: 'id', onDelete: 'SET NULL' });
+  User.hasOne(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
-  User.hasMany(Booking, { foreignKey: 'userId', onDelete: 'SET NULL' });
+  User.hasMany(Booking, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
 
   // Admin associations
@@ -146,7 +146,7 @@ const associateModels = () => {
   carFeature.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
   // Device associations
-  carDevices.belongsTo(Car, { foreignKey: 'carid', onDelete: 'CASCADE' });
+  carDevices.belongsTo(Car, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
   // Support and SupportChat associations
   Support.belongsTo(UserAdditional, { foreignKey: 'userId', onDelete: 'CASCADE' });

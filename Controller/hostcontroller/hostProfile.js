@@ -4,7 +4,7 @@ const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const fs = require('fs');
 const path = require('path');
-const noProfileImg = path.resolve(__dirname , '../assets/no_profile.webp')
+const noProfileImg = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.webp`;
 
 
 

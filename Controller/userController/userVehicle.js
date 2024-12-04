@@ -6,7 +6,7 @@ const moment = require('moment');
 const path = require('path');
 const csv = require('csv-parser');
 const {checkData, checkStatus} = require('./userProfile');
-const noVehicleImg = path.resolve(__dirname, '../assets/no_image.webp');
+const noVehicleImg = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
 
 const checkBool = (value) => {
     return value !== null && value !==undefined ? value : false;

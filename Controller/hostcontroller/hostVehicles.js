@@ -6,7 +6,7 @@ const path = require('path');
 const uuid = require('uuid');
 const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
-const noImgPath = path.resolve(__dirname, '../assets/no_image.webp');
+const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
 
 
 const vehicleImageStorage = multerS3({
