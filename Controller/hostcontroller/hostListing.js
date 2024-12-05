@@ -7,6 +7,13 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
     const hostid = req.user.userid;
     const host = await Host.findOne({ where: { id: hostid } });
     const checkData = (value) => { return value !== null && value !== undefined ?  value : "Not Provided"};
+    const checkDate = (value) => {
+      if (value === null || value === undefined) {
+        return null;  
+      }
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? null : value;
+    }
     const checkImage = (value) => {
       return (value !== null && value !== undefined ? value : noImgPath) ;
     }
@@ -19,19 +26,30 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
             return;
           }
            let vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
-          let lk = {
+           let vehicleModel;
+           if(vehicle.vehicletype == 2){
+              const car = await Car.findOne({ where: { vehicleid: lstg.vehicleid } });
+              vehicleModel = car.carmodel; 
+           }
+           if(vehicle.vehicletype == 1){
+            const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
+            vehicleModel = bike.bikemodel; 
+           }
+           
+           let lk = {
             id: lstg.id,
             vehicleid: lstg.vehicleid,
+            vehicleModel: vehicleModel,
             hostId: lstg.hostid,
             details: checkData(lstg.details),
-            startDate: checkData(lstg.start_date),
-            startTime: checkData(lstg.start_time),
-            endDate: checkData(lstg.end_date),
-            endTime: checkData(lstg.end_time),
-            pauseTimeStartDate: checkData(lstg.pausetime_start_date),
-            pauseTimeEndDate: checkData(lstg.pausetime_end_date),
-            pauseTimeStartTime: checkData(lstg.pausetime_start_time),
-            pauseTimeEndTime: checkData(lstg.pausetime_end_time),
+            startDate: checkDate(lstg.start_date),
+            startTime: checkDate(lstg.start_time),
+            endDate: checkDate(lstg.end_date),
+            endTime: checkDate(lstg.end_time),
+            pauseTimeStartDate: checkDate(lstg.pausetime_start_date),
+            pauseTimeEndDate: checkDate(lstg.pausetime_end_date),
+            pauseTimeStartTime: checkDate(lstg.pausetime_start_time),
+            pauseTimeEndTime: checkDate(lstg.pausetime_end_time),
             bookingId: checkData(lstg.bookingId),
             rcNumber: checkData(vehicle.Rcnumber),
             vehicletype: checkData(vehicle.vehicletype),

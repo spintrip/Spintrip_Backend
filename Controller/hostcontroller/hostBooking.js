@@ -6,8 +6,11 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
     sendBookingCompletionEmail,
     sendBookingCancellationEmail
   } = require('../emailController');
-
-
+const vehicleAdditional = require('../../Models/vehicleAdditional');
+const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
+const checkImage = (value) => {
+  return value !== null && value !==undefined && value.length > 0 ? value : noImgPath;
+}
   const generateOTP = () => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     return otp;
@@ -165,6 +168,7 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
     }
   }
 
+
   const hostBookings = async(req , res) => {
     try {
       const hostid = req.user.id;
@@ -196,6 +200,14 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
           if (!vehicle) {
             return;
           }
+          const vehicleAdditional = await VehicleAdditional.findOne({
+            where: {
+              vehicleid: booking.vehicleid,
+            }
+          });
+          if (!vehicleAdditional) {
+            return;
+          }
           const featureDetails = (booking.features || []).map(featureId => ({
             featureId,
             featureName: featureMap[featureId] || 'Unknown Feature'
@@ -215,6 +227,8 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
             cancelReason: booking.cancelReason || "Not Provided",
             features: featureDetails,
             createdAt: booking.createdAt,
+            vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
+
           }
           return { ...bk };
         });

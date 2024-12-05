@@ -4,6 +4,7 @@ const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const path = require('path');
 const uuid = require('uuid');
+const { Sequelize, Op } = require('sequelize');;
 const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
 const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
@@ -261,7 +262,8 @@ const putVehicleAdditional = async (req, res) => {
     }
     if (vehicle.vehicletype == 2) {
       Additional = await Car.findOne({ where: { vehicleid: vehicleid } });
-      await Additional.update({
+      console.log(ac);
+      const additional1 = await Additional.update({
         HorsePower: horsePower,
         AC: ac,
         FuelType: fuelType,
@@ -288,8 +290,9 @@ const putVehicleAdditional = async (req, res) => {
         airFreshner: airFreshner,
         ventelatedFrontSeat: ventelatedFrontSeat
       })
+      console.log(additional1);
     }
-
+    
     const vehicleAdditionals = {
       vehicleid: updatedvehicleAdditional.vehicleid,
       vehicleImage1: updatedvehicleAdditional.vehicleimage1,
@@ -466,7 +469,6 @@ const getVehicleAdditional = async (req, res) => {
 
 const activateVehicle = async (req, res) => {
   const { vehicleid, paymentMethod, planType } = req.body;
-
   try {
     const host = await Host.findByPk(req.user.id);
     if (!host) {
@@ -496,7 +498,7 @@ const activateVehicle = async (req, res) => {
     });
 
     await vehicle.update({ activated: true });
-
+    console.log('hello');
     res.status(200).json({ message: 'Vehicle activated successfully' });
   } catch (error) {
     console.error(error);
