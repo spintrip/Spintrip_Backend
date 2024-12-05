@@ -61,8 +61,8 @@ const pendingVehicleProfile = async (req, res) => {
       if (!admin) {
         return res.status(404).json({ message: 'Admin not found' });
       }
-      const userId = req.body.userId;
-      await UserAdditional.update({ dl: null , aadhar: null, verification_status: null }, { where: { id: userId } });
+      const vehicleid = req.body.vehicleid;
+      await VehicleAdditional.update({ verification_status: null }, { where: { vehicleid: vehicleid } });
       res.status(200).json({ message: 'Profile rejected successfully' });
     } catch (error) {
       console.log(error);

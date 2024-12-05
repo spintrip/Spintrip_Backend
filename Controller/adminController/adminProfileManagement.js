@@ -1,4 +1,4 @@
-const {UserAdditional, Admin} = require('../../Models');
+const {UserAdditional, Admin, User} = require('../../Models');
 const fs = require('fs');
 const path = require('path');
 
