@@ -435,6 +435,7 @@ const razorpay = new Razorpay({
         }
   
         let Additional , additionalData;
+        let booleanSpecs = [];
         if( vehicle.vehicletype == 1 ){
            additionalData = await Bike.findOne({ where: { vehicleid: vehicleid } });
            Additional ={
@@ -455,7 +456,11 @@ const razorpay = new Razorpay({
             createdAt: checkData(additionalData.createdAt),
             updatedAt: checkData(additionalData.updatedAt)
            }
-           
+           booleanSpecs = [
+            { field_name: "fuelType", title: "Fuel Type", value: checkBool(additionalData.FuelType), logo: "" },
+            { field_name: "helmet", title: "Helmet", value: checkBool(additionalData.helmet), logo: "" },
+            { field_name: "helmetSpace", title: "Helmet Space", value: checkBool(additionalData.helmetSpace), logo: "" },
+        ];
         }
         if( vehicle.vehicletype == 2 ){
           additionalData = await Car.findOne({ where: { vehicleid: vehicleid } });
@@ -500,7 +505,31 @@ const razorpay = new Razorpay({
          }
         }
   
-        
+        booleanSpecs = [
+          { title: "Air Conditioning", value: checkBool(additionalData.AC), field_name: "ac", logo: "" },
+          { title: "Music System", value: checkBool(additionalData.Musicsystem), field_name: "musicSystem", logo: "" },
+          { title: "Auto Window", value: checkBool(additionalData.Autowindow), field_name: "autoWindow", logo: "" },
+          { title: "Sunroof", value: checkBool(additionalData.Sunroof), field_name: "sunroof", logo: "" },
+          { title: "Touchscreen", value: checkBool(additionalData.Touchscreen), field_name: "touchscreen", logo: "" },
+          { title: "Seven Seater", value: checkBool(additionalData.Sevenseater), field_name: "sevenSeater", logo: "" },
+          { title: "Reverse Camera", value: checkBool(additionalData.Reversecamera), field_name: "reverseCamera", logo: "" },
+          { title: "Transmission", value: checkBool(additionalData.Transmission), field_name: "transmission", logo: "" },
+          { title: "Airbags", value: checkBool(additionalData.Airbags), field_name: "airbags", logo: "" },
+          { title: "Fuel Type", value: checkBool(additionalData.FuelType), field_name: "fuelType", logo: "" },
+          { title: "Pet Friendly", value: checkBool(additionalData.PetFriendly), field_name: "petFriendly", logo: "" },
+          { title: "Power Steering", value: checkBool(additionalData.PowerSteering), field_name: "powerSteering", logo: "" },
+          { title: "ABS", value: checkBool(additionalData.ABS), field_name: "abs", logo: "" },
+          { title: "Traction Control", value: checkBool(additionalData.tractionControl), field_name: "tractionControl", logo: "" },
+          { title: "Full Boot Space", value: checkBool(additionalData.fullBootSpace), field_name: "fullBootSpace", logo: "" },
+          { title: "Keyless Entry", value: checkBool(additionalData.KeylessEntry), field_name: "keylessEntry", logo: "" },
+          { title: "Air Purifier", value: checkBool(additionalData.airPurifier), field_name: "airPurifier", logo: "" },
+          { title: "Cruise Control", value: checkBool(additionalData.cruiseControl), field_name: "cruiseControl", logo: "" },
+          { title: "Voice Control", value: checkBool(additionalData.voiceControl), field_name: "voiceControl", logo: "" },
+          { title: "USB Charger", value: checkBool(additionalData.usbCharger), field_name: "usbCharger", logo: "" },
+          { title: "Bluetooth", value: checkBool(additionalData.bluetooth), field_name: "bluetooth", logo: "" },
+          { title: "Air Freshener", value: checkBool(additionalData.airFreshner), field_name: "airFreshener", logo: "" },
+          { title: "Ventilated Front Seat", value: checkBool(additionalData.ventelatedFrontSeat), field_name: "ventilatedFrontSeat", logo: "" }
+      ];
         // Fetch the Pricing data for the Car
         const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
         let availableVehicle = {
@@ -518,6 +547,7 @@ const razorpay = new Razorpay({
             vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
             vehicleImage4: checkImage(vehicleAdditional.vehicleimage4),
             vehicleImage5: checkImage(vehicleAdditional.vehicleimage5),
+            booleanSpecs,
            }
   
         if (cph) {

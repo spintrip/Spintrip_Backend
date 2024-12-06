@@ -84,10 +84,10 @@ const postVehicle = async (req, res) => {
       longitude,
       address,
     }
-
-    const missingFields = Object.entries(requiredFields)
-      .filter(([key, value]) => value == "" || value == null)
-      .map(([key]) => key);
+    const requiredFieldsSubset = ['rcNumber', 'vehicleModel', 'registrationYear']; 
+    const missingFields = Object.entries(requiredFieldsSubset)
+  .filter(([key, value]) => requiredFieldsSubset.includes(key) && (value == "" || value == null))
+  .map(([key]) => key);
 
     if (missingFields.length > 0) {
       // Return a 400 error with the missing fields
