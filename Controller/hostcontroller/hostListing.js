@@ -1,6 +1,7 @@
 const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const uuid = require('uuid');
 const path = require('path');
+const e = require('express');
 const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
   //Listing
  const getListing = async(req, res) => {
@@ -11,8 +12,9 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
       if (value === null || value === undefined) {
         return null;  
       }
-      const date = new Date(value);
-      return isNaN(date.getTime()) ? null : value;
+      else{
+        return value;
+      }
     }
     const checkImage = (value) => {
       return (value !== null && value !== undefined ? value : noImgPath) ;
@@ -35,7 +37,13 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
             const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
             vehicleModel = bike.bikemodel; 
            }
-           
+           const vehicleImages = [
+            checkImage(vehicleAdditional.vehicleimage1),
+            checkImage(vehicleAdditional.vehicleimage2),
+            checkImage(vehicleAdditional.vehicleimage3),
+            checkImage(vehicleAdditional.vehicleimage4),
+            checkImage(vehicleAdditional.vehicleimage5)
+          ];
            let lk = {
             id: lstg.id,
             vehicleid: lstg.vehicleid,
@@ -53,6 +61,7 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
             bookingId: checkData(lstg.bookingId),
             rcNumber: checkData(vehicle.Rcnumber),
             vehicletype: checkData(vehicle.vehicletype),
+            vehicleImages,
             vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
             vehicleImage2: checkImage(vehicleAdditional.vehicleimage2),
             vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
