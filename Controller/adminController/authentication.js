@@ -7,8 +7,16 @@ const generateOTP = () => {
   return otp;
 };
 
-const sendOTP = (phone, otp) => {
+const sendOTP = async(phone, otp) => {
   console.log(`Sending OTP ${otp} to phone number ${phone}`);
+  const url = `https://2factor.in/API/V1/${process.env.SMS_API_KEY}/SMS/${phone}//${otp}/`;    
+  try {
+    const response = await axios.get(url);
+    console.log('OTP sent successfully:', response.data);
+    return response.data; 
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+  }
 };
 
 const adminSignup = async (req, res) =>{
