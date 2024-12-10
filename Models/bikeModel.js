@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     bodytype: DataTypes.STRING,
     helmet: DataTypes.BOOLEAN,
     helmetSpace: DataTypes.BOOLEAN,
+    FuelType: DataTypes.INTEGER,
     vehicleid: { type: DataTypes.STRING(36), primaryKey: true },
     timestamp: DataTypes.DATE,
     city: DataTypes.STRING,

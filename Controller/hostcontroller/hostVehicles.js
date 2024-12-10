@@ -8,6 +8,7 @@ const { Sequelize, Op, where } = require('sequelize');;
 const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
 const hostPaymentModel = require('../../Models/hostPaymentModel');
+const bikeModel = require('../../Models/bikeModel');
 const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
 
 
@@ -267,7 +268,6 @@ const putVehicleAdditional = async (req, res) => {
       const additional1 = await Additional.update({
         HorsePower: horsePower,
         AC: ac,
-        FuelType: fuelType,
         Musicsystem: musicSystem,
         Autowindow: autoWindow,
         Sunroof: sunroof,
@@ -352,6 +352,9 @@ const getVehicleAdditional = async (req, res) => {
     const checkImage = (value) => {
       return (value !== null && value !== undefined ? value : noImgPath) ;
     }
+    const checkData = (value) => {
+      return value !== null && value !== undefined ? value : 'Not Provided';
+    } 
     const pricing = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     let booleanSpecs = [];
     let additional = {};
@@ -368,13 +371,14 @@ const getVehicleAdditional = async (req, res) => {
       // Bike-specific fields
       const bikeDetails = await Bike.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        bikeModel: bikeDetails?.bikemodel || "None",
-        horsePower: bikeDetails?.HorsePower || "None",
-        type: "Not Provided",
-        brand: bikeDetails?.brand || "None",
-        variant: bikeDetails?.variant || "None",
-        color: bikeDetails?.color || "None",
-        bodyType: "None",
+        bikeModel: bikeDetails?.bikemodel,
+        horsePower: bikeDetails?.HorsePower || 0,
+        fueltype : bikeDetails?.FuelType,
+        type: checkData(bikeDetails?.type),
+        brand: checkData(bikeDetails?.brand),
+        variant: checkData(bikeDetails?.variant),
+        color: checkData(bikeDetails?.color),
+        bodyType: checkData(bikeDetails?.bodytype),
         costperhr: pricing.costperhr,
       };
 
@@ -412,7 +416,7 @@ const getVehicleAdditional = async (req, res) => {
         { title: "Reverse Camera", value: safeBoolean(carDetails?.Reversecamera), field_name: "reverseCamera", logo: "" },
         { title: "Transmission", value: safeBoolean(carDetails?.Transmission), field_name: "transmission", logo: "" },
         { title: "Airbags", value: safeBoolean(carDetails?.Airbags), field_name: "airbags", logo: "" },
-        { title: "Fuel Type", value: safeBoolean(carDetails?.FuelType), field_name: "fuelType", logo: "" },
+        { title: "Fuel Type", value: checkData(carDetails?.FuelType), field_name: "fuelType", logo: "" },
         { title: "Pet Friendly", value: safeBoolean(carDetails?.PetFriendly), field_name: "petFriendly", logo: "" },
         { title: "Power Steering", value: safeBoolean(carDetails?.PowerSteering), field_name: "powerSteering", logo: "" },
         { title: "ABS", value: safeBoolean(carDetails?.ABS), field_name: "abs", logo: "" },
