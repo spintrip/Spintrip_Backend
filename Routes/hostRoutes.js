@@ -3,7 +3,7 @@ const { authenticate } = require('../Middleware/authMiddleware');
 const { getAllBlogs } = require('../Controller/blogController');
 const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateProfile, verifyProfile, 
-  verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
+  getActiveSubscriptionForVehicle, getAllSubscriptions, verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
   postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking,
   hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
   postMonthlyData,postGetFeedback, postGetVehicleReg
@@ -91,6 +91,10 @@ router.get('/support', authenticate, viewUserSupportTickets);
 router.get('/view-blog',authenticate, getAllBlogs );
 
 router.post('/activate-vehicle', authenticate, activateVehicle);
+
+router.post('/getallsubscription', authenticate, getAllSubscriptions);
+
+router.post('/getActiveSubscription', authenticate, getActiveSubscriptionForVehicle);
 
 router.post('/Trip-Started', authenticate, tripstart);
 

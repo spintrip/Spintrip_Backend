@@ -436,8 +436,10 @@ const razorpay = new Razorpay({
   
         let Additional , additionalData;
         let booleanSpecs = [];
+        let vehicleModel;
         if( vehicle.vehicletype == 1 ){
            additionalData = await Bike.findOne({ where: { vehicleid: vehicleid } });
+          vehicleModel = additionalData.bikemodel;
            Additional ={
             bikemodel: checkData(additionalData.bikemodel),
             HorsePower: checkData(additionalData.HorsePower),
@@ -456,14 +458,17 @@ const razorpay = new Razorpay({
             createdAt: checkData(additionalData.createdAt),
             updatedAt: checkData(additionalData.updatedAt)
            }
+           console.log(additionalData.helmet);
+           console.log(additionalData.helmetSpace);
            booleanSpecs = [
-            { field_name: "fuelType", title: "Fuel Type", value: checkBool(additionalData.FuelType), logo: "" },
+           // { field_name: "fuelType", title: "Fuel Type", value: checkBool(additionalData.FuelType), logo: "" },
             { field_name: "helmet", title: "Helmet", value: checkBool(additionalData.helmet), logo: "" },
             { field_name: "helmetSpace", title: "Helmet Space", value: checkBool(additionalData.helmetSpace), logo: "" },
         ];
         }
         if( vehicle.vehicletype == 2 ){
           additionalData = await Car.findOne({ where: { vehicleid: vehicleid } });
+          vehicleModel = additionalData.carmodel;
           Additional = {
             carmodel: checkData(additionalData.carmodel),
             HorsePower: checkData(additionalData.HorsePower),
@@ -503,9 +508,8 @@ const razorpay = new Razorpay({
             createdAt: checkData(additionalData.createdAt),
             updatedAt: checkData(additionalData.updatedAt)
          }
-        }
-  
-        booleanSpecs = [
+        
+         booleanSpecs = [
           { title: "Air Conditioning", value: checkBool(additionalData.AC), field_name: "ac", logo: "" },
           { title: "Music System", value: checkBool(additionalData.Musicsystem), field_name: "musicSystem", logo: "" },
           { title: "Auto Window", value: checkBool(additionalData.Autowindow), field_name: "autoWindow", logo: "" },
@@ -529,11 +533,15 @@ const razorpay = new Razorpay({
           { title: "Bluetooth", value: checkBool(additionalData.bluetooth), field_name: "bluetooth", logo: "" },
           { title: "Air Freshener", value: checkBool(additionalData.airFreshner), field_name: "airFreshener", logo: "" },
           { title: "Ventilated Front Seat", value: checkBool(additionalData.ventelatedFrontSeat), field_name: "ventilatedFrontSeat", logo: "" }
-      ];
+        ];
+        }
+  
+       
         // Fetch the Pricing data for the Car
         const cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
         let availableVehicle = {
             vehicleid: checkData(vehicle.vehicleid),
+            vehicleModel: vehicleModel,
             chassisNo: checkData(vehicle.chassisno),
             rcNumber: checkData(vehicle.Rcnumber),
             hostId: checkData(vehicle.hostId),

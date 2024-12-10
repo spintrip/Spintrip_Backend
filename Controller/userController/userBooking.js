@@ -117,12 +117,67 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
       // Ensure the vehicle is not paused in the listing
       const listing = await Listing.findOne({
         where: {
-          vehicleid: vehicleid,
-          pausetime_start_date: null,
-          pausetime_end_date: null
-        }
-      });
+          [Op.and]: [
+            {
+              [Op.or]: [
+                {
+                  [Op.or]: [
+                    {
+                      pausetime_start_date: {
+                        [Op.gt]: endDate,
+                      },
+                    },
+                    {
+                      pausetime_end_date: {
+                        [Op.lt]: startDate,
+                      },
+                    },
+                  ],
+                },
+                {
+                  [Op.or]: [
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { pausetime_start_date: endDate },
+                            { pausetime_start_date: null },
+                          ],
+                        },
+                        {
   
+                          [Op.or]: [
+                            { pausetime_start_time: { [Op.gte]: endTime } },
+                            { pausetime_start_time: null },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { pausetime_end_date: startDate },
+                            { pausetime_end_date: null },
+                          ],
+                        },
+                        {
+                          [Op.or]: [
+                            { pausetime_end_time: { [Op.lte]: startTime } },
+                            { pausetime_end_time: null },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          vehicleid: vehicleid,
+        },
+        include: [Vehicle],
+      });
       if (!listing) {
         return res.status(400).json({ message: 'Selected vehicle is not available for the specified dates' });
       }
@@ -490,6 +545,15 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
           }
   
           const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
+          let vehicleModel;
+          if(vehicle.vehicletype == 2){
+             const car = await Car.findOne({ where: { vehicleid: vehicle.vehicleid } });
+             vehicleModel = car.carmodel; 
+          }
+          if(vehicle.vehicletype == 1){
+           const bike = await Bike.findOne({ where: { vehicleid: vehicle.vehicleid } });
+           vehicleModel = bike.bikemodel; 
+          }
           const transaction = await Transaction.findOne({ where: { Transactionid: booking.Transactionid } });
   
           const featureDetails = (booking.features || []).map(featureId => ({
@@ -508,6 +572,7 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
                 startTripTime: checkData(booking.startTripTime),
                 endTripTime: checkData(booking.endTripTime),
                 hostId: checkData(vehicle.hostId),
+                vehicleModel: vehicleModel,
                 vehicleImage1: checkImage(vehicleAdditional.vehicleImage1),
                 vehicleImage2: checkImage(vehicleAdditional.vehicleImage2),
                 vehicleImage3: checkImage(vehicleAdditional.vehicleImage3),
@@ -625,7 +690,7 @@ const rating = async (req, res) => {
           hostId: vehicle.hostId,
         }
       });
-  
+      
       if (feedback) {
         await Feedback.create({
           vehicleid: vehicle.vehicleid,

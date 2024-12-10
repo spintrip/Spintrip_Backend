@@ -12,7 +12,7 @@ const {
   sendNotification, adminProfile, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
   allTransactions, getTransactionById, updateTransactionById, deleteTransactionById,getDevice, getDeviceById,
   postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById, pendingProfile, approveProfile, 
-  rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile
+  rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile, subscriptions
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
 
@@ -153,6 +153,8 @@ router.get('/bookings', authenticate, getAllBookings);
 router.get('/bookings/:id', authenticate, getBookingById);
 router.put('/bookings/:id', authenticate, updateBookingById);
 router.delete('/bookings/:id', authenticate, deleteBookingById);
+
+router.post('/Subscriptions', authenticate, subscriptions);
 
 // Brand routes
 router.post('/brand', authenticate, upload.single('carImage'), createOrUpdateBrand);

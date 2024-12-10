@@ -208,6 +208,15 @@ const checkImage = (value) => {
           if (!vehicleAdditional) {
             return;
           }
+          let vehicleModel;
+          if(vehicle.vehicletype == 2){
+             const car = await Car.findOne({ where: { vehicleid: vehicle.vehicleid } });
+             vehicleModel = car.carmodel; 
+          }
+          if(vehicle.vehicletype == 1){
+           const bike = await Bike.findOne({ where: { vehicleid: vehicle.vehicleid } });
+           vehicleModel = bike.bikemodel; 
+          }
           const featureDetails = (booking.features || []).map(featureId => ({
             featureId,
             featureName: featureMap[featureId] || 'Unknown Feature'
@@ -218,6 +227,7 @@ const checkImage = (value) => {
             id: booking.id,
             bookedBy: booking.UserAdditional ? booking.UserAdditional.FullName : "Not Provided",
             status: booking.status,
+            vehicleModel:vehicleModel,
             amount: booking.amount,
             startTripDate: booking.startTripDate,
             endTripDate: booking.endTripDate,
