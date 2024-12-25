@@ -65,7 +65,8 @@ const hostProfile = async(req, res) => {
         createdAt: checkData(vehicleDetail?.createdAt),
         updatedAt: checkData(vehicleDetail?.updatedAt),
       }));
-
+      const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
+      const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
       let profile = {
         id: additionalInfo.id,
         GSTnumber: checkData(additionalInfo.GSTnumber),
@@ -76,8 +77,8 @@ const hostProfile = async(req, res) => {
         address: checkData(additionalInfo.Address),
         verificationStatus: checkStatus(additionalInfo.verification_status),
         phone: user.phone,
-        profilePic: checkProfileImg(additionalInfo.profilepic), 
-        aadharFile:   checkProfileImg(additionalInfo.aadhar),
+        profilePic: checkProfileImg(profilePic), 
+        aadhar:   checkProfileImg(aadharFile),
         businessName: checkData(additionalInfo.businessName),
       }
       // You can include more fields as per your User model
