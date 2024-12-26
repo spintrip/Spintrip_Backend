@@ -7,6 +7,15 @@ const path = require('path');
 const noProfileImg = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.webp`;
 
 
+const checkStatus = (value) => {
+  return value !== null && value !== undefined  ? value : 0;
+}
+const checkData = (value) => {
+  return value !== null && value !== undefined ? value : 'Not Provided';
+} 
+const checkProfileImg = (value) => {
+  return value !== null && value !== undefined ? value : noProfileImg;
+} 
 
 const profileImageStorage = multerS3({
     s3: s3,
@@ -32,12 +41,6 @@ const hostProfile = async(req, res) => {
       }
       const user = await User.findOne({ where: { id: hostId } });
       const vehicle = await Vehicle.findAll({ where: { hostId: host.id } })
-      const checkData = (value) => {
-        return value !== null && value !== undefined ? value : 'Not Provided';
-      } 
-      const checkProfileImg = (value) => {
-        return value !== null && value !== undefined ? value : noProfileImg;
-      } 
       let additionalInfo = await HostAdditional.findByPk(hostId);
       console.log(additionalInfo);
       let hostDetails = {
@@ -62,7 +65,8 @@ const hostProfile = async(req, res) => {
         createdAt: checkData(vehicleDetail?.createdAt),
         updatedAt: checkData(vehicleDetail?.updatedAt),
       }));
-
+      const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
+      const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
       let profile = {
         id: additionalInfo.id,
         GSTnumber: checkData(additionalInfo.GSTnumber),
@@ -71,10 +75,10 @@ const hostProfile = async(req, res) => {
         email: checkData(additionalInfo.Email),
         aadharNumber: checkData(additionalInfo.AadharVfid),
         address: checkData(additionalInfo.Address),
-        verificationStatus: checkData(additionalInfo.verification_status),
+        verificationStatus: checkStatus(additionalInfo.verification_status),
         phone: user.phone,
-        profilePic: checkProfileImg(additionalInfo.profilepic), 
-        aadharFile:   checkProfileImg(additionalInfo.aadhar),
+        profilePic: checkProfileImg(profilePic), 
+        aadhar:   checkProfileImg(aadharFile),
         businessName: checkData(additionalInfo.businessName),
       }
       // You can include more fields as per your User model

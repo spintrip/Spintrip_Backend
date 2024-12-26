@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING(40),
+      allowNull: true
     },
     hostId: {
       type: DataTypes.STRING(36),

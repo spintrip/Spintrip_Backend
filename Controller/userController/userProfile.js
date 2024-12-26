@@ -26,7 +26,7 @@
       }
   
       const additionalInfo = await UserAdditional.findByPk(userId);
-  
+      console.log(additionalInfo);
       if (!additionalInfo) {
         return res.status(404).json({ message: 'Additional user info not found' });
       }

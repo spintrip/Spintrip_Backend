@@ -1,12 +1,14 @@
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Subscriptions, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const path = require('path');
 const uuid = require('uuid');
-const { Sequelize, Op } = require('sequelize');;
+const { Sequelize, Op, where } = require('sequelize');;
 const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
+const hostPaymentModel = require('../../Models/hostPaymentModel');
+const bikeModel = require('../../Models/bikeModel');
 const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
 
 
@@ -84,10 +86,10 @@ const postVehicle = async (req, res) => {
       longitude,
       address,
     }
-
-    const missingFields = Object.entries(requiredFields)
-      .filter(([key, value]) => value == "" || value == null)
-      .map(([key]) => key);
+    const requiredFieldsSubset = ['rcNumber', 'vehicleModel', 'registrationYear']; 
+    const missingFields = Object.entries(requiredFieldsSubset)
+  .filter(([key, value]) => requiredFieldsSubset.includes(key) && (value == "" || value == null))
+  .map(([key]) => key);
 
     if (missingFields.length > 0) {
       // Return a 400 error with the missing fields
@@ -266,7 +268,6 @@ const putVehicleAdditional = async (req, res) => {
       const additional1 = await Additional.update({
         HorsePower: horsePower,
         AC: ac,
-        FuelType: fuelType,
         Musicsystem: musicSystem,
         Autowindow: autoWindow,
         Sunroof: sunroof,
@@ -351,7 +352,10 @@ const getVehicleAdditional = async (req, res) => {
     const checkImage = (value) => {
       return (value !== null && value !== undefined ? value : noImgPath) ;
     }
-
+    const checkData = (value) => {
+      return value !== null && value !== undefined ? value : 'Not Provided';
+    } 
+    const pricing = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     let booleanSpecs = [];
     let additional = {};
     const features = await carFeature.findAll({ where: { vehicleid: vehicleid } });
@@ -367,18 +371,20 @@ const getVehicleAdditional = async (req, res) => {
       // Bike-specific fields
       const bikeDetails = await Bike.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        bikeModel: bikeDetails?.bikemodel || "None",
-        horsePower: bikeDetails?.HorsePower || "None",
-        type: "Not Provided",
-        brand: bikeDetails?.brand || "None",
-        variant: bikeDetails?.variant || "None",
-        color: bikeDetails?.color || "None",
-        bodyType: "None",
+        bikeModel: bikeDetails?.bikemodel,
+        horsePower: bikeDetails?.HorsePower || 0,
+        fueltype : bikeDetails?.FuelType,
+        type: checkData(bikeDetails?.type),
+        brand: checkData(bikeDetails?.brand),
+        variant: checkData(bikeDetails?.variant),
+        color: checkData(bikeDetails?.color),
+        bodyType: checkData(bikeDetails?.bodytype),
+        costperhr: pricing.costperhr,
       };
 
       // Populate booleanSpecs for bikes
       booleanSpecs = [
-        { field_name: "fuelType", title: "Fuel Type", value: safeBoolean(bikeDetails?.FuelType), logo: "" },
+       // { field_name: "fuelType", title: "Fuel Type", value: safeBoolean(bikeDetails?.FuelType), logo: "" },
         { field_name: "helmet", title: "Helmet", value: safeBoolean(bikeDetails?.helmet), logo: "" },
         { field_name: "helmetSpace", title: "Helmet Space", value: safeBoolean(bikeDetails?.helmetSpace), logo: "" },
       ];
@@ -396,6 +402,7 @@ const getVehicleAdditional = async (req, res) => {
         variant: carDetails?.variant || "None",
         color: carDetails?.color || "None",
         bodyType: "None",
+        costperhr: pricing.costperhr,
       };
 
       // Populate booleanSpecs for cars
@@ -409,7 +416,7 @@ const getVehicleAdditional = async (req, res) => {
         { title: "Reverse Camera", value: safeBoolean(carDetails?.Reversecamera), field_name: "reverseCamera", logo: "" },
         { title: "Transmission", value: safeBoolean(carDetails?.Transmission), field_name: "transmission", logo: "" },
         { title: "Airbags", value: safeBoolean(carDetails?.Airbags), field_name: "airbags", logo: "" },
-        { title: "Fuel Type", value: safeBoolean(carDetails?.FuelType), field_name: "fuelType", logo: "" },
+        { title: "Fuel Type", value: checkData(carDetails?.FuelType), field_name: "fuelType", logo: "" },
         { title: "Pet Friendly", value: safeBoolean(carDetails?.PetFriendly), field_name: "petFriendly", logo: "" },
         { title: "Power Steering", value: safeBoolean(carDetails?.PowerSteering), field_name: "powerSteering", logo: "" },
         { title: "ABS", value: safeBoolean(carDetails?.ABS), field_name: "abs", logo: "" },
@@ -466,6 +473,41 @@ const getVehicleAdditional = async (req, res) => {
   }
 };
 
+const getAllSubscriptions = async (req, res) => {
+  try {
+    const { vehicleType } = req.body;
+
+    let subscriptions;
+    
+    if (vehicleType) {
+      subscriptions = await Subscriptions.findAll({
+        where: {
+          vehicleType: vehicleType,  
+        },
+      });
+    } else {
+      subscriptions = await Subscriptions.findAll();
+    }
+
+    // If no subscriptions are found
+    if (!subscriptions || subscriptions.length === 0) {
+      return res.status(404).json({ message: 'No subscriptions found for the given criteria' });
+    }
+
+    // Return the list of subscriptions
+    res.status(200).json({
+      message: 'Subscriptions fetched successfully',
+      subscriptions: subscriptions,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: 'Error fetching subscriptions',
+      error: error.message,
+    });
+  }
+};
+
 
 const activateVehicle = async (req, res) => {
   const { vehicleid, paymentMethod, planType } = req.body;
@@ -479,24 +521,30 @@ const activateVehicle = async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    // Process payment (this is a placeholder, replace with actual payment processing logic)
+    const subscription = await Subscriptions.findOne({ where: {  PlanType : planType, vehicleType: vehicle.vehicletype} });
+   if(!subscription){
+    return res.status(404).json({ message: 'No Subscription record found' });
+   }
+   const expiryDays = subscription.expiry * 30; 
+    const planEndDate = new Date();
+    planEndDate.setDate(planEndDate.getDate() + expiryDays);
     const paymentId = uuid.v4();
-    const amount = 100; // Example amount, replace with actual amount
-    await HostPayment.create({
+    const amount = subscription.amount; 
+    const hostPayment = await HostPayment.create({
       PaymentId: paymentId,
       HostId: req.user.id,
       VehicleId: vehicleid,
       PlanType: planType,
       PaymentDate: new Date(),
-      PlanEndDate: new Date() + 1,
+      PlanEndDate: planEndDate,
       Amount: amount,
       GSTAmount: amount * 0.18,
       TotalAmount: amount * 1.18,
       PaymentStatus: 1, // Assuming 1 means successful
-      PaymentMethod: paymentMethod,
+      PaymentMethod: paymentMethod? paymentMethod: 'Cashfree',
       Remarks: 'Vehicle activation payment'
     });
-
+    console.log(hostPayment);
     await vehicle.update({ activated: true });
     console.log('hello');
     res.status(200).json({ message: 'Vehicle activated successfully' });
@@ -505,6 +553,43 @@ const activateVehicle = async (req, res) => {
     res.status(500).json({ message: 'Error activating vehicle' });
   }
 };
+
+const getActiveSubscriptionForVehicle = async (req, res) => {
+  const { vehicleid } = req.body; 
+  try {
+    const vehicle = await Vehicle.findOne({ where: { vehicleid, hostId: req.user.id } });
+    
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    const subscription = await HostPayment.findOne({
+      where: {
+        VehicleId: vehicleid, 
+        PlanEndDate: {
+          [Op.gt]: new Date()  
+        }
+      }
+    });
+
+    if (!subscription) {
+      return res.status(404).json({ message: 'No active subscription found for this vehicle' });
+    }
+
+    // Return the active subscription details
+    res.status(200).json({
+      message: 'Active subscription fetched successfully',
+      subscription: subscription,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Error fetching active subscription for vehicle',
+      error: error.message,
+    });
+  }
+};
+
 
 const postMonthlyData = async (req, res) => {
   const { vehicleid } = req.body;
@@ -621,4 +706,4 @@ const postGetVehicleReg = async (req, res) => {
   }
 };
 
-module.exports = { postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg };
+module.exports = { getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg, getActiveSubscriptionForVehicle };

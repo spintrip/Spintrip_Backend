@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     Reversecamera: DataTypes.BOOLEAN,
     Transmission: DataTypes.BOOLEAN,
     Airbags: DataTypes.BOOLEAN,
-    FuelType: DataTypes.BOOLEAN,
+    FuelType: DataTypes.INTEGER,
     PetFriendly: DataTypes.BOOLEAN,
     PowerSteering: DataTypes.BOOLEAN,
     ABS: DataTypes.BOOLEAN,

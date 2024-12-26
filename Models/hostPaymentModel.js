@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     PaymentMethod: { type: DataTypes.STRING, allowNull: false },
     TransactionId: { type: DataTypes.STRING, allowNull: true },
     PlanEndDate: { type: DataTypes.DATEONLY, allowNull: false },
-    PlanType: { type: DataTypes.STRING, allowNull: false },
+    PlanType: { type: DataTypes.STRING(36), allowNull: false },
     Remarks: { type: DataTypes.TEXT, allowNull: true }
   });
 
