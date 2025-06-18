@@ -94,7 +94,7 @@ router.post('/activate-vehicle', authenticate, activateVehicle);
 
 router.post('/getallsubscription', authenticate, getAllSubscriptions);
 
-router.post('/getActiveSubscription', authenticate, getActiveSubscriptionForVehicle);
+router.get('/getActiveSubscription', authenticate, getActiveSubscriptionForVehicle);
 
 router.post('/Trip-Started', authenticate, tripstart);
 

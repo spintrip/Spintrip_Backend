@@ -34,6 +34,7 @@ const io = new Server(server, {
             'https://spintrip.in', 
             'http://localhost', 
             'http://localhost:3000',
+            'http://localhost:4000',
             'http://13.232.236.183:3000', 
             'http://3.109.122.29:3000',
             'http://spintrip.in'
@@ -77,6 +78,7 @@ app.use(cors({
         'https://spintrip.in', 
         'http://localhost', 
         'http://localhost:3000',
+        'http://localhost:4000',
         'http://13.232.236.183:3000', 
         'http://3.109.122.29:3000',
         'http://spintrip.in'

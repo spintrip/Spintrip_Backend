@@ -1,6 +1,7 @@
 const { Admin, User, UserAdditional } = require('../../Models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const generateOTP = () => {
   const otp = Math.floor(1000 + Math.random() * 9000).toString();

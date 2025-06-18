@@ -371,7 +371,7 @@ const getVehicleAdditional = async (req, res) => {
       // Bike-specific fields
       const bikeDetails = await Bike.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        bikeModel: bikeDetails?.bikemodel,
+        vehicleModel: bikeDetails?.bikemodel,
         horsePower: bikeDetails?.HorsePower || 0,
         fueltype : bikeDetails?.FuelType,
         type: checkData(bikeDetails?.type),
@@ -395,7 +395,7 @@ const getVehicleAdditional = async (req, res) => {
       // Car-specific fields
       const carDetails = await Car.findOne({ where: { vehicleid: vehicleid } });
       additional = {
-        carModel: carDetails?.carmodel || "None",
+        vehicleModel: carDetails?.carmodel || "None",
         horsePower: carDetails?.HorsePower || "None",
         type: "Not Provided",
         brand: carDetails?.brand || "None",
@@ -510,20 +510,21 @@ const getAllSubscriptions = async (req, res) => {
 
 
 const activateVehicle = async (req, res) => {
-  const { vehicleid, paymentMethod, planType } = req.body;
+  const { paymentMethod, planType } = req.body;
   try {
     const host = await Host.findByPk(req.user.id);
     if (!host) {
       return res.status(401).json({ message: 'No Host found' });
     }
 
-    const vehicle = await Vehicle.findOne({ where: { vehicleid, hostId: req.user.id } });
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-    const subscription = await Subscriptions.findOne({ where: {  PlanType : planType, vehicleType: vehicle.vehicletype} });
+
+    const subscription = await Subscriptions.findOne({ where: {  PlanType : planType } });
    if(!subscription){
     return res.status(404).json({ message: 'No Subscription record found' });
+   }
+   const vehicle = await Vehicle.findAll({ where: {  hostId: req.user.id, vehicletype: String(subscription.vehicleType), } });
+   if (!vehicle) {
+     return res.status(404).json({ message: 'Vehicle not found' });
    }
    const expiryDays = subscription.expiry * 30; 
     const planEndDate = new Date();
@@ -533,7 +534,6 @@ const activateVehicle = async (req, res) => {
     const hostPayment = await HostPayment.create({
       PaymentId: paymentId,
       HostId: req.user.id,
-      VehicleId: vehicleid,
       PlanType: planType,
       PaymentDate: new Date(),
       PlanEndDate: planEndDate,
@@ -545,9 +545,16 @@ const activateVehicle = async (req, res) => {
       Remarks: 'Vehicle activation payment'
     });
     console.log(hostPayment);
-    await vehicle.update({ activated: true });
-    console.log('hello');
-    res.status(200).json({ message: 'Vehicle activated successfully' });
+    const vehicles =  await Vehicle.update(
+      { activated: true },
+      {
+        where: {
+          hostId: req.user.id,
+          vehicletype: subscription.vehicleType,
+        },
+      }
+    );
+    res.status(200).json({ message: 'Vehicle activated successfully', vehicles });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error activating vehicle' });
@@ -555,17 +562,12 @@ const activateVehicle = async (req, res) => {
 };
 
 const getActiveSubscriptionForVehicle = async (req, res) => {
-  const { vehicleid } = req.body; 
+ 
   try {
-    const vehicle = await Vehicle.findOne({ where: { vehicleid, hostId: req.user.id } });
-    
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
 
-    const subscription = await HostPayment.findOne({
+    const subscription = await HostPayment.findAll({
       where: {
-        VehicleId: vehicleid, 
+        HostId: req.user.id, 
         PlanEndDate: {
           [Op.gt]: new Date()  
         }
