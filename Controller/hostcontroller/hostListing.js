@@ -31,11 +31,11 @@ const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAd
            let vehicleModel;
            if(vehicle.vehicletype == 2){
               const car = await Car.findOne({ where: { vehicleid: lstg.vehicleid } });
-              vehicleModel = car.carmodel; 
+              vehicleModel = car.brand + ' ' +car.carmodel; 
            }
            if(vehicle.vehicletype == 1){
             const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
-            vehicleModel = bike.bikemodel; 
+            vehicleModel = bike.brand + ' ' +  bike.bikemodel; 
            }
            const vehicleImages = [
             checkImage(vehicleAdditional.vehicleimage1),

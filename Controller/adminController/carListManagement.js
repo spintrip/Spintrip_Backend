@@ -21,6 +21,22 @@ const getAllvehicles = async (req, res) => {
   }
 };
 
+const postActiveVehicle = async (req, res) => {
+  try {
+    const vehicles = await Vehicle.findByPk(req.params.id);
+    if (!vehicles) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+    const updatedVehicles = await vehicles.update(
+      { activated: true },);
+
+    res.status(200).json({ message: "vehicle activated", vehicles: updatedVehicles });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error vehicle activated', error });
+  }
+};
+
 // Get a car by ID with additional information
 const getvehicleById = async (req, res) => {
   try {
@@ -288,5 +304,6 @@ module.exports = {
   bikes,
   updateBike,
   deleteBike,
-  bikeById
+  bikeById,
+  postActiveVehicle
 };

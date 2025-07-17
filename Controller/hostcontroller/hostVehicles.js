@@ -397,7 +397,7 @@ const getVehicleAdditional = async (req, res) => {
       additional = {
         vehicleModel: carDetails?.carmodel || "None",
         horsePower: carDetails?.HorsePower || "None",
-        type: "Not Provided",
+        type: carDetails?.type || "None",
         brand: carDetails?.brand || "None",
         variant: carDetails?.variant || "None",
         color: carDetails?.color || "None",

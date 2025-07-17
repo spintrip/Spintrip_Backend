@@ -548,11 +548,15 @@ function calculateTripHours(startTripDate, endTripDate, startTripTime, endTripTi
           let vehicleModel;
           if(vehicle.vehicletype == 2){
              const car = await Car.findOne({ where: { vehicleid: vehicle.vehicleid } });
-             vehicleModel = car.carmodel; 
+             if(car.brand){
+             vehicleModel = car.brand.charAt(0).toUpperCase() + car.brand.slice(1).toLowerCase(); 
+             }
           }
           if(vehicle.vehicletype == 1){
            const bike = await Bike.findOne({ where: { vehicleid: vehicle.vehicleid } });
-           vehicleModel = bike.bikemodel; 
+           if(bike.brand){
+           vehicleModel = bike.brand.charAt(0).toUpperCase() + bike.brand.slice(1).toLowerCase();
+          }
           }
           const transaction = await Transaction.findOne({ where: { Transactionid: booking.Transactionid } });
   
