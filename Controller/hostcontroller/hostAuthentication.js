@@ -71,8 +71,8 @@ const hostLogin = async(req, res) => {
       if (phone == '+910123456789') {
         return res.status(201).json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', phone, otp: user.otp });
       }
-      const otp = generateOTP();
-      sendOTP(phone, otp);
+      const otp = await generateOTP();
+      await sendOTP(phone, otp);
       await user.update({ otp: otp })
       return res.json({ message: 'OTP sent successfully', redirectTo: '/verify-otp', otp: otp });
     } catch (error) {
