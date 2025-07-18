@@ -9,12 +9,12 @@ const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
 const hostPaymentModel = require('../../Models/hostPaymentModel');
 const bikeModel = require('../../Models/bikeModel');
-const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
+const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 
 
 const vehicleImageStorage = multerS3({
   s3: s3,
-  bucket: 'spintrip-bucket',
+  bucket: 'spintrip-s3bucket',
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
     const vehicleid = req.body.vehicleid;
@@ -31,7 +31,7 @@ const uploadvehicleImages = multer({ storage: vehicleImageStorage }).fields(
 async function deleteFromS3(key) {
   try {
     const params = {
-      Bucket: 'spintrip-bucket',
+      Bucket: 'spintrip-s3bucket',
       Key: key,
     };
 

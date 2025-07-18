@@ -2,7 +2,7 @@
  const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../../Models');
  const path = require('path');
- const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.webp`; 
+ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`; 
   
  
  const checkData = (value) => {

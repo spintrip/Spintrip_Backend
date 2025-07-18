@@ -26,7 +26,7 @@ const router = express.Router();
 const upload = multer({
   storage: multerS3({
     s3: s3,
-    bucket: 'spintrip-bucket',
+    bucket: 'spintrip-s3bucket',
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: function (req, file, cb) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -37,7 +37,7 @@ const upload = multer({
 
 const blogImageStorage = multerS3({
   s3: s3,
-  bucket: 'spintrip-bucket',
+  bucket: 'spintrip-s3bucket',
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

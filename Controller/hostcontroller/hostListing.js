@@ -2,7 +2,7 @@ const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Prici
 const uuid = require('uuid');
 const path = require('path');
 const e = require('express');
-const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
+const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
   //Listing
  const getListing = async(req, res) => {
     const hostid = req.user.userid;

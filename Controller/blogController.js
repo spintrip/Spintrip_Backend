@@ -7,7 +7,7 @@ const path = require('path');
 
 const s3Config = multerS3({
   s3: s3,
-  bucket: 'spintrip-bucket', // Replace with your actual bucket name
+  bucket: 'spintrip-s3bucket', // Replace with your actual bucket name
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
     const blogId = req.body.blogId ? req.body.blogId : uuid.v4();

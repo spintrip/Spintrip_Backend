@@ -7,7 +7,7 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
     sendBookingCancellationEmail
   } = require('../emailController');
 const vehicleAdditional = require('../../Models/vehicleAdditional');
-const noImgPath = `https://spintrip-bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.webp`;
+const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 const checkImage = (value) => {
   return value !== null && value !==undefined && value.length > 0 ? value : noImgPath;
 }
