@@ -60,6 +60,10 @@ const deleteUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    await UserAdditional.destroy({
+      where: { id: user.id },
+    });
+    await Admin.destroy({ where: { id: user.id }});
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {

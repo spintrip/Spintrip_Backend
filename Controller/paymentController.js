@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Vehicle, Transaction, User, HostPayment } = require('../Models');
+const { Vehicle, Transaction, User, HostPayment, Subscriptions } = require('../Models');
 require('dotenv').config();
 const crypto = require('crypto');
 const uuid = require('uuid');
@@ -9,79 +9,100 @@ function roundToTwo(num) {
 const initiatePayment = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
-    const { vehicleid } = req.body;
-    const vehicle = await Vehicle.findOne({ where: { vehicleid : vehicleid  } });
-  
-    if (!vehicle) {
-      return res.status(404).json({ message: 'vehicle not found' });
-    }
-    const hostPaymentPlan = await  HostPayment.findOne({ where: { VehicleId : vehicleid  } });
-    let amount = roundToTwo(hostPaymentPlan.Amount);
-    const orderId = uuid.v4();
+    const { planId } = req.body;
+    // const vehicle = await Vehicle.findOne({ where: { planId} });
 
-    const paymentLinkRequest = {
+    // if (!vehicle) {
+    //   return res.status(404).json({ message: 'vehicle not found' });
+    // }
+
+    const hostPaymentPlan = await Subscriptions.findOne({ where: { PlanType: planId } });
+    if (!hostPaymentPlan) {
+      return res.status(404).json({ message: 'host payment plan not found' });
+    }
+
+    // Use roundToTwo as before
+    const amount = roundToTwo(hostPaymentPlan.amount);
+
+    // Create an order id (Cashfree docs typically expect a merchant order id)
+    const orderId = `order_${uuid.v4()}`;
+
+    // Build request body for Create Order API
+    const createOrderRequest = {
+      link_amount: amount,
+      link_currency: 'INR',          // default INR
+      link_purpose: `Plan Activation: ${hostPaymentPlan.PlanType}`,            // your merchant order id
       customer_details: {
-        customer_phone: user.phone,
-        customer_email: '',
-        customer_name: '',
+        customer_name: user.FullName || undefined,
+        customer_phone: user.phone || undefined,
+        customer_email: user.email || undefined,
+      },
+      // meta object allows return_url & notify_url and other options
+      link_meta: {
+        return_url: `https://spintripfrontend.site/payment/complete?order_id=${uuid.v4()}`,
+        notify_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
+        // upi_intent: "false"  // example optional meta
       },
       link_notify: {
-        send_sms: false,
-        send_email: false,
-      },
-      link_amount: amount,
-      link_id: orderId,
-      link_currency: 'INR',
-      link_purpose: 'Plan Activation Payment',
-      notes: {
-        order_note: 'Payment for Vehicle Activation',
-      },
-      callback_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
-      expires_at: '2024-09-29T00:00:00Z',
-      payment_methods: 'all', 
+        send_sms: true,
+        send_email: true
+      }, // change to true to have Cashfree send email
+      link_auto_reminders: false,
+      link_notes: {
+        planId: String(planId),
+        userId: String(req.user.id),
+      }
+      // optional: order_expiry_time, payment_methods, tags etc.
     };
-  
+
     const options = {
       method: 'POST',
       url: 'https://api.cashfree.com/pg/links',
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
-        'x-api-version': '2022-09-01',
+        // x-api-version should be set to a version you use (example: '2023-08-01' or '2022-09-01')
+        'x-api-version': process.env.CASHFREE_API_VERSION || '2023-08-01',
         'x-client-id': process.env.CASHFREE_APP_ID,
         'x-client-secret': process.env.CASHFREE_SECRET_KEY,
       },
-      data: JSON.stringify(paymentLinkRequest),
+      data: JSON.stringify(createOrderRequest),
     };
-    
+
     const response = await axios.request(options);
-    console.log(response);
-    if (response.data.link_status === 'ACTIVE') {
-      console.log('Cashfree Response:', response); 
-  
-      const paymentUrl = response.data.link_url;
-  
-      // Save transaction details to your database
-      await Transaction.create({
-        Transactionid: orderId,
-        vehicleid: vehicleid,
-        id: req.user.id,
-        status: 1,
-        amount: hostPaymentPlan.Amount,
-        GSTAmount: hostPaymentPlan.GSTAmount,
-        totalAmount:hostPaymentPlan.TotalAmount,
+    console.log('Cashfree Create Order response:', response);
+
+    // Cashfree returns status and a payment_session_id (and other order fields)
+    // Inspect the returned body to adapt to your exact account behavior
+    if (response.data && response.status === 200) { // use on client to open checkout
+      // Save transaction/order details
+      // await Transaction.create({
+      //   Transactionid: orderId,
+      //   vehicleid: vehicleid,
+      //   id: req.user.id,
+      //   status: 1, // 1 = created/pending
+      //   amount: hostPaymentPlan.Amount,
+      //   GSTAmount: hostPaymentPlan.GSTAmount,
+      //   totalAmount: hostPaymentPlan.TotalAmount,
+      // });
+
+      // await hostPaymentPlan.update({ Transactionid: orderId });
+
+      // Return the order info to client. Client should use payment_session_id to start checkout.
+      return res.status(200).json({
+        message: 'Payment link created',
+        raw: response.data,
       });
-      await hostPaymentPlan.update({ Transactionid: orderId });
-      return res.status(200).json({ paymentUrl });
     } else {
-      console.error('Error creating payment link:', response.data);
-      return res.status(400).json({ message: 'Failed to create payment link', error: response.data.message });
+      console.error('Error creating Cashfree order:', response.data);
+      return res.status(400).json({ message: 'Failed to create order', error: response.data });
     }
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }  
+    console.error('Error in initiatePayment:', error.response?.data || error.message || error);
+    return res.status(500).json({ message: 'Server error', error: error.message || error });
+  }
 };
+
 
 
 

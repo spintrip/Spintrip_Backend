@@ -1,4 +1,4 @@
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, User, Driver, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
 const axios = require('axios');
@@ -34,6 +34,10 @@ const hostSignup = async (req, res) => {
       const userId = uuid.v4();
       const user1 = await User.findOne({ where: { phone:phone } });
       if (user1) {
+        const driver = await Driver.findOne({ where: { id: user1.id } });
+        if(driver){
+        return res.status(404).json({ message: 'Driver Already exists' });
+        }
         const host1 = await Host.findOne({ where: { id: user1.id } });
         if(host1){
         return res.status(404).json({ message: 'Host Already exists' });
@@ -64,8 +68,8 @@ const hostLogin = async(req, res) => {
     try {
       const user = await User.findOne({ where: { phone } });
       const host = await Host.findOne({ where: { id: user.id } });
-  
-      if (!host) {
+      const driver = await Driver.findOne({ where: { id: user.id } });
+      if (!host && !driver) {
         return res.status(401).json({ message: 'Invalid phone or password' });
       }
       if (phone == '+910123456789') {
@@ -89,11 +93,18 @@ const hostVerifyOtp = async(req , res) =>{
     if (!user) {
       return res.status(401).json({ message: 'Invalid Phone' });
     }
+    const driver = await Driver.findOne({ where: { id: user.id } });
     const fixed_otp = user.otp;
     if (fixed_otp === otp) {
       const user = await User.findOne({ where: { phone } });
+      if(driver){
+         const token = jwt.sign({ id: user.id, role: 'Driver' }, 'your_secret_key');
+         return res.json({ message: 'OTP verified successfully', id: user.id, token, role: 'Driver' });
+      }
+      else{
       const token = jwt.sign({ id: user.id, role: 'host' }, 'your_secret_key');
       return res.json({ message: 'OTP verified successfully', id: user.id, token });
+      }
     } else {
       return res.status(401).json({ message: 'Invalid OTP' });
     }

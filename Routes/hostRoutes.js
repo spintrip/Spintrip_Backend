@@ -6,6 +6,7 @@ const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateP
   getActiveSubscriptionForVehicle, getAllSubscriptions, verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
   postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking,
   hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
+   postDriver,getAllDrivers, verifyDriverProfileHandler, verifyDriverProfile, assignDriver, DriverBookings,
   postMonthlyData,postGetFeedback, postGetVehicleReg
   } = require('../Controller/hostcontroller/hostController');
 const router = express.Router();
@@ -30,6 +31,8 @@ router.put('/profile', authenticate, updateProfile);
 // Put Verify
 router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
 
+router.put('/driververify', authenticate, verifyDriverProfileHandler, verifyDriverProfile );
+
 
 // Add the required cabRoutes module
 const cabRoutes = require('./cabRoutes');
@@ -38,7 +41,13 @@ router.use('/cab', cabRoutes);
 // Modify the existing endpoint
 router.post('/vehicle', authenticate, postVehicle);
 
+router.post('/driver', authenticate, postDriver);
 
+router.post('/assign-driver', authenticate, assignDriver);
+
+router.get("/my-drivers", authenticate, getAllDrivers);
+
+router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
 //chat
 router.post('/chat/send', chatController.sendMessage);
 router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
@@ -109,4 +118,7 @@ router.post('/phonepayment', authenticate, phonePayment );
 router.post('/webhook/phonepe', webhook );
 
 router.post('/Cancel-Booking', authenticate, cancelbooking);
+
+
+router.get('/driverbookings', authenticate, DriverBookings );
 module.exports = router;

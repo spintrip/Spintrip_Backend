@@ -1,10 +1,11 @@
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, User, Listing, Cab, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Driver, DriverAdditional, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const fs = require('fs');
 const path = require('path');
 const noProfileImg = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`;
+const uuid = require('uuid');
 
 
 const checkStatus = (value) => {
@@ -46,15 +47,20 @@ const hostProfile = async (req, res) => {
     for (const lstg of vehicles) {
       let vehicleModel = null;
       let type = null;
-      if (lstg.vehicletype == 2) {  
+      if (lstg.vehicletype == 2) {
         const car = await Car.findOne({ where: { vehicleid: lstg.vehicleid } });
         vehicleModel = car?.carmodel || null;
         type = car?.type || null;
       }
-      if (lstg.vehicletype == 1) {  
+      if (lstg.vehicletype == 1) {
         const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
         vehicleModel = bike?.bikemodel || null;
         type = bike?.type || null;
+      }
+      if (lstg.vehicletype == 3) {
+        const cab = await Cab.findOne({ where: { vehicleid: lstg.vehicleid } });
+        vehicleModel = cab?.model || null;
+        type = cab?.type || null;
       }
 
       processedVehicles.push({
@@ -159,12 +165,188 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// concise postDriver handler
+const postDriver = async (req, res) => {
+  try {
+    const hostId = req.user?.id;
+    if (!hostId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const host = await Host.findByPk(hostId);
+    if (!host) return res.status(404).json({ message: 'Host not found' });
+
+    const phone = (req.body.phone || '').toString().trim();
+    const fullName = (req.body.fullName || '').toString().trim();
+    const aadharId = (req.body.aadharId || '').toString().trim();
+    const email = (req.body.email || '').toString().trim();
+    const address = (req.body.address || '').toString().trim();
+
+    if (!phone || !fullName) return res.status(400).json({ message: 'phone and fullName required' });
+
+    const existingUser = await User.findOne({ where: { phone } });
+
+    // helper to create/update DriverAdditional
+    const upsertAdditional = async (driverId, trx) => {
+      const values = {
+        id: driverId,
+        ...(fullName && { FullName: fullName }),
+        ...(aadharId && { AadharVfid: aadharId }),
+        ...(email && { Email: email }),
+        ...(address && { Address: address }),
+      };
+      const found = await DriverAdditional.findOne({ where: { id: driverId }});
+      if (found) {
+        if (Object.keys(values).length > 1) await DriverAdditional.update(values, { where: { id: driverId }, transaction: trx });
+        return DriverAdditional.findOne({ where: { id: driverId } });
+      }
+      // ensure required fields on create
+      return DriverAdditional.create({
+        id: driverId,
+        FullName: fullName || 'Not Provided',
+        AadharVfid: aadharId || 'Not Provided',
+        Email: email || 'Not Provided',
+        Address: address || 'Not Provided',
+        profilepic: null,
+        aadhar: null
+      });
+    };
+
+    if (existingUser) {
+      const driverRow = await Driver.findOne({ where: { id: existingUser.id } });
+
+      if (driverRow) {
+        const updated = await upsertAdditional(existingUser.id, null);
+        return res.status(200).json({ message: 'Driver exists — updated additional', driver: updated });
+      }
+
+      // user exists but not a driver -> create driver + additional
+
+        await Driver.create({ id: existingUser.id, hostid: hostId });
+        await upsertAdditional(existingUser.id);
+    
+
+      const created = await DriverAdditional.findOne({ where: { id: existingUser.id } });
+      return res.status(201).json({ message: 'Driver created for existing user', driver: created });
+    }
+
+    // new user -> create user, driver, additional
+    const userId = uuid.v4();
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash('1234', bcrypt.genSaltSync(10));
+
+      await User.create({ id: userId, phone, password: hashedPassword, role: 'Driver' });
+      await Driver.create({ id: userId, hostid: hostId });
+      await DriverAdditional.create({
+        id: userId,
+        FullName: fullName || 'Not Provided',
+        AadharVfid: aadharId || 'Not Provided',
+        Email: email || 'Not Provided',
+        Address: address || 'Not Provided',
+        profilepic: null,
+        aadhar: null
+      });
+
+    const driver = await DriverAdditional.findOne({ where: { id: userId } });
+    return res.status(201).json({ message: 'Driver created successfully', driver });
+
+  } catch (err) {
+    console.error('postDriver error', err);
+    return res.status(500).json({ message: 'Error creating driver', error: err.message || err });
+  }
+};
+
+
+const getAllDrivers = async (req, res) => {
+  try {
+    const hostId = req.user.id;
+
+    // Validate host
+    const host = await Host.findByPk(hostId);
+    if (!host) {
+      return res.status(404).json({ message: "Host not found" });
+    }
+
+    // Fetch drivers belonging to this host with joined info
+    const drivers = await Driver.findAll({
+      where: { hostid: hostId },
+      include: [
+        {
+          model: User,
+          attributes: ["phone", "role", "createdAt"],
+        },
+        {
+          model: DriverAdditional,
+          attributes: [
+            "FullName",
+            "Email",
+            "AadharVfid",
+            "Address",
+            "profilepic",
+            "aadhar",
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!drivers || drivers.length === 0) {
+      return res.status(404).json({ message: "No drivers found for this host." });
+    }
+
+    res.status(200).json({
+      message: "Drivers fetched successfully",
+      count: drivers.length,
+      drivers,
+    });
+  } catch (error) {
+    console.error("Error fetching drivers:", error);
+    res.status(500).json({ message: "Error fetching drivers", error: error.message });
+  }
+};
+
+
+const verifyDriverProfile = async (req, res) => {
+  try {
+    const hostId = req.user.id;
+
+    const host = await Host.findByPk(hostId);
+    if (!host) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+
+    const { aadharFile, profilePic } = req.files || {};
+
+    if (profilePic && profilePic[0]) {
+      await DriverAdditional.update(
+        { profilepic: profilePic[0].location || null },
+        { where: { id: hostId } }
+      );
+    }
+
+    if (aadharFile && aadharFile[0]) {
+      await DriverAdditional.update(
+        { aadhar: aadharFile[0].location || null },
+        { where: { id: hostId } }
+      );
+    }
+
+    res.status(200).json({ message: 'Driver profile files uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error uploading driver profile files', error });
+  }
+};
+
+
 
 const verifyProfileHandler = upload.fields([
   { name: 'aadharFile', maxCount: 1 },
   { name: 'profilePic', maxCount: 1 }
 ]);
 
+const verifyDriverProfileHandler = upload.fields([
+  { name: 'aadharFile', maxCount: 1 },
+  { name: 'profilePic', maxCount: 1 }
+]);
 const verifyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -199,4 +381,4 @@ const verifyProfile = async (req, res) => {
 
 
 
-module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler };
+module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler, postDriver, verifyDriverProfile, getAllDrivers, verifyDriverProfileHandler };

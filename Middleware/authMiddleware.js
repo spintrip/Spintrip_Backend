@@ -47,22 +47,22 @@ const authenticate = async (req, res, next) => {
 
     try {
       // Handle Driver Login
-      const driver = await Driver.findOne({ where: { phone } });
-      if (driver) {
-        if (password !== '1234') {
-          return res.status(401).json({ message: 'Invalid phone or password for driver' });
-        }
+      // const driver = await Driver.findOne({ where: { phone } });
+      // if (driver) {
+      //   if (password !== '1234') {
+      //     return res.status(401).json({ message: 'Invalid phone or password for driver' });
+      //   }
 
-        // Allow specific driver routes: `/cab` or `/host/cab`
-        if (!req.originalUrl.startsWith('/cab') && !req.originalUrl.startsWith('/host/cab')) {
-          return res.status(403).json({ message: 'Access denied for drivers on this route' });
-        }
+      //   // Allow specific driver routes: `/cab` or `/host/cab`
+      //   if (!req.originalUrl.startsWith('/cab') && !req.originalUrl.startsWith('/host/cab')) {
+      //     return res.status(403).json({ message: 'Access denied for drivers on this route' });
+      //   }
 
-        req.user = { ...driver.dataValues, userid: driver.id, role: 'driver' };
-        next();
-        return;
-      }
-
+      //   req.user = { ...driver.dataValues, userid: driver.id, role: 'driver' };
+      //   next();
+      //   return;
+      // }
+       
       // Handle User, Host, or Admin Login
       const user = await User.findOne({ where: { phone } });
       if (!user) {
@@ -76,12 +76,17 @@ const authenticate = async (req, res, next) => {
 
       const host = await Host.findOne({ where: { id: user.id } });
       const admin = await Admin.findOne({ where: { id: user.id } });
+      const existingDriver = await Driver.findOne({ where: { id: user.id } });
 
       let role = 'user';
       if (host) {
+        console.log('Host logged in');
         role = 'host';
       } else if (admin) {
         role = 'admin';
+      }
+      else if (existingDriver) {
+        role = 'Driver';
       }
 
       req.user = { ...user.dataValues, userid: user.id, role };
@@ -104,9 +109,9 @@ const signup = async (req, res) => {
 
     // Check for existing user or driver with the same phone
     const existingUser = await User.findOne({ where: { phone } });
-    const existingDriver = await Driver.findOne({ where: { phone } });
+    // const existingDriver = await Driver.findOne({ where: { phone } });
 
-    if (existingUser || existingDriver) {
+    if (existingUser) {
       return res.status(400).json({ message: 'User with this phone already exists' });
     }
 
@@ -132,7 +137,7 @@ const signup = async (req, res) => {
           password: await bcrypt.hash(password, 10),
         });
         break;
-      case 'driver':
+      case 'Driver':
         user = await Driver.create({
           phone,
           password, // Plain text for drivers, to align with OTP-based verification

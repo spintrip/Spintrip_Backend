@@ -9,7 +9,9 @@ module.exports = (sequelize, DataTypes) => {
       FuelType: DataTypes.INTEGER,
       seatingCapacity: DataTypes.INTEGER,
       luggageCapacity: DataTypes.INTEGER,
+      permitNumber: DataTypes.STRING,
       vehicleid: { type: DataTypes.STRING(36), primaryKey: true },
+      driverId: DataTypes.STRING(36), 
       timestamp: DataTypes.DATE,
       city: DataTypes.STRING,
       hostId: {

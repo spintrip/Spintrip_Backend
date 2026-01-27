@@ -8,7 +8,7 @@ const { authenticate } = require('../Middleware/authMiddleware');
 } = require('../Controller/cabController');
 const {signup , login, verify, getprofile, putprofile, uploadProfile, deleteuser,getbrand, features,findvehicles, onevehicle, getvehicleadditional,
    postwishlist, cancelwishlist, getwishlist, getallVehicles, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
-   chat, chathistory,updateDeviceToken,toprating
+   chat, chathistory,updateDeviceToken,toprating, postaddress , getaddress, findCabs
   } = require('../Controller/userController/userController');
 const { getAllBlogs } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
@@ -67,6 +67,8 @@ router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
 
 //Find Vehicles
 router.post('/findvehicles', authenticate, findvehicles);
+
+router.post('/findcabs', authenticate, findCabs);
 router.post('/onevehicle', onevehicle);
 
 // Booking Route
@@ -92,6 +94,10 @@ router.post('/book-cab', authenticate, bookCab);
 router.post('/Cancel-Booking', authenticate, cancelbooking);
 
 router.post('/getFeedback', authenticate, getfeedback);
+
+router.post('/postaddress', authenticate, postaddress);
+
+router.get('/getAlladress', authenticate, getaddress);
 //User-Bookings
 router.get('/User-Bookings', authenticate, userbookings);
 

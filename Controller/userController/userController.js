@@ -1,6 +1,6 @@
 const {signup , login, verify} = require('./userAuthentication');
-const {getprofile, putprofile, uploadProfile, deleteuser} = require('./userProfile');
-const { getbrand, features, findvehicles, onevehicle, getvehicleadditional, postwishlist, cancelwishlist, getwishlist, getallVehicles, toprating } = require('./userVehicle');
+const {getprofile, putprofile, uploadProfile, deleteuser, getaddress, postaddress} = require('./userProfile');
+const { getbrand, features, findvehicles, onevehicle, getvehicleadditional, postwishlist, cancelwishlist, getwishlist, getallVehicles, toprating, findCabs } = require('./userVehicle');
 const {booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating} = require('./userBooking');
 const { chat, chathistory } = require('./userChat');
 const {updateDeviceToken} =require ('./userDevice');
@@ -8,5 +8,5 @@ const {updateDeviceToken} =require ('./userDevice');
 module.exports = {
     signup , login, verify, getprofile, putprofile, uploadProfile, deleteuser, getbrand, features, findvehicles, onevehicle, getvehicleadditional, 
     postwishlist, cancelwishlist, getwishlist,getallVehicles, toprating, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating, chat, chathistory,
-    updateDeviceToken
+    updateDeviceToken, getaddress, postaddress, findCabs
 };

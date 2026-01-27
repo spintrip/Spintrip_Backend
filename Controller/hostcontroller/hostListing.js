@@ -1,4 +1,4 @@
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, User, Cab, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const uuid = require('uuid');
 const path = require('path');
 const e = require('express');
@@ -36,6 +36,10 @@ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicle
            if(vehicle.vehicletype == 1){
             const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
             vehicleModel = bike.brand + ' ' +  bike.bikemodel; 
+           }
+           if(vehicle.vehicletype == 3){
+            const cab = await Cab.findOne({ where: { vehicleid: lstg.vehicleid } });
+            vehicleModel = cab.brand + ' ' +  cab.bikemodel; 
            }
            const vehicleImages = [
             checkImage(vehicleAdditional.vehicleimage1),

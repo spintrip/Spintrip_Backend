@@ -137,6 +137,81 @@ const assignDriverToVehicle = async (req, res) => {
 /**
  * Search for nearby cabs
  */
+
+const estimatePrice = async ({ origin, destination, vehicleId }) => {
+  try {
+    console.log("Estimating price with input:", { origin, destination, vehicleId });
+
+    // Validate input
+    if (!origin || !destination || !vehicleId) {
+      throw new Error("Missing required parameters: origin, destination, or vehicleId.");
+    }
+    if (!origin.latitude || !origin.longitude || !destination.latitude || !destination.longitude) {
+      throw new Error("Invalid origin or destination coordinates.");
+    }
+
+    // Fetch distance, duration, and traffic information from Google Maps API
+    const response = await axios.get(GOOGLE_MAPS_API_URL, {
+      params: {
+        origins: `${origin.latitude},${origin.longitude}`,
+        destinations: `${destination.latitude},${destination.longitude}`,
+        key: GOOGLE_MAPS_API_KEY,
+        departure_time: "now", // Fetch real-time traffic data
+      },
+    });
+
+    const { rows } = response.data;
+
+    // Validate API response
+    if (!rows || !rows[0].elements || rows[0].elements[0].status !== "OK") {
+      console.error("Google Maps API response error:", response.data);
+      throw new Error("Failed to fetch distance and duration from Google Maps.");
+    }
+
+    const { distance, duration } = rows[0].elements[0];
+    const distanceInKm = distance.value / 1000; // Convert meters to kilometers
+    const durationInMinutes = duration.value / 60; // Convert seconds to minutes
+
+    // Fetch pricing information for the vehicle
+    const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
+    if (!pricing) {
+      throw new Error("Pricing information not found for this vehicle.");
+    }
+
+    const costPerKm = pricing?.costperhr || 20; // Use costperhr as cost per km
+    const basePrice = distanceInKm * costPerKm; // Base price calculation
+
+    // Initialize pricing multiplier
+    let multiplier = 1.0;
+
+    // Determine traffic conditions based on duration-to-distance ratio
+    const trafficRatio = durationInMinutes / distanceInKm; // Average time per kilometer
+    if (trafficRatio > 2.5) {
+      multiplier *= 1.3; // Heavy traffic increases price by 30%
+    } else if (trafficRatio > 1.5) {
+      multiplier *= 1.1; // Moderate traffic increases price by 10%
+    }
+
+    // Apply night-time multiplier (22:00 - 06:00)
+    const currentHour = new Date().getHours();
+    if (currentHour >= 22 || currentHour < 6) {
+      multiplier *= 1.1; // Increase price by 10% during night hours
+    }
+
+    const estimatedPrice = Math.round(basePrice * multiplier); // Final price calculation
+
+    return {
+      distance: distanceInKm,
+      duration: durationInMinutes,
+      estimatedPrice,
+      multiplier,
+      basePrice,
+    };
+  } catch (error) {
+    console.error("Error estimating price:", error.message);
+    throw new Error("Failed to estimate price.");
+  }
+};
 const searchForCabs = async (req, res) => {
   const { fromLocation, searchRadius } = req.body;
 
@@ -210,6 +285,8 @@ const searchForCabs = async (req, res) => {
 /**
  * Book a cab and notify nearby drivers
  */
+
+
 const bookCab = async (req, res) => {
   const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
   const userId = req.user.id
@@ -383,80 +460,7 @@ const login = async (req, res) => {
 /**
  * Estimate price using Google Maps API for distance and traffic conditions
  */
-const estimatePrice = async ({ origin, destination, vehicleId }) => {
-  try {
-    console.log("Estimating price with input:", { origin, destination, vehicleId });
 
-    // Validate input
-    if (!origin || !destination || !vehicleId) {
-      throw new Error("Missing required parameters: origin, destination, or vehicleId.");
-    }
-    if (!origin.latitude || !origin.longitude || !destination.latitude || !destination.longitude) {
-      throw new Error("Invalid origin or destination coordinates.");
-    }
-
-    // Fetch distance, duration, and traffic information from Google Maps API
-    const response = await axios.get(GOOGLE_MAPS_API_URL, {
-      params: {
-        origins: `${origin.latitude},${origin.longitude}`,
-        destinations: `${destination.latitude},${destination.longitude}`,
-        key: GOOGLE_MAPS_API_KEY,
-        departure_time: "now", // Fetch real-time traffic data
-      },
-    });
-
-    const { rows } = response.data;
-
-    // Validate API response
-    if (!rows || !rows[0].elements || rows[0].elements[0].status !== "OK") {
-      console.error("Google Maps API response error:", response.data);
-      throw new Error("Failed to fetch distance and duration from Google Maps.");
-    }
-
-    const { distance, duration } = rows[0].elements[0];
-    const distanceInKm = distance.value / 1000; // Convert meters to kilometers
-    const durationInMinutes = duration.value / 60; // Convert seconds to minutes
-
-    // Fetch pricing information for the vehicle
-    const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
-    if (!pricing) {
-      throw new Error("Pricing information not found for this vehicle.");
-    }
-
-    const costPerKm = pricing.costperhr || 20; // Use costperhr as cost per km
-    const basePrice = distanceInKm * costPerKm; // Base price calculation
-
-    // Initialize pricing multiplier
-    let multiplier = 1.0;
-
-    // Determine traffic conditions based on duration-to-distance ratio
-    const trafficRatio = durationInMinutes / distanceInKm; // Average time per kilometer
-    if (trafficRatio > 2.5) {
-      multiplier *= 1.3; // Heavy traffic increases price by 30%
-    } else if (trafficRatio > 1.5) {
-      multiplier *= 1.1; // Moderate traffic increases price by 10%
-    }
-
-    // Apply night-time multiplier (22:00 - 06:00)
-    const currentHour = new Date().getHours();
-    if (currentHour >= 22 || currentHour < 6) {
-      multiplier *= 1.1; // Increase price by 10% during night hours
-    }
-
-    const estimatedPrice = Math.round(basePrice * multiplier); // Final price calculation
-
-    return {
-      distance: distanceInKm,
-      duration: durationInMinutes,
-      estimatedPrice,
-      multiplier,
-      basePrice,
-    };
-  } catch (error) {
-    console.error("Error estimating price:", error.message);
-    throw new Error("Failed to estimate price.");
-  }
-};
 
 const getEstimate =  async (req, res) => {
   try {
@@ -680,6 +684,7 @@ const checkBookingStatus = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 const checkPendingBookings = async (req, res) => {
   const driverId = req.user.id; // Driver's ID from JWT authentication
 
@@ -795,6 +800,7 @@ module.exports = {
   searchForCabs,
   bookCab,
   addCab,
+  estimatePrice,
   getEstimate,
   verifyDriverOtp,
   driverKeepAlive,

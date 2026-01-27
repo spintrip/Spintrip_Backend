@@ -1,4 +1,4 @@
-const { Host, Car, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Subscriptions, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, Cab, User, Listing, HostAdditional, UserAdditional, Booking, Pricing, Subscriptions, Brand, Feedback, Driver, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
@@ -47,9 +47,9 @@ const postVehicle = async (req, res) => {
 
   try {
     // If it's a cab, delegate to addCab function from cabRoutes
-    if (vehicletype === '3') {
-      return addCab(req, res); // Pass request and response directly to addCab
-    }
+    // if (vehicletype === '3') {
+    //   return addCab(req, res); // Pass request and response directly to addCab
+    // }
 
     // For other vehicle types, handle the logic here (e.g., bikes or cars)
     const {
@@ -68,6 +68,9 @@ const postVehicle = async (req, res) => {
       longitude,
       address,
       timeStamp,
+      permitNumber,
+      serviceType,
+      seatingCapacity
     } = req.body;
     
     const requiredFields = {
@@ -150,6 +153,26 @@ const postVehicle = async (req, res) => {
         city,
       });
     }
+
+    if (vehicletype === '3') {
+      // Cab - store cab-specific fields (no driver info)
+      // Ensure your Models export a Cab model with these columns:
+      // vehicleid, cabmodel (or use carmodel/vehicleModel), permitNumber, serviceType, seatingCapacity, brand, variant, color, bodytype, city
+      await Cab.create({
+        vehicleid: vehicleId,
+        model: vehicleModel,
+        type,
+        brand,
+        variant,
+        color,
+        bodytype: bodyType,
+        city,
+        permitNumber: permitNumber || null,
+        serviceType: serviceType || null,
+        seatingCapacity: seatingCapacity || null,
+      });
+    }
+
 
     await Pricing.create({
       vehicleid: vehicleId,
@@ -293,7 +316,9 @@ const putVehicleAdditional = async (req, res) => {
       })
       console.log(additional1);
     }
-    
+    if (vehicle.vehicletype == 3) {
+      Additional = await Cab.findOne({ where: { vehicleid: vehicleid } });
+    }
     const vehicleAdditionals = {
       vehicleid: updatedvehicleAdditional.vehicleid,
       vehicleImage1: updatedvehicleAdditional.vehicleimage1,
@@ -314,7 +339,28 @@ const putVehicleAdditional = async (req, res) => {
   }
 };
 
+const assignDriver = async (req, res) => {
+  try {
+   
+    const { carId, driverId } = req.body;
+    const hostId = req.user.id;
+    console.log(carId, driverId, hostId);
 
+    const car = await Cab.findOne({ where: { vehicleid: carId } });
+    if (!car) return res.status(404).json({ message: "Car not found" });
+
+    const driver = await Driver.findOne({ where: { id: driverId, hostid: hostId } });
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+    console.log(driverId);
+
+    await Cab.update({ driverId: driverId }, { where: { vehicleid: carId } });
+
+    res.status(200).json({ message: "Driver assigned successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error assigning driver", error });
+  }
+};
 const postPricing = async (req, res) => {
   try {
     const { vehicleid } = req.body;
@@ -431,6 +477,19 @@ const getVehicleAdditional = async (req, res) => {
         { title: "Air Freshener", value: safeBoolean(carDetails?.airFreshner), field_name: "airFreshener", logo: "" },
         { title: "Ventilated Front Seat", value: safeBoolean(carDetails?.ventelatedFrontSeat), field_name: "ventilatedFrontSeat", logo: "" }
       ];
+    }
+
+    if (vehicle.vehicletype == 3) {
+      // Car-specific fields
+      const cabDetails = await Cab.findOne({ where: { vehicleid: vehicleid } });
+      additional = {
+        vehicleModel: cabDetails?.model || "None",
+        driverId: cabDetails?.driverId || "None",
+        costperhr: pricing.costperhr,
+      };
+
+      // Populate booleanSpecs for cars
+
     }
 
     const vehicleAdditionals = {
@@ -708,4 +767,4 @@ const postGetVehicleReg = async (req, res) => {
   }
 };
 
-module.exports = { getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg, getActiveSubscriptionForVehicle };
+module.exports = { getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, assignDriver, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg, getActiveSubscriptionForVehicle };

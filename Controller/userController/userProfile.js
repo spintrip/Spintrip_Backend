@@ -1,9 +1,9 @@
 //importing modules
  const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction } = require('../../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction, UserAddress } = require('../../Models');
  const path = require('path');
  const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`; 
-  
+ const uuid = require('uuid');
  
  const checkData = (value) => {
     return value !== null && value !== undefined ? value : "Not Provided";
@@ -94,6 +94,58 @@
     }
   }
 
+  const postaddress = async (req, res) => {
+    try {
+      const { fullAddress, latitude, longitude } = req.body;
+
+      const userId = req.user.id;
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+  
+      if (!fullAddress || !latitude || !longitude) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+  
+      const address = await UserAddress.create({
+        id: uuid.v4(),
+        userid: userId,
+        fullAddress,
+        latitude,
+        longitude,
+      });
+  
+      res.status(201).json({
+        message: "Address created successfully",
+        data: address,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to create address" });
+    }
+  };
+  const  getaddress = async (req, res) => {
+    try {
+      const id = req.user.id;
+      console.log(req.user.id);
+      const address = await UserAddress.findAll({ where: { userid: id } });
+  
+      if (!address) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+  
+      res.status(200).json({
+        message: "Address fetched successfully",
+        data: address,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to fetch address" });
+    }
+  };
+  
   const uploadProfile = async (req, res) => {
     try {
       const userId = req.user.id;
@@ -147,4 +199,4 @@
     }
   };
 
-  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, checkData, checkImage, checkStatus};
+  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, checkData, checkImage, checkStatus, postaddress, getaddress};

@@ -7,15 +7,6 @@ module.exports = (sequelize, DataTypes) => {
     hostid: {
       type: DataTypes.STRING(36),
     },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    phone: {
-      type: DataTypes.STRING,
-      unique: true,
-      allowNull: false,
-    },
     details: {
       type: DataTypes.JSON, // Can hold additional driver metadata (e.g., license number, experience)
       allowNull: true,
@@ -32,8 +23,6 @@ module.exports = (sequelize, DataTypes) => {
     pausetime_end_date: DataTypes.DATEONLY,
     pausetime_start_time: DataTypes.TIME,
     pausetime_end_time: DataTypes.TIME,
-    otp:DataTypes.STRING(100),
-    deviceToken: DataTypes.STRING, 
   });
 
   return Driver;

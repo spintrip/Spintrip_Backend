@@ -20,7 +20,10 @@ module.exports = (sequelize, DataTypes) => {
     endTripTime: { type: DataTypes.TIME, allowNull: true },
     cancelDate: { type: DataTypes.DATE, allowNull: true },
     cancelReason: { type: DataTypes.TEXT, allowNull: true },
-    features: { type: DataTypes.JSON, allowNull: true } 
+    features: { type: DataTypes.JSON, allowNull: true },
+    driverid: { type: DataTypes.STRING(36), allowNull: true },
+    pickup: { type: DataTypes.TEXT, allowNull: true },
+    destination: { type: DataTypes.TEXT, allowNull: true },
   });
 
   Booking.associate = (models) => {

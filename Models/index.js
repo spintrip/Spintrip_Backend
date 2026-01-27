@@ -16,6 +16,9 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     acquire: 30000,
     idle: 10000,
   },
+  dialectOptions: {
+    ssl: false  // 👈 Disable SSL here
+  },
   logging: false, // Disable logging in production
 });
 
@@ -26,7 +29,7 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     console.log('PostGIS extension enabled');
   } catch (error) {
     console.error('Error enabling PostGIS extension:', error.message);
-  }
+  }  
 })();
 
 // Test the database connection
@@ -52,6 +55,7 @@ db.Bike = require('./bikeModel')(sequelize, DataTypes);
 db.Vehicle = require('./vehicleModel')(sequelize, DataTypes);
 db.UserAdditional = require('./userAdditionalModel')(sequelize, DataTypes);
 db.HostAdditional = require('./hostAdditionalModel')(sequelize, DataTypes);
+db.DriverAdditional = require('./driverAdditionalModel')(sequelize, DataTypes);
 db.VehicleAdditional = require('./vehicleAdditional')(sequelize, DataTypes);
 db.Subscriptions = require('./SubscriptionModel')(sequelize, DataTypes);
 db.Booking = require('./bookingModel')(sequelize, DataTypes);
@@ -75,22 +79,26 @@ db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.Driver = require('./driverModel')(sequelize, DataTypes);
 db.CabToDriver = require('./CabtoDriverModel')(sequelize, DataTypes);
 db.Cab = require('./cabModel')(sequelize, DataTypes);
+db.CabSchedule = require('./cabSchedule')(sequelize, DataTypes);
 db.CabBookingRequest = require('./cabBookingRequestModel')(sequelize, DataTypes);
 db.CabBookingAccepted = require('./cabBookingAcceptModel')(sequelize, DataTypes);
+db.UserAddress = require('./userAddress')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
-    User, Admin, Host, Car, Bike, Vehicle, UserAdditional, HostAdditional, VehicleAdditional,
+    User, Admin, Host, Car, Bike, Vehicle, UserAdditional, HostAdditional, VehicleAdditional, DriverAdditional,
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver, CabToDriver,
-    CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab
+    CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule
   } = sequelize.models;
 
   // User and related associations
   User.hasOne(Admin, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasOne(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
+  User.hasOne(Driver, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
   User.hasMany(Booking, { foreignKey: 'id', onDelete: 'SET NULL' });
+  User.hasMany(UserAddress, { foreignKey: 'userid', onDelete: 'SET NULL' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
 
   // Admin associations
@@ -99,21 +107,30 @@ const associateModels = () => {
 
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
+  Host.hasMany(Driver, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'CASCADE' });
 
   // Vehicle-specific associations
   Vehicle.hasOne(Car, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Vehicle.hasOne(Cab, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasOne(Bike, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasMany(Feedback, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasOne(Listing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasOne(VehicleAdditional, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Vehicle.hasOne(Pricing, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   VehicleAdditional.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Driver.belongsTo(Host, { foreignKey: 'hostid'});
+
+  // Driver has one DriverAdditional (they share the same id)
+  Driver.hasOne(DriverAdditional, { foreignKey: 'id'});
+
+  // Driver has one User (if your User id === Driver id)
+  Driver.belongsTo(User, { foreignKey: 'id' });
 
   // Car and Bike associations
   Car.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   Bike.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-
+  Cab.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   // Feedback associations
   Feedback.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
 
@@ -133,6 +150,9 @@ const associateModels = () => {
   Driver.hasMany(CabToDriver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
   CabToDriver.belongsTo(Driver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
   CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  // Driver.belongsTo(Host, { foreignKey: 'hostid' , onDelete: 'CASCADE' });
+  // Driver.hasOne(DriverAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
+  // Driver.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
 
   // Pricing and Transaction associations
   HostPayment.belongsTo(Host, { foreignKey: 'HostId', onDelete: 'CASCADE' });
