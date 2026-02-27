@@ -72,7 +72,7 @@ const postVehicle = async (req, res) => {
       serviceType,
       seatingCapacity
     } = req.body;
-    
+
     const requiredFields = {
       vehicleModel,
       type,
@@ -89,10 +89,10 @@ const postVehicle = async (req, res) => {
       longitude,
       address,
     }
-    const requiredFieldsSubset = ['rcNumber', 'vehicleModel', 'registrationYear']; 
+    const requiredFieldsSubset = ['rcNumber', 'vehicleModel', 'registrationYear'];
     const missingFields = Object.entries(requiredFieldsSubset)
-  .filter(([key, value]) => requiredFieldsSubset.includes(key) && (value == "" || value == null))
-  .map(([key]) => key);
+      .filter(([key, value]) => requiredFieldsSubset.includes(key) && (value == "" || value == null))
+      .map(([key]) => key);
 
     if (missingFields.length > 0) {
       // Return a 400 error with the missing fields
@@ -233,7 +233,7 @@ const putVehicleAdditional = async (req, res) => {
       additionalInfo
     } = req.body;
 
-    
+
 
     const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
     if (!vehicle) {
@@ -258,7 +258,7 @@ const putVehicleAdditional = async (req, res) => {
 
     const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicleid } });
 
- 
+
     for (const [requestField, dbField] of Object.entries(imageFields)) {
       if (req.files[requestField]) {
         updateData[dbField] = req.files[requestField][0].location;
@@ -341,7 +341,7 @@ const putVehicleAdditional = async (req, res) => {
 
 const assignDriver = async (req, res) => {
   try {
-   
+
     const { carId, driverId } = req.body;
     const hostId = req.user.id;
     console.log(carId, driverId, hostId);
@@ -395,12 +395,12 @@ const getVehicleAdditional = async (req, res) => {
     }
 
     const safeBoolean = (value) => (value !== null && value !== undefined ? value : false);
-    const checkImage = (value) => {
-      return (value !== null && value !== undefined ? value : noImgPath) ;
-    }
+    // const checkImage = (value) => {
+    //   return (value !== null && value !== undefined ? value : noImgPath);
+    // }
     const checkData = (value) => {
       return value !== null && value !== undefined ? value : 'Not Provided';
-    } 
+    }
     const pricing = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     let booleanSpecs = [];
     let additional = {};
@@ -419,7 +419,7 @@ const getVehicleAdditional = async (req, res) => {
       additional = {
         vehicleModel: bikeDetails?.bikemodel,
         horsePower: bikeDetails?.HorsePower || 0,
-        fueltype : bikeDetails?.FuelType,
+        fueltype: bikeDetails?.FuelType,
         type: checkData(bikeDetails?.type),
         brand: checkData(bikeDetails?.brand),
         variant: checkData(bikeDetails?.variant),
@@ -430,7 +430,7 @@ const getVehicleAdditional = async (req, res) => {
 
       // Populate booleanSpecs for bikes
       booleanSpecs = [
-       // { field_name: "fuelType", title: "Fuel Type", value: safeBoolean(bikeDetails?.FuelType), logo: "" },
+        // { field_name: "fuelType", title: "Fuel Type", value: safeBoolean(bikeDetails?.FuelType), logo: "" },
         { field_name: "helmet", title: "Helmet", value: safeBoolean(bikeDetails?.helmet), logo: "" },
         { field_name: "helmetSpace", title: "Helmet Space", value: safeBoolean(bikeDetails?.helmetSpace), logo: "" },
       ];
@@ -501,11 +501,11 @@ const getVehicleAdditional = async (req, res) => {
       registrationYear: vehicle.Registrationyear,
     };
     const vehicleImages = [
-      checkImage(vehicleAdditional.vehicleimage1),
-      checkImage(vehicleAdditional.vehicleimage2),
-      checkImage(vehicleAdditional.vehicleimage3),
-      checkImage(vehicleAdditional.vehicleimage4),
-      checkImage(vehicleAdditional.vehicleimage5)
+      vehicleAdditional.vehicleimage1,
+      vehicleAdditional.vehicleimage2,
+      vehicleAdditional.vehicleimage3,
+      vehicleAdditional.vehicleimage4,
+      vehicleAdditional.vehicleimage5
     ];
     if (vehicleImages) {
       res.status(200).json({
@@ -537,11 +537,11 @@ const getAllSubscriptions = async (req, res) => {
     const { vehicleType } = req.body;
 
     let subscriptions;
-    
+
     if (vehicleType) {
       subscriptions = await Subscriptions.findAll({
         where: {
-          vehicleType: vehicleType,  
+          vehicleType: vehicleType,
         },
       });
     } else {
@@ -577,19 +577,19 @@ const activateVehicle = async (req, res) => {
     }
 
 
-    const subscription = await Subscriptions.findOne({ where: {  PlanType : planType } });
-   if(!subscription){
-    return res.status(404).json({ message: 'No Subscription record found' });
-   }
-   const vehicle = await Vehicle.findAll({ where: {  hostId: req.user.id, vehicletype: String(subscription.vehicleType), } });
-   if (!vehicle) {
-     return res.status(404).json({ message: 'Vehicle not found' });
-   }
-   const expiryDays = subscription.expiry * 30; 
+    const subscription = await Subscriptions.findOne({ where: { PlanType: planType } });
+    if (!subscription) {
+      return res.status(404).json({ message: 'No Subscription record found' });
+    }
+    const vehicle = await Vehicle.findAll({ where: { hostId: req.user.id, vehicletype: String(subscription.vehicleType), } });
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+    const expiryDays = subscription.expiry * 30;
     const planEndDate = new Date();
     planEndDate.setDate(planEndDate.getDate() + expiryDays);
     const paymentId = uuid.v4();
-    const amount = subscription.amount; 
+    const amount = subscription.amount;
     const hostPayment = await HostPayment.create({
       PaymentId: paymentId,
       HostId: req.user.id,
@@ -600,11 +600,11 @@ const activateVehicle = async (req, res) => {
       GSTAmount: amount * 0.18,
       TotalAmount: amount * 1.18,
       PaymentStatus: 1, // Assuming 1 means successful
-      PaymentMethod: paymentMethod? paymentMethod: 'Cashfree',
+      PaymentMethod: paymentMethod ? paymentMethod : 'Cashfree',
       Remarks: 'Vehicle activation payment'
     });
     console.log(hostPayment);
-    const vehicles =  await Vehicle.update(
+    const vehicles = await Vehicle.update(
       { activated: true },
       {
         where: {
@@ -621,14 +621,14 @@ const activateVehicle = async (req, res) => {
 };
 
 const getActiveSubscriptionForVehicle = async (req, res) => {
- 
+
   try {
 
     const subscription = await HostPayment.findAll({
       where: {
-        HostId: req.user.id, 
+        HostId: req.user.id,
         PlanEndDate: {
-          [Op.gt]: new Date()  
+          [Op.gt]: new Date()
         }
       }
     });
@@ -685,7 +685,60 @@ const postMonthlyData = async (req, res) => {
     console.error('Error fetching monthly data:', error);
   }
 };
+const pauseCab = async (req, res) => {
+  try {
+    const { listingid } = req.body;
 
+    const listing = await Listing.findOne(
+      { where: { id: listingid } }
+    );
+    
+    const cab = await Cab.findOne(
+      { where: { vehicleid: listing.vehicleid } }
+    );
+    if (cab?.driverId) {
+      
+      await Driver.update(
+        { isActive: false },
+        { where: { id: cab.driverId } }
+      );
+
+      res.status(201).json({ message: 'Cab paused successfully' });
+    }
+    else {
+      res.status(404).json({ message: 'Cab is already paused' });
+    }
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+
+};
+
+const resumeCab = async (req, res) => {
+  try {
+    const { vehicleid } = req.body;
+    const cab = await Cab.findOne(
+      { where: { vehicleid: vehicleid } }
+    );
+    if (cab?.driverId) {
+      
+      await Driver.update(
+        { isActive: true },
+        { where: { id: cab.driverId } }
+      );
+
+      res.status(201).json({ message: 'Cab resumed successfully' });
+    }
+    else {
+      res.status(404).json({ message: 'Cab is already resumed' });
+    }
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+
+};
 const postGetFeedback = async (req, res) => {
   try {
     const { vehicleid } = req.body;
@@ -767,4 +820,4 @@ const postGetVehicleReg = async (req, res) => {
   }
 };
 
-module.exports = { getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, assignDriver, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg, getActiveSubscriptionForVehicle };
+module.exports = { getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, pauseCab, resumeCab, getVehicleAdditional, assignDriver, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg, getActiveSubscriptionForVehicle };

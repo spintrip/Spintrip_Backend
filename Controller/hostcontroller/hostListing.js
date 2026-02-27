@@ -6,7 +6,10 @@ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicle
   //Listing
  const getListing = async(req, res) => {
     const hostid = req.user.userid;
-    const host = await Host.findOne({ where: { id: hostid } });
+    let host = await Host.findOne({ where: { id: hostid } });
+    if(!host){
+      return;
+    }
     const checkData = (value) => { return value !== null && value !== undefined ?  value : "Not Provided"};
     const checkDate = (value) => {
       if (value === null || value === undefined) {
@@ -39,7 +42,7 @@ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicle
            }
            if(vehicle.vehicletype == 3){
             const cab = await Cab.findOne({ where: { vehicleid: lstg.vehicleid } });
-            vehicleModel = cab.brand + ' ' +  cab.bikemodel; 
+            vehicleModel = cab.brand + ' ' +  cab.model; 
            }
            const vehicleImages = [
             checkImage(vehicleAdditional.vehicleimage1),

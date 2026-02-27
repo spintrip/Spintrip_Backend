@@ -240,7 +240,7 @@ const booking = async (req, res) => {
     };
 
     const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
-    await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
+    // await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
 
     res.status(201).json({ message: 'Booking successful', bookings });
 

@@ -1,7 +1,7 @@
 const { hostSignup , hostLogin, hostVerifyOtp, deleteHost } = require('./hostAuthentication');
-const {hostProfile, updateProfile, verifyProfile, verifyProfileHandler, verifyDriverProfileHandler, verifyDriverProfile,postDriver,getAllDrivers} = require('./hostProfile');
-const {getListing, createListing, putListing, deleteListing} = require('./hostListing');
-const {getActiveSubscriptionForVehicle, getAllSubscriptions, postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, assignDriver, getVehicleAdditional, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg} = require('./hostVehicles');
+const {hostProfile, updateProfile, verifyProfile, verifyProfileHandler, verifyDriverProfileHandler, deleteDriver, verifyDriverProfile,postDriver,getAllDrivers} = require('./hostProfile');
+const {getListing, createListing, putListing, deleteListing } = require('./hostListing');
+const {getActiveSubscriptionForVehicle, getAllSubscriptions, postVehicle, pauseCab, resumeCab,  putVehicleAdditional, uploadvehicleImages, postPricing, assignDriver, getVehicleAdditional, activateVehicle, postMonthlyData, postGetFeedback, postGetVehicleReg} = require('./hostVehicles');
 const {hostBookings, tripstart, bookingcompleted, DriverBookings, cancelbooking, postHostRating} = require('./hostBooking');
 const {postFeatures, allFeatures, updateFeatures, deleteFeatures} = require('./hostFeatures');
 const {getBrand} = require('./hostBrand');
@@ -11,5 +11,5 @@ module.exports = {
  getActiveSubscriptionForVehicle, getAllSubscriptions, hostSignup , hostLogin, hostVerifyOtp, deleteHost, hostProfile, updateProfile, verifyProfile, verifyProfileHandler, getListing, createListing, 
  putListing, deleteListing,postVehicle, putVehicleAdditional, uploadvehicleImages, postPricing, getVehicleAdditional, activateVehicle, hostBookings, tripstart,
  bookingcompleted,cancelbooking, postHostRating, postFeatures, allFeatures, updateFeatures, deleteFeatures, getBrand, deviceVehicleId, postMonthlyData,
- postGetFeedback, postGetVehicleReg, postDriver,getAllDrivers, verifyDriverProfile, verifyDriverProfileHandler, assignDriver, DriverBookings
+ postGetFeedback, postGetVehicleReg, postDriver,getAllDrivers, verifyDriverProfile, verifyDriverProfileHandler, assignDriver, DriverBookings, deleteDriver, pauseCab, resumeCab 
 };

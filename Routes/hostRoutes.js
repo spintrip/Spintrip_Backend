@@ -6,8 +6,8 @@ const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateP
   getActiveSubscriptionForVehicle, getAllSubscriptions, verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
   postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking,
   hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
-   postDriver,getAllDrivers, verifyDriverProfileHandler, verifyDriverProfile, assignDriver, DriverBookings,
-  postMonthlyData,postGetFeedback, postGetVehicleReg
+   postDriver,getAllDrivers, verifyDriverProfileHandler, verifyDriverProfile, assignDriver, DriverBookings, deleteDriver,
+  postMonthlyData,postGetFeedback, postGetVehicleReg, pauseCab, resumeCab 
   } = require('../Controller/hostcontroller/hostController');
 const router = express.Router();
 const chatController = require('../Controller/chatController');
@@ -107,6 +107,9 @@ router.get('/getActiveSubscription', authenticate, getActiveSubscriptionForVehic
 
 router.post('/Trip-Started', authenticate, tripstart);
 
+router.post('/pause-cab', authenticate, pauseCab);
+router.post('/resume-cab', authenticate, resumeCab);
+
 router.post('/booking-completed', authenticate, bookingcompleted);
 
 router.post('/payment', authenticate,  initiatePayment);
@@ -121,4 +124,6 @@ router.post('/Cancel-Booking', authenticate, cancelbooking);
 
 
 router.get('/driverbookings', authenticate, DriverBookings );
+
+router.get('/driver/:id', authenticate, deleteDriver);
 module.exports = router;

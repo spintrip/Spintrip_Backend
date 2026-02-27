@@ -12,7 +12,7 @@ const checkStatus = (value) => {
   return value !== null && value !== undefined ? value : 0;
 }
 const checkData = (value) => {
-  return value !== null && value !== undefined ? value : 'Not Provided';
+  return value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
 }
 const checkProfileImg = (value) => {
   return value !== null && value !== undefined ? value : noProfileImg;
@@ -128,7 +128,52 @@ const hostProfile = async (req, res) => {
   }
 };
 
+const driverProfile = async (req, res) => {
+  try {
+    const driverId = req.user.id;
 
+    const driver = await Driver.findByPk(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    const user = await User.findByPk(driverId);
+    const additionalInfo = await DriverAdditional.findByPk(driverId);
+
+    const host = driver.hostid
+      ? await Host.findByPk(driver.hostid)
+      : null;
+
+    const profilePic = additionalInfo?.profilepic
+      ? [additionalInfo.profilepic]
+      : [];
+
+    const aadharFile = additionalInfo?.aadhar
+      ? [additionalInfo.aadhar]
+      : [];
+
+    const profile = {
+      id: driver.id,
+      fullName: additionalInfo?.FullName || null,
+      email: additionalInfo?.Email || null,
+      aadharNumber: additionalInfo?.AadharVfid || null,
+      address: additionalInfo?.Address || null,
+      phone: user?.phone || null,
+      profilePic,
+      aadhar: aadharFile,
+      hostId: driver.hostid || null,
+      hostAssigned: !!driver.hostid,
+      createdAt: driver.createdAt,
+      updatedAt: driver.updatedAt,
+    };
+
+    res.status(200).json({ profile });
+
+  } catch (error) {
+    console.error("driverProfile error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 //router.put('/profile', authenticate, async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
@@ -193,7 +238,7 @@ const postDriver = async (req, res) => {
         ...(email && { Email: email }),
         ...(address && { Address: address }),
       };
-      const found = await DriverAdditional.findOne({ where: { id: driverId }});
+      const found = await DriverAdditional.findOne({ where: { id: driverId } });
       if (found) {
         if (Object.keys(values).length > 1) await DriverAdditional.update(values, { where: { id: driverId }, transaction: trx });
         return DriverAdditional.findOne({ where: { id: driverId } });
@@ -214,15 +259,32 @@ const postDriver = async (req, res) => {
       const driverRow = await Driver.findOne({ where: { id: existingUser.id } });
 
       if (driverRow) {
-        const updated = await upsertAdditional(existingUser.id, null);
-        return res.status(200).json({ message: 'Driver exists — updated additional', driver: updated });
+
+        // If driver exists but is detached, reassign
+        if (!driverRow.hostid) {
+          await driverRow.update({ hostid: hostId });
+        }
+
+        // If driver belongs to another host (important security check)
+        else if (driverRow.hostid !== hostId) {
+          return res.status(400).json({
+            message: "Driver already assigned to another host"
+          });
+        }
+
+        await upsertAdditional(existingUser.id, null);
+
+        const updated = await DriverAdditional.findOne({ where: { id: existingUser.id } });
+
+        return res.status(200).json({
+          message: "Driver reactivated successfully",
+          driver: updated
+        });
       }
 
-      // user exists but not a driver -> create driver + additional
+      await Driver.create({ id: existingUser.id, hostid: hostId });
+      await upsertAdditional(existingUser.id);
 
-        await Driver.create({ id: existingUser.id, hostid: hostId });
-        await upsertAdditional(existingUser.id);
-    
 
       const created = await DriverAdditional.findOne({ where: { id: existingUser.id } });
       return res.status(201).json({ message: 'Driver created for existing user', driver: created });
@@ -233,17 +295,17 @@ const postDriver = async (req, res) => {
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash('1234', bcrypt.genSaltSync(10));
 
-      await User.create({ id: userId, phone, password: hashedPassword, role: 'Driver' });
-      await Driver.create({ id: userId, hostid: hostId });
-      await DriverAdditional.create({
-        id: userId,
-        FullName: fullName || 'Not Provided',
-        AadharVfid: aadharId || 'Not Provided',
-        Email: email || 'Not Provided',
-        Address: address || 'Not Provided',
-        profilepic: null,
-        aadhar: null
-      });
+    await User.create({ id: userId, phone, password: hashedPassword, role: 'Driver' });
+    await Driver.create({ id: userId, hostid: hostId });
+    await DriverAdditional.create({
+      id: userId,
+      FullName: fullName || 'Not Provided',
+      AadharVfid: aadharId || 'Not Provided',
+      Email: email || 'Not Provided',
+      Address: address || 'Not Provided',
+      profilepic: null,
+      aadhar: null
+    });
 
     const driver = await DriverAdditional.findOne({ where: { id: userId } });
     return res.status(201).json({ message: 'Driver created successfully', driver });
@@ -251,6 +313,43 @@ const postDriver = async (req, res) => {
   } catch (err) {
     console.error('postDriver error', err);
     return res.status(500).json({ message: 'Error creating driver', error: err.message || err });
+  }
+};
+
+const deleteDriver = async (req, res) => {
+  try {
+    const driverId = req.params.id;
+    const hostId = req.user.id; // coming from auth middleware
+    console.log('Delete driver request', { driverId, hostId });
+    const driver = await Driver.findOne({
+      where: {
+        id: driverId,
+        hostid: hostId, // ensures host can delete only their driver
+      },
+    });
+
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message: "Driver not found",
+      });
+    }
+
+    await driver.update({
+      hostid: null
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Driver deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete driver error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -381,4 +480,4 @@ const verifyProfile = async (req, res) => {
 
 
 
-module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler, postDriver, verifyDriverProfile, getAllDrivers, verifyDriverProfileHandler };
+module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler, deleteDriver, postDriver, verifyDriverProfile, getAllDrivers, verifyDriverProfileHandler };

@@ -107,7 +107,7 @@ const associateModels = () => {
 
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
-  Host.hasMany(Driver, { foreignKey: 'hostId', onDelete: 'CASCADE' });
+  Host.hasMany(Driver, { foreignKey: 'hostId' });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'CASCADE' });
 
   // Vehicle-specific associations
@@ -147,7 +147,7 @@ const associateModels = () => {
   UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
   // Cab SaaS associations
-  Driver.hasMany(CabToDriver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
+  Driver.hasMany(CabToDriver, { foreignKey: 'driverid' });
   CabToDriver.belongsTo(Driver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
   CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
   // Driver.belongsTo(Host, { foreignKey: 'hostid' , onDelete: 'CASCADE' });
