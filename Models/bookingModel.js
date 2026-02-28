@@ -24,11 +24,11 @@ module.exports = (sequelize, DataTypes) => {
     driverid: { type: DataTypes.STRING(36), allowNull: true },
     pickup: {
       type: DataTypes.JSONB,
-      allowNull: false,
+      allowNull: true,
     },
     destination: {
       type: DataTypes.JSONB,
-      allowNull: false,
+      allowNull: true,
     }
   });
 

@@ -24,6 +24,7 @@ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicle
     }
     if (host) {
       try {
+        // console.log("Host ID from token:", hostid);
         const listing = await Listing.findAll({ where: { hostid: hostid } });
         const listings = listing.map(async (lstg) => {
           let vehicle = await Vehicle.findOne({ where: { vehicleid: lstg.vehicleid, hostId: hostid } });

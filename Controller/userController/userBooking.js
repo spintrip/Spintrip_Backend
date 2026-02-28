@@ -91,6 +91,23 @@ const getBookingDetails = async (bookingId) => {
   }
 };
 
+function checkTime(value) {
+  if (!value) return "00:00:00";
+
+  const str = value.toString().trim();
+
+  if (
+    str === "" ||
+    str.toLowerCase() === "not provided" ||
+    str.toLowerCase() === "null"
+  ) {
+    return "00:00:00";
+  }
+
+  return str;
+}
+
+
 const booking = async (req, res) => {
   try {
     const { vehicleid, startDate, endDate, startTime, endTime, pickup, destination, features } = req.body;
@@ -142,18 +159,110 @@ const booking = async (req, res) => {
           [Op.and]: [
             {
               [Op.or]: [
-                { pausetime_start_date: { [Op.gt]: endDate } },
-                { pausetime_end_date: { [Op.lt]: startDate } },
                 {
-                  [Op.and]: [
-                    { pausetime_start_date: endDate },
-                    { pausetime_start_time: { [Op.gte]: endTime } },
+                  [Op.or]: [
+                    {
+                      pausetime_start_date: {
+                        [Op.gt]: endDate,
+                      },
+                    },
+                    {
+                      pausetime_end_date: {
+                        [Op.lt]: startDate,
+                      },
+                    },
                   ],
                 },
                 {
+                  [Op.or]: [
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { pausetime_start_date: endDate },
+                            { pausetime_start_date: null },
+                          ],
+                        },
+                        {
+
+                          [Op.or]: [
+                            { pausetime_start_time: { [Op.gte]: endTime } },
+                            { pausetime_start_time: null },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { pausetime_end_date: startDate },
+                            { pausetime_end_date: null },
+                          ],
+                        },
+                        {
+                          [Op.or]: [
+                            { pausetime_end_time: { [Op.lte]: startTime } },
+                            { pausetime_end_time: null },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              [Op.or]: [
+                {
                   [Op.and]: [
-                    { pausetime_end_date: startDate },
-                    { pausetime_end_time: { [Op.lte]: startTime } },
+                    {
+                      start_date: {
+                        [Op.lt]: startDate,
+                      },
+                    },
+                    {
+                      end_date: {
+                        [Op.gt]: endDate,
+                      },
+                    },
+                  ],
+                },
+                {
+                  [Op.or]: [
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { start_date: startDate },
+                            { start_date: null },
+                          ],
+                        },
+                        {
+
+                          [Op.or]: [
+                            { start_time: { [Op.lte]: startTime } },
+                            { start_time: null },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      [Op.and]: [
+                        {
+                          [Op.or]: [
+                            { end_date: endDate },
+                            { end_date: null },
+                          ],
+                        },
+                        {
+                          [Op.or]: [
+                            { end_time: { [Op.gte]: endTime } },
+                            { end_time: null },
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
               ],
@@ -202,7 +311,7 @@ const booking = async (req, res) => {
     // CREATE BOOKING
     // ==============================
     const bookingid = uuid.v4();
-
+    console.log('Creating booking with data:', { bookingid, vehicleid, startDate, endDate, startTime, endTime, userId, amount, features, driverId, pickup, destination });
     let booking = await Booking.create({
       Bookingid: bookingid,
       vehicleid: vehicleid,
@@ -220,8 +329,8 @@ const booking = async (req, res) => {
 
       // 🚕 CAB FIELDS
       driverid: isCab ? driverId : null,
-      pickup: isCab ? JSON.stringify(pickup) : null,
-      destination: isCab ? JSON.stringify(destination) : null,
+      pickup: isCab ? pickup : null,
+      destination: isCab ? destination : null,
     });
 
     const bookings = {
@@ -529,7 +638,7 @@ const cancelbooking = async (req, res) => {
           { where: { Bookingid: bookingId } }
         );
         const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
-        sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
+        // sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
         res.status(201).json({ message: 'Trip Has been Cancelled' });
       }
       else {
@@ -589,13 +698,13 @@ const userbookings = async (req, res) => {
           featureId,
           featureName: featureMap[featureId] || 'Unknown Feature'
         }));
-      let pickup = null;
-      let destination = null;
-      let driver = null;
+        let pickup = null;
+        let destination = null;
+        let driver = null;
         if (vehicle.vehicletype == 3) {
           // parse pickup/drop JSON safely
-          pickup = booking.pickup ? JSON.parse(booking.pickup) : null;
-          destination = booking.destination ? JSON.parse(booking.destination) : null;
+          pickup = booking.pickup ? booking.pickup : null;
+          destination = booking.destination ? booking.destination : null;
 
           if (booking.driverid) {
             const driverData = await Driver.findOne({ where: { id: booking.driverid } });
@@ -620,7 +729,7 @@ const userbookings = async (req, res) => {
           startTripDate: checkData(booking.startTripDate),
           endTripDate: checkData(booking.endTripDate),
           startTripTime: checkData(booking.startTripTime),
-          endTripTime: checkData(booking.endTripTime),
+          endTripTime: checkTime(booking.endTripTime),
           hostId: checkData(vehicle.hostId),
           vehicleModel: vehicleModel,
           vehicletype: vehicle.vehicletype,

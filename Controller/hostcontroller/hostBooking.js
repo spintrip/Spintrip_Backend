@@ -153,7 +153,7 @@ const cancelbooking = async (req, res) => {
           { where: { Bookingid: bookingId } }
         );
         const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
-        sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
+        // sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
         res.status(201).json({ message: 'Trip Has been Cancelled' });
       }
       else {
@@ -167,6 +167,21 @@ const cancelbooking = async (req, res) => {
   catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
+}
+function checkTime(value) {
+  if (!value) return "00:00:00";
+
+  const str = value.toString().trim();
+
+  if (
+    str === "" ||
+    str.toLowerCase() === "not provided" ||
+    str.toLowerCase() === "null"
+  ) {
+    return "00:00:00";
+  }
+
+  return str;
 }
 
 
@@ -236,8 +251,8 @@ const hostBookings = async (req, res) => {
         let destination = null;
         let driver = null;
         if (vehicle.vehicletype == 3) {
-          pickup = booking.pickup ? JSON.parse(booking.pickup) : null;
-          destination = booking.destination ? JSON.parse(booking.destination) : null;
+          pickup = booking.pickup ? booking.pickup : null;
+          destination = booking.destination ? booking.destination : null;
 
           if (booking.driverid) {
             const driverData = await Driver.findOne({ where: { id: booking.driverid } });
@@ -264,7 +279,7 @@ const hostBookings = async (req, res) => {
           startTripDate: booking.startTripDate,
           endTripDate: booking.endTripDate,
           startTripTime: booking.startTripTime,
-          endTripTime: booking.endTripTime,
+          endTripTime: checkTime(booking.endTripTime),
           driverid: booking.driverid,
           vehicletype: vehicle.vehicletype,
           cancelDate: booking.cancelDate || "Not Provided",
@@ -366,8 +381,8 @@ const DriverBookings = async (req, res) => {
         let destination = null;
         let driver = null;
         if (vehicle.vehicletype == 3) {
-          pickup = booking.pickup ? JSON.parse(booking.pickup) : null;
-          destination = booking.destination ? JSON.parse(booking.destination) : null;
+          pickup = booking.pickup ? booking.pickup : null;
+          destination = booking.destination ? booking.destination : null;
 
           if (booking.driverid) {
             const driverData = await User.findOne({ where: { id: booking.id } });
@@ -393,7 +408,7 @@ const DriverBookings = async (req, res) => {
           startTripDate: booking.startTripDate,
           endTripDate: booking.endTripDate,
           startTripTime: booking.startTripTime,
-          endTripTime: booking.endTripTime,
+          endTripTime: checkTime(booking.endTripTime),
           cancelDate: booking.cancelDate || "Not Provided",
           cancelReason: booking.cancelReason || "Not Provided",
           features: featureDetails,
