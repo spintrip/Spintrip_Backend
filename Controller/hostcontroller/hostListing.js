@@ -2,223 +2,279 @@ const { Host, Car, User, Cab, Listing, HostAdditional, UserAdditional, Booking, 
 const uuid = require('uuid');
 const path = require('path');
 const e = require('express');
+const { Op } = require('sequelize');
 const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
-  //Listing
- const getListing = async(req, res) => {
-    const hostid = req.user.userid;
-    let host = await Host.findOne({ where: { id: hostid } });
-    if(!host){
-      return;
-    }
-    const checkData = (value) => { return value !== null && value !== undefined ?  value : "Not Provided"};
-    const checkDate = (value) => {
-      if (value === null || value === undefined) {
-        return null;  
-      }
-      else{
-        return value;
-      }
-    }
-    const checkImage = (value) => {
-      return (value !== null && value !== undefined ? value : noImgPath) ;
-    }
-    if (host) {
-      try {
-        // console.log("Host ID from token:", hostid);
-        const listing = await Listing.findAll({ where: { hostid: hostid } });
-        const listings = listing.map(async (lstg) => {
-          let vehicle = await Vehicle.findOne({ where: { vehicleid: lstg.vehicleid, hostId: hostid } });
-          if (!vehicle) {
-            return;
-          }
-           let vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
-           let vehicleModel;
-           if(vehicle.vehicletype == 2){
-              const car = await Car.findOne({ where: { vehicleid: lstg.vehicleid } });
-              vehicleModel = car.brand + ' ' +car.carmodel; 
-           }
-           if(vehicle.vehicletype == 1){
-            const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
-            vehicleModel = bike.brand + ' ' +  bike.bikemodel; 
-           }
-           if(vehicle.vehicletype == 3){
-            const cab = await Cab.findOne({ where: { vehicleid: lstg.vehicleid } });
-            vehicleModel = cab.brand + ' ' +  cab.model; 
-           }
-           const vehicleImages = [
-            checkImage(vehicleAdditional.vehicleimage1),
-            checkImage(vehicleAdditional.vehicleimage2),
-            checkImage(vehicleAdditional.vehicleimage3),
-            checkImage(vehicleAdditional.vehicleimage4),
-            checkImage(vehicleAdditional.vehicleimage5)
-          ];
-           let lk = {
-            id: lstg.id,
-            vehicleid: lstg.vehicleid,
-            vehicleModel: vehicleModel,
-            hostId: lstg.hostid,
-            details: checkData(lstg.details),
-            startDate: checkDate(lstg.start_date),
-            startTime: checkDate(lstg.start_time),
-            endDate: checkDate(lstg.end_date),
-            endTime: checkDate(lstg.end_time),
-            pauseTimeStartDate: checkDate(lstg.pausetime_start_date),
-            pauseTimeEndDate: checkDate(lstg.pausetime_end_date),
-            pauseTimeStartTime: checkDate(lstg.pausetime_start_time),
-            pauseTimeEndTime: checkDate(lstg.pausetime_end_time),
-            bookingId: checkData(lstg.bookingId),
-            rcNumber: checkData(vehicle.Rcnumber),
-            vehicletype: checkData(vehicle.vehicletype),
-            vehicleImages,
-            vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
-            vehicleImage2: checkImage(vehicleAdditional.vehicleimage2),
-            vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
-            vehicleImage4: checkImage(vehicleAdditional.vehicleimage4),
-            vehicleImage5: checkImage(vehicleAdditional.vehicleimage5),
-          }
-          return { ...lk };
-        });
-        const hostListings = await Promise.all(listings);
-        res.status(201).json({ message: "Listing successfully queried", hostListings })
-      }
-      catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Error showing listings' });
-      }
+//Listing
+const getListing = async (req, res) => {
+
+  const hostid = req.user.userid;
+  let hostIds = [hostid];
+
+
+  let host = await Host.findOne({ where: { id: hostid } });
+  if (!host) {
+    return;
+  }
+  if (host.parentHostId === null) {
+    const vendors = await Host.findAll({
+      where: { parentHostId: hostid }
+    });
+
+    vendors.forEach(v => {
+      hostIds.push(v.id);
+    });
+  }
+  const checkData = (value) => { return value !== null && value !== undefined ? value : "Not Provided" };
+  const checkDate = (value) => {
+    if (value === null || value === undefined) {
+      return null;
     }
     else {
-      res.status(401).json({ message: 'Unauthorized User' });
+      return value;
     }
-  
-  };
-
-  const createListing = async(req, res) => {
-    const { vehicleid } = req.body;
+  }
+  const checkImage = (value) => {
+    return (value !== null && value !== undefined ? value : noImgPath);
+  }
+  if (host) {
     try {
-      const host = await Host.findByPk(req.user.id);
-      const vehiclehostid = req.user.id;
-  
-      if (!host) {
-        return res.status(401).json({ message: 'No Host found' });
-      }
-      const listingid = uuid.v4();
-      const listings = await Listing.create({
-        id: listingid,
-        vehicleid: vehicleid,
-        hostid: vehiclehostid,
+      // console.log("Host ID from token:", hostid);
+      const listing = await Listing.findAll({
+        where: {
+          hostid: {
+            [Op.in]: hostIds
+          }
+        }
       });
-  
-      const listing = {
-        id: listings.id,
-        vehicleid: listings.vehicleid,
-        hostId: listings.hostid,
-        details: listings.details,
-        startDate: listings.start_date,
-        startTime: listings.start_time,
-        endDate: listings.end_date,
-        endTime: listings.end_time,
-        pauseTimeStartDate: listings.pausetime_start_date,
-        pauseTimeEndDate: listings.pausetime_end_date,
-        pauseTimeStartTime: listings.pausetime_start_time,
-        pauseTimeEndTime: listings.pausetime_end_time,
-        bookingId: listings.bookingId
-      }
-      res.status(200).json({ message: 'Listing created successfully', listing });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error Adding Listing' });
+      const listings = listing.map(async (lstg) => {
+        let vehicle = await Vehicle.findOne({ where: { vehicleid: lstg.vehicleid } });
+        if (!vehicle) {
+          return;
+        }
+        let vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: lstg.vehicleid } });
+        let vehicleModel;
+        if (vehicle.vehicletype == 2) {
+          const car = await Car.findOne({ where: { vehicleid: lstg.vehicleid } });
+          vehicleModel = car.brand + ' ' + car.carmodel;
+        }
+        if (vehicle.vehicletype == 1) {
+          const bike = await Bike.findOne({ where: { vehicleid: lstg.vehicleid } });
+          vehicleModel = bike.brand + ' ' + bike.bikemodel;
+        }
+        if (vehicle.vehicletype == 3) {
+          const cab = await Cab.findOne({ where: { vehicleid: lstg.vehicleid } });
+          vehicleModel = cab.brand + ' ' + cab.model;
+        }
+        const vehicleImages = [
+          checkImage(vehicleAdditional.vehicleimage1),
+          checkImage(vehicleAdditional.vehicleimage2),
+          checkImage(vehicleAdditional.vehicleimage3),
+          checkImage(vehicleAdditional.vehicleimage4),
+          checkImage(vehicleAdditional.vehicleimage5)
+        ];
+        let lk = {
+          id: lstg.id,
+          vehicleid: lstg.vehicleid,
+          vehicleModel: vehicleModel,
+          hostId: lstg.hostid,
+          details: checkData(lstg.details),
+          startDate: checkDate(lstg.start_date),
+          startTime: checkDate(lstg.start_time),
+          endDate: checkDate(lstg.end_date),
+          endTime: checkDate(lstg.end_time),
+          pauseTimeStartDate: checkDate(lstg.pausetime_start_date),
+          pauseTimeEndDate: checkDate(lstg.pausetime_end_date),
+          pauseTimeStartTime: checkDate(lstg.pausetime_start_time),
+          pauseTimeEndTime: checkDate(lstg.pausetime_end_time),
+          bookingId: checkData(lstg.bookingId),
+          rcNumber: checkData(vehicle.Rcnumber),
+          vehicletype: checkData(vehicle.vehicletype),
+          vehicleImages,
+          vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
+          vehicleImage2: checkImage(vehicleAdditional.vehicleimage2),
+          vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
+          vehicleImage4: checkImage(vehicleAdditional.vehicleimage4),
+          vehicleImage5: checkImage(vehicleAdditional.vehicleimage5),
+        }
+        return { ...lk };
+      });
+      const hostListings = await Promise.all(listings);
+      res.status(201).json({ message: "Listing successfully queried", hostListings })
     }
-  };
-
-  //Put Listing
-  const putListing = async(req, res) => {
-    try {
-      // Get the listing ID from the request body
-      const { listingId, details, startDate, startTime, endDate, endTime, pauseTimeStartDate, pauseTimeEndDate, pauseTimeEndTime, pauseTimeStartTime, hourCount } = req.body;
-      const hostid = req.user.userid;
-      const host = await Host.findOne({ where: { id: hostid } });
-      // Check if the authenticated user is a host
-      if (!host) {
-        return res.status(401).json({ message: 'Unauthorized User' });
-      }
-  
-      const listing = await Listing.findOne({
-        where: { id: listingId, hostid: hostid },
-      });
-  
-      // If the listing doesn't exist or doesn't belong to the host, return an error
-      if (!listing) {
-        return res.status(404).json({ message: 'Listing not found' });
-      }
-  
-      // Update the listing's details
-      await listing.update({
-        details: details,
-        start_date: startDate,
-        start_time: startTime,
-        end_date: endDate,
-        end_time: endTime,
-        pausetime_start_date: pauseTimeStartDate,
-        pausetime_end_date: pauseTimeEndDate,
-        pausetime_start_time: pauseTimeStartTime,
-        pausetime_end_time: pauseTimeEndTime,
-        hourcount: hourCount
-      });
-  
-      const listings = {
-        id: listing.id,
-        vehicleid: listing.vehicleid,
-        hostId: listing.hostid,
-        details: listing.details,
-        startDate: listing.start_date,
-        startTime: listing.start_time,
-        endDate: listing.end_date,
-        endTime: listing.end_time,
-        pauseTimeStartDate: listing.pausetime_start_date,
-        pauseTimeEndDate: listing.pausetime_end_date,
-        pauseTimeStartTime: listing.pausetime_start_time,
-        pauseTimeEndTime: listing.pausetime_end_time,
-        bookingId: listing.bookingId
-      }
-  
-      res.status(200).json({ message: 'Listing updated successfully', updatedListing: listings });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error updating listing' });
+    catch (error) {
+      console.log(error);
+      res.status(500).json({ message: 'Error showing listings' });
     }
-  };
+  }
+  else {
+    res.status(401).json({ message: 'Unauthorized User' });
+  }
 
+};
 
-  
-  //Delete Listing
-  const deleteListing = async(req, res) => {
-    try {
-      // Get the listing ID from the request parameters
-      const listingId = req.body.listingId;
-      const hostid = req.user.userid;
-  
-      // Check if the authenticated user is a host
-      const host = await Host.findOne({ where: { id: hostid } });
-      if (!host) {
-        return res.status(401).json({ message: 'Unauthorised User' });
-      }
-  
-      // Find the listing
-      const listing = await Listing.findOne({
-        where: { id: listingId, hostid },
-      });
-  
-      // If the listing doesn't exist or doesn't belong to the host, return an error
-      if (!listing) {
-        return res.status(404).json({ message: 'Listing not found' });
-      }
-  
-      await listing.destroy();
-      res.status(201).json({ message: 'Listing reset successfully' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error deleting listing' });
+const createListing = async (req, res) => {
+  const { vehicleid } = req.body;
+  try {
+    const host = await Host.findByPk(req.user.id);
+    const vehiclehostid = req.user.id;
+
+    if (!host) {
+      return res.status(401).json({ message: 'No Host found' });
     }
-  };
+    const listingid = uuid.v4();
+    const listings = await Listing.create({
+      id: listingid,
+      vehicleid: vehicleid,
+      hostid: vehiclehostid,
+    });
 
-  module.exports = {getListing, createListing, putListing, deleteListing};
+    const listing = {
+      id: listings.id,
+      vehicleid: listings.vehicleid,
+      hostId: listings.hostid,
+      details: listings.details,
+      startDate: listings.start_date,
+      startTime: listings.start_time,
+      endDate: listings.end_date,
+      endTime: listings.end_time,
+      pauseTimeStartDate: listings.pausetime_start_date,
+      pauseTimeEndDate: listings.pausetime_end_date,
+      pauseTimeStartTime: listings.pausetime_start_time,
+      pauseTimeEndTime: listings.pausetime_end_time,
+      bookingId: listings.bookingId
+    }
+    res.status(200).json({ message: 'Listing created successfully', listing });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error Adding Listing' });
+  }
+};
+
+//Put Listing
+const putListing = async (req, res) => {
+  try {
+    // Get the listing ID from the request body
+    const { listingId, details, startDate, startTime, endDate, endTime, pauseTimeStartDate, pauseTimeEndDate, pauseTimeEndTime, pauseTimeStartTime, hourCount } = req.body;
+    const hostid = req.user.userid;
+    const host = await Host.findOne({ where: { id: hostid } });
+    // Check if the authenticated user is a host
+    if (!host) {
+      return res.status(401).json({ message: 'Unauthorized User' });
+    }
+    let hostIds = [hostid];
+
+    if (host.parentHostId === null) {
+      const vendors = await Host.findAll({
+        where: { parentHostId: hostid }
+      });
+
+      vendors.forEach(v => hostIds.push(v.id));
+    }
+
+    const listing = await Listing.findOne({
+      where: {
+        id: listingId,
+        hostid: {
+          [Op.in]: hostIds
+        }
+      }
+    });
+
+    // const listing = await Listing.findOne({
+    //   where: { id: listingId, hostid: hostid },
+    // });
+
+    // If the listing doesn't exist or doesn't belong to the host, return an error
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+
+    // Update the listing's details
+    await listing.update({
+      details: details,
+      start_date: startDate,
+      start_time: startTime,
+      end_date: endDate,
+      end_time: endTime,
+      pausetime_start_date: pauseTimeStartDate,
+      pausetime_end_date: pauseTimeEndDate,
+      pausetime_start_time: pauseTimeStartTime,
+      pausetime_end_time: pauseTimeEndTime,
+      hourcount: hourCount
+    });
+
+    const listings = {
+      id: listing.id,
+      vehicleid: listing.vehicleid,
+      hostId: listing.hostid,
+      details: listing.details,
+      startDate: listing.start_date,
+      startTime: listing.start_time,
+      endDate: listing.end_date,
+      endTime: listing.end_time,
+      pauseTimeStartDate: listing.pausetime_start_date,
+      pauseTimeEndDate: listing.pausetime_end_date,
+      pauseTimeStartTime: listing.pausetime_start_time,
+      pauseTimeEndTime: listing.pausetime_end_time,
+      bookingId: listing.bookingId
+    }
+
+    res.status(200).json({ message: 'Listing updated successfully', updatedListing: listings });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating listing' });
+  }
+};
+
+
+
+//Delete Listing
+const deleteListing = async (req, res) => {
+  try {
+    // Get the listing ID from the request parameters
+    const listingId = req.body.listingId;
+    const hostid = req.user.userid;
+
+    // Check if the authenticated user is a host
+    const host = await Host.findOne({ where: { id: hostid } });
+    if (!host) {
+      return res.status(401).json({ message: 'Unauthorised User' });
+    }
+    let hostIds = [hostid];
+
+    if (host.parentHostId === null) {
+      const vendors = await Host.findAll({
+        where: { parentHostId: hostid }
+      });
+
+      vendors.forEach(v => hostIds.push(v.id));
+    }
+
+    const listing = await Listing.findOne({
+      where: {
+        id: listingId,
+        hostid: {
+          [Op.in]: hostIds
+        }
+      }
+    });
+
+    // Find the listing
+    // const listing = await Listing.findOne({
+    //   where: { id: listingId, hostid },
+    // });
+
+    // If the listing doesn't exist or doesn't belong to the host, return an error
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+
+    await listing.destroy();
+    res.status(201).json({ message: 'Listing reset successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error deleting listing' });
+  }
+};
+
+module.exports = { getListing, createListing, putListing, deleteListing };

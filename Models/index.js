@@ -100,11 +100,18 @@ const associateModels = () => {
   User.hasMany(Booking, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(UserAddress, { foreignKey: 'userid', onDelete: 'SET NULL' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
-
+  Host.hasOne(HostAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
+  Driver.hasOne(DriverAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
+  UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
+  Host.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
+  Driver.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
   // Admin associations
   Admin.hasMany(SupportChat, { foreignKey: 'adminId', onDelete: 'CASCADE' });
   Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
+  HostAdditional.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
+
+Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Host.hasMany(Driver, { foreignKey: 'hostId' });

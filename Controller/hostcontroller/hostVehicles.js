@@ -42,6 +42,22 @@ async function deleteFromS3(key) {
   }
 }
 
+// const getAllowedHostIds = async (hostId) => {
+//   const host = await Host.findOne({ where: { id: hostId } });
+
+//   let hostIds = [hostId];
+
+//   if (host && host.parentHostId === null) {
+//     const vendors = await Host.findAll({
+//       where: { parentHostId: hostId }
+//     });
+
+//     vendors.forEach(v => hostIds.push(v.id));
+//   }
+
+//   return hostIds;
+// };
+
 const postVehicle = async (req, res) => {
   const { vehicletype } = req.body;
 
@@ -70,9 +86,10 @@ const postVehicle = async (req, res) => {
       timeStamp,
       permitNumber,
       serviceType,
-      seatingCapacity
+      seatingCapacity,
+      vendorid,
     } = req.body;
-
+    console.log(req.body);
     const requiredFields = {
       vehicleModel,
       type,
@@ -116,7 +133,7 @@ const postVehicle = async (req, res) => {
       Enginenumber: engineNumber || '0',
       Registrationyear: registrationYear,
       vehicleid: vehicleId,
-      hostId: req.user.id,
+      hostid: vendorid ? vendorid : req.user.id,
       timestamp: timeStamp,
       activated: false,
     });
@@ -183,7 +200,7 @@ const postVehicle = async (req, res) => {
     await Listing.create({
       id: listingId,
       vehicleid: vehicleId,
-      hostid: req.user.id,
+      hostid: vendorid ? vendorid : req.user.id,
     });
 
     res.status(201).json({
@@ -230,6 +247,12 @@ const putVehicleAdditional = async (req, res) => {
       helmet,
       helmetSpace,
       costperhr,
+      priceperkm,
+      packagePrice,
+      pricingType,
+      fixedPrice,
+      baseKm,
+      extraKmPrice,
       additionalInfo
     } = req.body;
 
@@ -272,11 +295,26 @@ const putVehicleAdditional = async (req, res) => {
     }
 
     const updatedvehicleAdditional = await vehicleAdditional.update(updateData, { where: { vehicleid: vehicleid } });
-    if (costperhr) {
-      const Price = await Pricing.findOne({ where: { vehicleid: vehicleid } })
-      if (Price) {
-        await Price.update({ costperhr: costperhr });
-      }
+
+    const pricingPayload = {
+      costperhr: costperhr || null,
+      pricingType: pricingType || null,
+      priceperkm: priceperkm || null,
+      fixedPrice: fixedPrice || null,
+      packagePrice: packagePrice || null,
+      baseKm: baseKm || null,
+      extraKmPrice: extraKmPrice || null,
+    };
+
+    let price = await Pricing.findOne({ where: { vehicleid } });
+
+    if (price) {
+      await price.update(pricingPayload);
+    } else {
+      await Pricing.create({
+        vehicleid,
+        ...pricingPayload,
+      });
     }
     let Additional;
     if (vehicle.vehicletype == 1) {
@@ -384,7 +422,7 @@ const getVehicleAdditional = async (req, res) => {
 
   try {
     // Check if the host owns the vehicle
-    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid, hostId: hostId } });
+    const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleid } });
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found or unauthorized access' });
     }
@@ -426,6 +464,9 @@ const getVehicleAdditional = async (req, res) => {
         color: checkData(bikeDetails?.color),
         bodyType: checkData(bikeDetails?.bodytype),
         costperhr: pricing.costperhr,
+        pricingType: pricing?.pricingType || null,
+        costperhr: pricing?.costperhr || null,
+        priceperkm: pricing?.priceperkm || null,
       };
 
       // Populate booleanSpecs for bikes
@@ -486,6 +527,12 @@ const getVehicleAdditional = async (req, res) => {
         vehicleModel: cabDetails?.model || "None",
         driverId: cabDetails?.driverId || "None",
         costperhr: pricing.costperhr,
+        pricingType: pricing?.pricingType || null,
+        priceperkm: pricing?.priceperkm || null,
+        fixedPrice: pricing?.fixedPrice || null,
+        packagePrice: pricing?.packagePrice || null,
+        baseKm: pricing?.baseKm || null,
+        extraKmPrice: pricing?.extraKmPrice || null,
       };
 
       // Populate booleanSpecs for cars
@@ -692,12 +739,12 @@ const pauseCab = async (req, res) => {
     const listing = await Listing.findOne(
       { where: { id: listingid } }
     );
-    
+
     const cab = await Cab.findOne(
       { where: { vehicleid: listing.vehicleid } }
     );
     if (cab?.driverId) {
-      
+
       await Driver.update(
         { isActive: false },
         { where: { id: cab.driverId } }
@@ -722,7 +769,7 @@ const resumeCab = async (req, res) => {
       { where: { vehicleid: vehicleid } }
     );
     if (cab?.driverId) {
-      
+
       await Driver.update(
         { isActive: true },
         { where: { id: cab.driverId } }

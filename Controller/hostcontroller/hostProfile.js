@@ -3,6 +3,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = require('../../s3Config');
 const fs = require('fs');
+const { Op } = require('sequelize');
 const path = require('path');
 const noProfileImg = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`;
 const uuid = require('uuid');
@@ -81,13 +82,13 @@ const hostProfile = async (req, res) => {
       });
     }
     let additionalInfo = await HostAdditional.findByPk(hostId);
-    console.log(additionalInfo);
     let hostDetails = {
       id: host.id,
       onlyVerifiedUsers: host.onlyVerifiedUsers,
       createdAt: host.createdAt,
       updatedAt: host.updatedAt,
-      userId: checkData(host.userId)
+      userId: checkData(host.userId),
+      parentHostId: checkData(host.parentHostId)
     }
 
     // const processedVehicles = vehicle.map((vehicleDetail) => ({
@@ -303,8 +304,6 @@ const postDriver = async (req, res) => {
       AadharVfid: aadharId || 'Not Provided',
       Email: email || 'Not Provided',
       Address: address || 'Not Provided',
-      profilepic: null,
-      aadhar: null
     });
 
     const driver = await DriverAdditional.findOne({ where: { id: userId } });
@@ -353,6 +352,43 @@ const deleteDriver = async (req, res) => {
   }
 };
 
+const deleteVendor = async (req, res) => {
+  try {
+    const vendorId = req.params.id;
+    const hostId = req.user.id; // coming from auth middleware
+    console.log('Delete vendor request', { vendorId, hostId });
+    const vendor = await Host.findOne({
+      where: {
+        id: vendorId,
+        parentHostId: hostId, // ensures host can delete only their vendor
+      },
+    });
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    await vendor.update({
+      parentHostId: null
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Vendor deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Delete vendor error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 const getAllDrivers = async (req, res) => {
   try {
@@ -390,7 +426,7 @@ const getAllDrivers = async (req, res) => {
     if (!drivers || drivers.length === 0) {
       return res.status(404).json({ message: "No drivers found for this host." });
     }
-
+    console.log(drivers[1].DriverAdditional);
     res.status(200).json({
       message: "Drivers fetched successfully",
       count: drivers.length,
@@ -406,25 +442,49 @@ const getAllDrivers = async (req, res) => {
 const verifyDriverProfile = async (req, res) => {
   try {
     const hostId = req.user.id;
-
+    console.log('verifyDriverProfile request', { hostId, body: req.body, files: req.files });
     const host = await Host.findByPk(hostId);
     if (!host) {
       return res.status(404).json({ message: 'Host not found' });
     }
+    console.log('verifyDriverProfile request', { hostId, body: req.body.id, files: req.files });
+    const driverId = req.body.id;
+
+    if (!driverId) {
+      return res.status(400).json({
+        message: "Driver id required"
+      });
+    }
+
+    const driver = await Driver.findOne({
+      where: {
+        id: driverId,
+        hostid: hostId
+      }
+    });
+
+    if (!driver) {
+      return res.status(404).json({
+        message: "Driver not found or not assigned to host"
+      });
+    }
+
+
 
     const { aadharFile, profilePic } = req.files || {};
 
     if (profilePic && profilePic[0]) {
       await DriverAdditional.update(
         { profilepic: profilePic[0].location || null },
-        { where: { id: hostId } }
+        { where: { id: driverId } }
       );
+      console.log('Updated driver profile pic', { driverId, profilePic: profilePic[0].location });
     }
 
     if (aadharFile && aadharFile[0]) {
       await DriverAdditional.update(
         { aadhar: aadharFile[0].location || null },
-        { where: { id: hostId } }
+        { where: { id: driverId } }
       );
     }
 
@@ -478,6 +538,63 @@ const verifyProfile = async (req, res) => {
   }
 };
 
+const verifyVendorProfile = async (req, res) => {
+  try {
+    const hostId = req.user.id;
+    console.log('verifyDriverProfile request', { hostId, body: req.body, files: req.files });
+    const host = await Host.findByPk(hostId);
+    if (!host) {
+      return res.status(404).json({ message: 'Host not found' });
+    }
+    console.log('verifyDriverProfile request', { hostId, body: req.body.id, files: req.files });
+    const vendorId = req.body.id;
+
+    if (!vendorId) {
+      return res.status(400).json({
+        message: "Vendor id required"
+      });
+    }
+
+    const vendor = await Host.findOne({
+      where: {
+        id: vendorId,
+        parentHostId: hostId
+      }
+    });
+
+    if (!vendor) {
+      return res.status(404).json({
+        message: "Vendor not found or not assigned to host"
+      });
+    }
 
 
-module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler, deleteDriver, postDriver, verifyDriverProfile, getAllDrivers, verifyDriverProfileHandler };
+
+    const { aadharFile, profilePic } = req.files || {};
+
+    if (profilePic && profilePic[0]) {
+      await HostAdditional.update(
+        { profilepic: profilePic[0].location || null },
+        { where: { id: vendorId } }
+      );
+      console.log('Updated vendor profile pic', { vendorId, profilePic: profilePic[0].location });
+    }
+
+    if (aadharFile && aadharFile[0]) {
+      await HostAdditional.update(
+        { aadhar: aadharFile[0].location || null },
+        { where: { id: vendorId } }
+      );
+    }
+
+    console.log('Vendor profile updated', { vendorId });
+
+    res.status(200).json({ message: 'Vendor profile files uploaded successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error uploading vendor profile files', error });
+  }
+};
+
+
+module.exports = { hostProfile, updateProfile, verifyProfile, verifyProfileHandler, deleteDriver, deleteVendor,postDriver, verifyDriverProfile, getAllDrivers, verifyDriverProfileHandler, verifyVendorProfile };

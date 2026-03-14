@@ -9,7 +9,7 @@ const csv = require('csv-parser');
 const { checkData, checkStatus } = require('./userProfile');
 const noVehicleImg = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 const { Sequelize } = require('sequelize');
-const BUFFER_MINUTES = 10; 
+const BUFFER_MINUTES = 10;
 
 const checkBool = (value) => {
   return value !== null && value !== undefined ? value : false;
@@ -460,7 +460,7 @@ const findvehicles = async (req, res) => {
           vehicleid: checkData(additionalData.vehicleid),
           timestamp: checkData(additionalData.timestamp),
           city: checkData(additionalData.city),
-          buisnessName: checkData(hostProfile.businessName),
+          buisnessName: checkData(hostProfile?.businessName),
           hostId: checkData(additionalData.hostId),
           createdAt: checkData(additionalData.createdAt),
           updatedAt: checkData(additionalData.updatedAt)
@@ -511,7 +511,7 @@ const findvehicles = async (req, res) => {
           timestamp: checkData(additionalData.timestamp),
           rating: checkData(additionalData.rating),
           city: checkData(additionalData.city),
-          buisnessName: checkData(hostProfile.businessName),
+          buisnessName: checkData(hostProfile?.businessName),
           hostId: checkData(additionalData.hostId),
           createdAt: checkData(additionalData.createdAt),
           updatedAt: checkData(additionalData.updatedAt)
@@ -543,26 +543,7 @@ const findvehicles = async (req, res) => {
           { title: "Ventilated Front Seat", value: checkBool(additionalData.ventelatedFrontSeat), field_name: "ventilatedFrontSeat", logo: "" }
         ];
       }
-      if (vehicle.vehicletype == 3) {
-        additionalData = await Cab.findOne({ where: { vehicleid: vehicleid } });
-        vehicleModel = additionalData.model;
-        Additional = {
-          cabmodel: checkData(additionalData.model),
-          type: checkData(additionalData.type),
-          brand: checkData(additionalData.brand),
-          variant: checkData(additionalData.variant),
-          color: checkData(additionalData.color),
-          vehicleid: checkData(additionalData.vehicleid),
-          timestamp: checkData(additionalData.timestamp),
-          rating: checkData(additionalData.rating),
-          city: checkData(additionalData.city),
-          buisnessName: checkData(hostProfile.businessName),
-          hostId: checkData(additionalData.hostId),
-          createdAt: checkData(additionalData.createdAt),
-          updatedAt: checkData(additionalData.updatedAt)
-        }
 
-      }
 
 
       // Fetch the Pricing data for the Car
@@ -574,7 +555,7 @@ const findvehicles = async (req, res) => {
         rcNumber: checkData(vehicle.Rcnumber),
         hostId: checkData(vehicle.hostId),
         rating: checkData(vehicle.rating),
-        buisnessName: checkData(vehicleAdditional.buisnessname),
+        // buisnessName: checkData(vehicleAdditional.buisnessname),
         registrationYear: checkData(vehicle.Registrationyear),
         additionalInfo: checkData(vehicleAdditional.Additionalinfo),
         latitude: checkData(vehicleAdditional.latitude),
@@ -591,19 +572,9 @@ const findvehicles = async (req, res) => {
       let costperhr = 0;
       let estimatedamount;
       if (cph) {
-        if (vehicletype != 3) {
-          hours = calculateTripHours(startDate, endDate, startTime, endTime);
-          amount = Math.round(cph.costperhr * hours);
-          costperhr = Math.round(cph.costperhr);
-        }
-        else {
-          const estimatedamount = await estimatePrice({
-            origin: pickup,
-            destination: destination,
-            vehicleId: vehicleid
-          });
-          console.log("Estimated Amount:", estimatedamount.estimatedPrice);
-        }
+        hours = calculateTripHours(startDate, endDate, startTime, endTime);
+        amount = Math.round(cph.costperhr * hours);
+        costperhr = Math.round(cph.costperhr);
 
         // Combine the Car data with the pricing information
         return { ...availableVehicle, pricing: { costPerHr: costperhr, hours: hours, amount: amount }, Additional };
@@ -630,8 +601,202 @@ const findvehicles = async (req, res) => {
   }
 }
 
+const findCabs = async (req, res) => {
 
-const findCabs = async (req, res) => { 
+  try {
+
+    const { pickup, destination, cabType } = req.body;
+
+    const pickupLat = pickup?.latitude;
+    const pickupLng = pickup?.longitude;
+
+    const destLat = destination?.latitude;
+    const destLng = destination?.longitude;
+
+    if (!pickupLat || !pickupLng || !destLat || !destLng) {
+      return res.status(400).json({ message: "Invalid pickup or destination coordinates." });
+    }
+
+    /// fetch activated cab vehicles
+    let vehicles = await Vehicle.findAll({
+
+      where: {
+        vehicletype: '3',
+        activated: true
+      },
+
+      include: [
+        { model: Cab },
+        { model: VehicleAdditional },
+        { model: Pricing },
+        { model: HostAdditional }
+      ]
+
+    });
+
+    let availableVehicles = [];
+
+    for (const v of vehicles) {
+
+      const cab = v.Cab;
+      const additional = v.VehicleAdditional;
+      const price = v.Pricing;
+      const host = v.HostAdditional;
+
+      if (!cab || !additional || !price) continue;
+
+      /// cabType filter
+      if (cabType === "airport" && !cab.permitNumber) continue;
+
+      if (cabType === "outstation" && cab.serviceType !== "outstation") continue;
+
+      if (cabType === "local" && cab.serviceType !== "local") continue;
+
+      /// distance calculation
+      const distance = haversineDistance(
+        pickupLat,
+        pickupLng,
+        additional.latitude,
+        additional.longitude
+      );
+
+      /// optional radius filter
+      if (distance > 50) continue;
+
+      /// booking check
+      const booking = await Booking.findOne({
+
+        where: {
+          vehicleid: v.vehicleid,
+          status: { [Op.in]: [1, 2, 5] }
+        }
+
+      });
+
+      if (booking) continue;
+
+      availableVehicles.push({
+
+        vehicleid: v.vehicleid,
+        rentalName: host?.businessName || "Rental",
+        cabType: cab.type,
+
+        vehicleImage1: additional.vehicleimage1 || noVehicleImg,
+        vehicleImage2: additional.vehicleimage2 || noVehicleImg,
+        vehicleImage3: additional.vehicleimage3 || noVehicleImg,
+        vehicleImage4: additional.vehicleimage4 || noVehicleImg,
+        vehicleImage5: additional.vehicleimage5 || noVehicleImg,
+
+        basePrice: price.priceperkm || price.fixedPrice || 0,
+
+        latitude: additional.latitude,
+        longitude: additional.longitude,
+
+        distance
+
+      });
+
+    }
+
+    /// group by rental
+    const grouped = {};
+
+    for (const v of availableVehicles) {
+
+      if (!grouped[v.rentalName]) {
+
+        grouped[v.rentalName] = {
+          rentalName: v.rentalName,
+          distance: v.distance,
+          cabs: {}
+        };
+
+      }
+
+      if (!grouped[v.rentalName].cabs[v.cabType]) {
+
+        grouped[v.rentalName].cabs[v.cabType] = {
+          count: 1,
+          vehicleid: v.vehicleid,
+          basePrice: v.basePrice,
+          images: [
+            v.vehicleImage1,
+            v.vehicleImage2,
+            v.vehicleImage3,
+            v.vehicleImage4,
+            v.vehicleImage5
+          ]
+        };
+
+      } else {
+
+        grouped[v.rentalName].cabs[v.cabType].count++;
+
+        /// keep cheapest vehicle
+        if (v.basePrice < grouped[v.rentalName].cabs[v.cabType].basePrice) {
+
+          grouped[v.rentalName].cabs[v.cabType].basePrice = v.basePrice;
+          grouped[v.rentalName].cabs[v.cabType].vehicleid = v.vehicleid;
+
+        }
+
+      }
+
+    }
+
+    /// estimate price only for cheapest vehicle
+    for (const rental of Object.values(grouped)) {
+
+      for (const type in rental.cabs) {
+
+        const vehicleId = rental.cabs[type].vehicleid;
+
+        try {
+
+          const estimate = await estimatePrice({
+
+            origin: `${pickupLat},${pickupLng}`,
+            destination: `${destLat},${destLng}`,
+            vehicleId
+
+          });
+
+          rental.cabs[type].price = estimate.estimatedPrice;
+
+        } catch (err) {
+
+          console.log("Error estimating price:", err.message);
+
+          rental.cabs[type].price = rental.cabs[type].basePrice;
+
+        }
+
+        delete rental.cabs[type].basePrice;
+
+      }
+
+    }
+
+    /// convert to array
+    const rentals = Object.values(grouped);
+
+    /// sort by nearest rental
+    rentals.sort((a, b) => a.distance - b.distance);
+
+    res.status(200).json({ rentals });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      message: "Error fetching cab listings"
+    });
+
+  }
+
+};
+const findCabs1 = async (req, res) => {
   const {
     pickup,
     destination,
@@ -694,7 +859,7 @@ const findCabs = async (req, res) => {
        3. Filter available cabs
     ----------------------------*/
     const cabResults = [];
-    
+
 
     for (const cabVehicle of cabs) {
       const vehicleid = cabVehicle.vehicleid;
@@ -750,13 +915,13 @@ const findCabs = async (req, res) => {
       const hostProfile = await HostAdditional.findOne({
         where: { id: cabVehicle.hostId }
       });
-          const vehicleImages = [
-      checkImage(vehicleAdditional.vehicleimage1),
-      checkImage(vehicleAdditional.vehicleimage2),
-      checkImage(vehicleAdditional.vehicleimage3),
-      checkImage(vehicleAdditional.vehicleimage4),
-      checkImage(vehicleAdditional.vehicleimage5)
-    ];
+      const vehicleImages = [
+        checkImage(vehicleAdditional.vehicleimage1),
+        checkImage(vehicleAdditional.vehicleimage2),
+        checkImage(vehicleAdditional.vehicleimage3),
+        checkImage(vehicleAdditional.vehicleimage4),
+        checkImage(vehicleAdditional.vehicleimage5)
+      ];
 
       let cabObj = {
         vehicleid: cabVehicle.vehicleid,
@@ -830,7 +995,7 @@ const findCabs = async (req, res) => {
         durationMin: cabResults[0]?.pricing?.durationMin || null,
         pickupDateTime,
         tripEndDateTime: cabResults[0] ? new Date(
-          pickupDateTime.getTime() + 
+          pickupDateTime.getTime() +
           (cabResults[0].pricing.durationMin + BUFFER_MINUTES) * 60000
         ) : null
       }

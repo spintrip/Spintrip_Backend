@@ -4,10 +4,9 @@ const { getAllBlogs } = require('../Controller/blogController');
 const { initiatePayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
 const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateProfile, verifyProfile, 
   getActiveSubscriptionForVehicle, getAllSubscriptions, verifyProfileHandler, getListing, createListing, putListing, deleteListing ,postVehicle, putVehicleAdditional, uploadvehicleImages,
-  postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking,
-  hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
+  postPricing, getVehicleAdditional, activateVehicle, tripstart, bookingcompleted, cancelbooking, verifyVendorProfile,hostBookings, postHostRating,postFeatures, allFeatures, updateFeatures, deleteFeatures,getBrand,deviceVehicleId,
    postDriver,getAllDrivers, verifyDriverProfileHandler, verifyDriverProfile, assignDriver, DriverBookings, deleteDriver,
-  postMonthlyData,postGetFeedback, postGetVehicleReg, pauseCab, resumeCab 
+  postMonthlyData,postGetFeedback, postGetVehicleReg, pauseCab, resumeCab, addVendor, getChildHosts, deleteVendor
   } = require('../Controller/hostcontroller/hostController');
 const router = express.Router();
 const chatController = require('../Controller/chatController');
@@ -33,6 +32,7 @@ router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
 
 router.put('/driververify', authenticate, verifyDriverProfileHandler, verifyDriverProfile );
 
+router.put('/vendorverify', authenticate,verifyProfileHandler, verifyVendorProfile );
 
 // Add the required cabRoutes module
 const cabRoutes = require('./cabRoutes');
@@ -72,8 +72,6 @@ router.put('/listing', authenticate, putListing);
 router.post('/pricing', authenticate, postPricing);
 //Delete Listing
 router.delete('/listing', authenticate, deleteListing);
-
-
 
 router.post('/monthly-data', authenticate, postMonthlyData);
 router.post('/getCarReg', postGetVehicleReg);
@@ -126,4 +124,11 @@ router.post('/Cancel-Booking', authenticate, cancelbooking);
 router.get('/driverbookings', authenticate, DriverBookings );
 
 router.get('/driver/:id', authenticate, deleteDriver);
+
+router.get('/vendor/:id', authenticate, deleteVendor);
+
+router.get("/my-vendors", authenticate, getChildHosts);
+
+router.post("/addvendors", authenticate, addVendor);
+
 module.exports = router;

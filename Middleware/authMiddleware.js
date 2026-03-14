@@ -17,26 +17,44 @@ const authenticate = async (req, res, next) => {
     try {
       // Verify Token
       const decodedToken = jwt.verify(token, SECRET_KEY);
+      console.log('Decoded Token:', decodedToken);
+      const user = await User.findByPk(decodedToken.id);
 
-      if (decodedToken.role === 'driver') {
-        // Handle Driver Role
-        const driver = await Driver.findOne({ where: { id: decodedToken.id } });
-        if (!driver) {
-          return res.status(401).json({ message: 'Driver not found or unauthorized' });
-        }
-
-        req.user = { ...driver.dataValues, userid: driver.id, role: 'driver' };
-      } else {
-        // Handle User, Host, or Admin
-        const user = await User.findOne({ where: { id: decodedToken.id } });
-        if (!user) {
-          return res.status(401).json({ message: 'User not found or unauthorized' });
-        }
-
-        req.user = { ...user.dataValues, userid: user.id, role: decodedToken.role };
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
       }
 
-      console.log(`${decodedToken.role} is logged in`);
+      let role = user.role;
+
+      // Validate host
+      if (role === "host" || role === "superhost") {
+
+        const host = await Host.findOne({ where: { id: user.id } });
+
+        if (!host) {
+          return res.status(401).json({ message: "Host not found" });
+        }
+
+      }
+
+      // Validate driver
+      if (role === "Driver") {
+
+        const driver = await Driver.findOne({ where: { id: user.id } });
+
+        if (!driver) {
+          return res.status(401).json({ message: "Driver not found" });
+        }
+
+        
+
+      }
+
+      // Attach user to request
+      req.user = {...user.dataValues, userid: user.id, role: decodedToken.role };
+
+      console.log(`${role} authenticated`);
+
       next();
     } catch (error) {
       return res.status(401).json({ message: 'Invalid token' });
@@ -62,7 +80,7 @@ const authenticate = async (req, res, next) => {
       //   next();
       //   return;
       // }
-       
+
       // Handle User, Host, or Admin Login
       const user = await User.findOne({ where: { phone } });
       if (!user) {

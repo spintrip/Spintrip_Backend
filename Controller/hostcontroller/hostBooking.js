@@ -2,6 +2,7 @@ const axios = require('axios');
 const { User, Vehicle, Chat, Cab, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, DriverAdditional, BookingExtension, Transaction,
   Driver } = require('../../Models');
+  const { Op } = require('sequelize');
 const {
   sendBookingConfirmationEmail,
   sendBookingCompletionEmail,
@@ -27,6 +28,25 @@ const sendOTP = async (phone, otp) => {
   } catch (error) {
     console.error('Error sending OTP:', error);
   }
+};
+
+const getAllowedHostIds = async (hostId) => {
+  if (!hostId) {
+    throw new Error("hostId is required");
+  }
+  const host = await Host.findOne({ where: { id: hostId } });
+
+  let hostIds = [hostId];
+
+  if (host && host.parentHostId === null) {
+    const vendors = await Host.findAll({
+      where: { parentHostId: hostId }
+    });
+
+    vendors.forEach(v => hostIds.push(v.id));
+  }
+
+  return hostIds;
 };
 
 const getBookingDetails = async (bookingId) => {
@@ -68,7 +88,7 @@ const getBookingDetails = async (bookingId) => {
 
 const tripstart = async (req, res) => {
   try {
-    const { bookingId } = req.body;
+    const { bookingId, UserOtp } = req.body;
     // Fetch the booking and ensure it is pending trip start
     const booking = await Booking.findOne({
       where: { Bookingid: bookingId, status: 1 }
@@ -76,6 +96,13 @@ const tripstart = async (req, res) => {
 
     if (!booking) {
       return res.status(404).json({ message: 'Trip already started or not present' });
+    }
+    const user = await User.findOne({
+      where: { id: booking.id }
+    });
+    console.log(user, UserOtp);
+    if (user.otp != UserOtp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
     }
 
     await Booking.update(
@@ -95,6 +122,7 @@ const tripstart = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 const bookingcompleted = async (req, res) => {
   try {
@@ -188,11 +216,14 @@ function checkTime(value) {
 const hostBookings = async (req, res) => {
   try {
     const hostid = req.user.id;
+    const hostIds = await getAllowedHostIds(hostid);
     let bookings = await Booking.findAll({
       include: [
         {
           model: Vehicle,
-          where: { hostId: hostid },
+          where: {   hostId: {
+          [Op.in]: hostIds
+        } },
           attributes: ['chassisno', 'Rcnumber', 'Enginenumber'],
         },
         {
@@ -310,7 +341,9 @@ const hostBookings = async (req, res) => {
 const DriverBookings = async (req, res) => {
   try {
     const driverid = req.user.id;
+    console.log(driverid);
     const driver = await Driver.findOne({ where: { id: driverid } });
+    console.log(driver);
     if (!driver) {
       return res.status(403).json({ message: "Not a valid driver" });
     }

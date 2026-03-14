@@ -658,7 +658,7 @@ const userbookings = async (req, res) => {
   try {
     let userId = req.user.userid;
     const bookings = await Booking.findAll({ where: { id: userId } });
-
+    const user = await User.findOne({ where: { id: userId } });
     if (bookings && bookings.length > 0) {
       const featureList = await Feature.findAll();
       const featureMap = featureList.reduce((map, feature) => {
@@ -746,6 +746,7 @@ const userbookings = async (req, res) => {
           pickup: pickup,
           destination: destination,
           driver: driver,
+          userOtp: user.otp,
           createdAt: checkData(booking.createdAt)
 
         };

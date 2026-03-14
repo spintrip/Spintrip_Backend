@@ -10,7 +10,7 @@ const {
   Listing,
   CabBookingRequest,
   CabBookingAccepted,
-  Driver, 
+  Driver,
   CabToDriver,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
@@ -87,8 +87,8 @@ const addDriver = async (req, res) => {
   const { name, phone } = req.body;
   const hostId = req.user.id;
   const driver = await Driver.findOne({ where: { phone: phone } });
-  if(driver){
-    res.status(500).json({ message: "Driver already exists, please assign the driver."});
+  if (driver) {
+    res.status(500).json({ message: "Driver already exists, please assign the driver." });
   }
   try {
     const driverId = uuid.v4();
@@ -139,78 +139,204 @@ const assignDriverToVehicle = async (req, res) => {
  */
 
 const estimatePrice = async ({ origin, destination, vehicleId }) => {
+
   try {
-    console.log("Estimating price with input:", { origin, destination, vehicleId });
 
-    // Validate input
     if (!origin || !destination || !vehicleId) {
-      throw new Error("Missing required parameters: origin, destination, or vehicleId.");
-    }
-    if (!origin.latitude || !origin.longitude || !destination.latitude || !destination.longitude) {
-      throw new Error("Invalid origin or destination coordinates.");
+      throw new Error("Missing parameters");
     }
 
-    // Fetch distance, duration, and traffic information from Google Maps API
-    const response = await axios.get(GOOGLE_MAPS_API_URL, {
-      params: {
-        origins: `${origin.latitude},${origin.longitude}`,
-        destinations: `${destination.latitude},${destination.longitude}`,
-        key: GOOGLE_MAPS_API_KEY,
-        departure_time: "now", // Fetch real-time traffic data
-      },
+    console.log("Estimating price with origin:", origin, "destination:", destination, "vehicleId:", vehicleId);
+
+    let distanceKm = 0;
+    let durationMin = 0;
+
+    try {
+      let originLat, originLng;
+      let destLat, destLng;
+
+      if (typeof origin === "string") {
+        const parts = origin.split(",");
+        originLat = parseFloat(parts[0]);
+        originLng = parseFloat(parts[1]);
+      } else {
+        originLat = parseFloat(origin.latitude);
+        originLng = parseFloat(origin.longitude);
+      }
+
+      if (typeof destination === "string") {
+        const parts = destination.split(",");
+        destLat = parseFloat(parts[0]);
+        destLng = parseFloat(parts[1]);
+      } else {
+        destLat = parseFloat(destination.latitude);
+        destLng = parseFloat(destination.longitude);
+      }
+
+      console.log("Parsed coordinates:", {
+        originLat,
+        originLng,
+        destLat,
+        destLng
+      });
+
+      const url =
+        `https://maps.googleapis.com/maps/api/distancematrix/json` +
+        `?origins=${originLat},${originLng}` +
+        `&destinations=${destLat},${destLng}` +
+        `&departure_time=now` +
+        `&units=metric` +
+        `&key=${GOOGLE_MAPS_API_KEY}`;
+
+      console.log("Google Request URL:", url);
+
+      const response = await axios.get(url);
+
+      console.log("Google Response:", response.data);
+      console.log("Google Maps API response:", response.data);
+
+      const element = response.data?.rows?.[0]?.elements?.[0];
+      console.log("Distance Matrix element:", element);
+      // if (!element || element.status !== "OK") {
+      //   throw new Error("Google distance error");
+      // }
+
+      distanceKm = element.distance.value / 1000;
+      durationMin = element.duration.value / 60;
+
+    } catch (googleError) {
+
+      console.log("Google API failed, using haversine distance");
+
+      distanceKm = haversineDistance(
+        origin.latitude,
+        origin.longitude,
+        destination.latitude,
+        destination.longitude
+      );
+
+      durationMin = distanceKm * 2; // assume avg 30km/h
+
+    }
+
+    /// GET PRICING
+    const pricing = await Pricing.findOne({
+      where: { vehicleid: vehicleId }
     });
-
-    const { rows } = response.data;
-
-    // Validate API response
-    if (!rows || !rows[0].elements || rows[0].elements[0].status !== "OK") {
-      console.error("Google Maps API response error:", response.data);
-      throw new Error("Failed to fetch distance and duration from Google Maps.");
-    }
-
-    const { distance, duration } = rows[0].elements[0];
-    const distanceInKm = distance.value / 1000; // Convert meters to kilometers
-    const durationInMinutes = duration.value / 60; // Convert seconds to minutes
-
-    // Fetch pricing information for the vehicle
-    const pricing = await Pricing.findOne({ where: { vehicleid: vehicleId } });
+    console.log("Pricing details:", pricing);
     if (!pricing) {
-      throw new Error("Pricing information not found for this vehicle.");
+      throw new Error("Pricing not found");
     }
 
-    const costPerKm = pricing?.costperhr || 20; // Use costperhr as cost per km
-    const basePrice = distanceInKm * costPerKm; // Base price calculation
+    let basePrice = 0;
 
-    // Initialize pricing multiplier
-    let multiplier = 1.0;
+    switch (pricing.pricingType) {
 
-    // Determine traffic conditions based on duration-to-distance ratio
-    const trafficRatio = durationInMinutes / distanceInKm; // Average time per kilometer
-    if (trafficRatio > 2.5) {
-      multiplier *= 1.3; // Heavy traffic increases price by 30%
-    } else if (trafficRatio > 1.5) {
-      multiplier *= 1.1; // Moderate traffic increases price by 10%
+      case "Per KM":
+
+        basePrice = distanceKm * (pricing.priceperkm || 0);
+
+        break;
+
+      case "Fixed Price":
+
+        basePrice = pricing.fixedPrice || 0;
+
+        break;
+
+      case "Package (Base KM + Extra)":
+
+        const baseKm = pricing.baseKm || 0;
+
+        if (distanceKm <= baseKm) {
+
+          basePrice = pricing.packagePrice || 0;
+
+        } else {
+
+          const extraKm = distanceKm - baseKm;
+          console.log("Calculating package price with extra km:", { distanceKm, baseKm, extraKm });
+          basePrice =
+            (pricing.packagePrice || 0) +
+            (extraKm * (pricing.extraKmPrice || 0));
+
+        }
+
+        break;
+
+      default:
+
+        basePrice = distanceKm * 20;
+
     }
 
-    // Apply night-time multiplier (22:00 - 06:00)
-    const currentHour = new Date().getHours();
-    if (currentHour >= 22 || currentHour < 6) {
-      multiplier *= 1.1; // Increase price by 10% during night hours
-    }
+    /// TRAFFIC MULTIPLIER
+    // const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
 
-    const estimatedPrice = Math.round(basePrice * multiplier); // Final price calculation
+    let multiplier = 1;
+
+    // if (ratio > 2.5) multiplier = 1.3;
+    // else if (ratio > 1.5) multiplier = 1.1;
+
+    /// NIGHT SURCHARGE
+    // const hour = new Date().getHours();
+
+    // if (hour >= 22 || hour < 6) {
+    //   multiplier *= 1.1;
+    // }
+
+    /// MINIMUM FARE
+    const minimumFare = 100;
+
+    const estimatedPrice = Math.max(
+      Math.round(basePrice * multiplier),
+      minimumFare
+    );
 
     return {
-      distance: distanceInKm,
-      duration: durationInMinutes,
+
+      distance: distanceKm,
+      duration: durationMin,
       estimatedPrice,
-      multiplier,
       basePrice,
+      multiplier
+
     };
-  } catch (error) {
-    console.error("Error estimating price:", error.message);
-    throw new Error("Failed to estimate price.");
+
+  } catch (err) {
+
+    console.error("Error estimating price:", err.message);
+
+    return {
+
+      distance: 0,
+      duration: 0,
+      estimatedPrice: 100,
+      basePrice: 100,
+      multiplier: 1
+
+    };
+
   }
+
+};
+const haversineDistance = (lat1, lon1, lat2, lon2) => {
+
+  const R = 6371;
+
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
 };
 const searchForCabs = async (req, res) => {
   const { fromLocation, searchRadius } = req.body;
@@ -451,7 +577,7 @@ const login = async (req, res) => {
     await driver.update({ otp });
 
     sendOTP(phone, otp);
-    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.', otp:otp });
+    res.status(200).json({ message: 'OTP sent successfully to the provided phone number.', otp: otp });
   } catch (error) {
     console.error('Error during driver login:', error);
     res.status(500).json({ message: 'Error during login', error });
@@ -462,7 +588,7 @@ const login = async (req, res) => {
  */
 
 
-const getEstimate =  async (req, res) => {
+const getEstimate = async (req, res) => {
   try {
     // Extract data from the request body
     const { origin, destination, vehicleId, trafficConditions } = req.body;
