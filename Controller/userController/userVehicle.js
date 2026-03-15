@@ -644,13 +644,13 @@ const findCabs = async (req, res) => {
       const host = v.HostAdditional;
 
       if (!cab || !additional || !price) continue;
-
+      console.log(`Checking vehicle ${v.vehicleid} - Cab: ${cab.type}, Service Type: ${cab.serviceType}, Location: (${additional.latitude}, ${additional.longitude})`);
       /// cabType filter
-      if (cabType === "airport" && !cab.permitNumber) continue;
+      if (cabType === "airport" &&  cab.serviceType !== "Airport" ) continue;
 
-      if (cabType === "outstation" && cab.serviceType !== "outstation") continue;
+      if (cabType === "outstation" && cab.serviceType !== "Outstation") continue;
 
-      if (cabType === "local" && cab.serviceType !== "local") continue;
+      if (cabType === "local" && cab.serviceType !== "Local") continue;
 
       /// distance calculation
       const distance = haversineDistance(

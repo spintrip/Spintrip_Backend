@@ -113,6 +113,8 @@ const booking = async (req, res) => {
     const { vehicleid, startDate, endDate, startTime, endTime, pickup, destination, features } = req.body;
     const userId = req.user.id;
 
+    console.log('Received booking request with data:', { vehicleid, startDate, endDate, startTime, endTime, pickup, destination, features, userId });
+
     // Fetch vehicle
     const vehicle = await Vehicle.findByPk(vehicleid);
     if (!vehicle) {
@@ -140,6 +142,7 @@ const booking = async (req, res) => {
     // ==============================
     // HOST VALIDATION
     // ==============================
+    console.log('Fetching host details for vehicle:', vehicle.hostId);
     const host = await Host.findByPk(vehicle.hostId);
     if (!host) {
       return res.status(404).json({ message: 'Host not found' });

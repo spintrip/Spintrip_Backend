@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       seatingCapacity: DataTypes.INTEGER,
       luggageCapacity: DataTypes.INTEGER,
       permitNumber: DataTypes.STRING,
+      serviceType: DataTypes.STRING,
       vehicleid: { type: DataTypes.STRING(36), primaryKey: true },
       driverId: DataTypes.STRING(36), 
       timestamp: DataTypes.DATE,

@@ -133,7 +133,7 @@ const postVehicle = async (req, res) => {
       Enginenumber: engineNumber || '0',
       Registrationyear: registrationYear,
       vehicleid: vehicleId,
-      hostid: vendorid ? vendorid : req.user.id,
+      hostId: vendorid ? vendorid : req.user.id,
       timestamp: timeStamp,
       activated: false,
     });
@@ -175,6 +175,7 @@ const postVehicle = async (req, res) => {
       // Cab - store cab-specific fields (no driver info)
       // Ensure your Models export a Cab model with these columns:
       // vehicleid, cabmodel (or use carmodel/vehicleModel), permitNumber, serviceType, seatingCapacity, brand, variant, color, bodytype, city
+      console.log('Creating cab with data:', { vehicleId, vehicleModel, type, brand, variant, color, bodyType, city, permitNumber, serviceType, seatingCapacity });
       await Cab.create({
         vehicleid: vehicleId,
         model: vehicleModel,
@@ -202,7 +203,9 @@ const postVehicle = async (req, res) => {
       vehicleid: vehicleId,
       hostid: vendorid ? vendorid : req.user.id,
     });
-
+    console.log('Vehicle created with ID:', vehicleId);
+    console.log('Listing created with ID:', listingId);
+    console.log('vendorid:', vendorid ? vendorid : req.user.id);
     res.status(201).json({
       message: 'Vehicle and listing added successfully for the host',
       vehicle,

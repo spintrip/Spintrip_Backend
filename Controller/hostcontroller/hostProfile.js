@@ -426,7 +426,6 @@ const getAllDrivers = async (req, res) => {
     if (!drivers || drivers.length === 0) {
       return res.status(404).json({ message: "No drivers found for this host." });
     }
-    console.log(drivers[1].DriverAdditional);
     res.status(200).json({
       message: "Drivers fetched successfully",
       count: drivers.length,
