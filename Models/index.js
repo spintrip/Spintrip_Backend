@@ -121,7 +121,7 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Host.hasMany(Driver, { foreignKey: 'hostId' });
-  Host.hasMany(HostCabRateCard, { foreignKey: 'hostId', onDelete: 'CASCADE' });
+  Host.hasMany(HostCabRateCard, { foreignKey: 'hostId', onDelete: 'CASCADE', constraints: false });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'CASCADE' });
 
   // Vehicle-specific associations

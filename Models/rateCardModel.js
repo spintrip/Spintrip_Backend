@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     hostId: {
       type: DataTypes.STRING(36),
-      allowNull: false,
+      allowNull: true,
     },
     city: {
       type: DataTypes.STRING,
