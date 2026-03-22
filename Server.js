@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 2000;
 
 // Assigning the variable app to express
 const app = express();
+app.set('trust proxy', 1); // Enable proxy trust for AWS ALB / NGINX / Cloudflare
 
 // Creating HTTP server
 const server = http.createServer(app);
