@@ -77,6 +77,7 @@ const initiateRecharge = async (req, res) => {
 
     // Build Cashfree body
     const createOrderRequest = {
+      link_id: orderId,
       link_amount: '1',
       link_currency: 'INR',
       link_purpose: 'Spintrip Wallet Recharge',
