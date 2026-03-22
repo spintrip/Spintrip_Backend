@@ -8,7 +8,7 @@ const { Sequelize, Op, where } = require('sequelize');;
 const { npm } = require('winston/lib/winston/config');
 const hostPaymentModel = require('../../Models/hostPaymentModel');
 const bikeModel = require('../../Models/bikeModel');
-const { sendPushNotification } = require('../../utils/notificationService');
+const { sendPushNotification } = require('../../Utils/notificationService');
 const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 
 

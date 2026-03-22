@@ -1,5 +1,5 @@
 const { User, Host, Driver } = require('../Models');
-const { sendPushNotification } = require('../utils/notificationService');
+const { sendPushNotification } = require('../Utils/notificationService');
 
 const updateFcmToken = async (req, res) => {
   try {
