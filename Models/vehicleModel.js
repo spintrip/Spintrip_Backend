@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     vehicletype: DataTypes.STRING,
     chassisno: DataTypes.STRING,
     Rcnumber: DataTypes.STRING,
+    RcImage: DataTypes.STRING,
+    PucImage: DataTypes.STRING,
     Enginenumber: DataTypes.STRING,
     Registrationyear: DataTypes.DATEONLY, 
     timestamp: DataTypes.DATE,

@@ -11,6 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON, // Can hold additional driver metadata (e.g., license number, experience)
       allowNull: true,
     },
+
+    fcmToken: {
+      type: DataTypes.STRING,
+      allowNull: true, // Assuming fcmToken can be null
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: false, // Tracks if the driver is actively available for trips
@@ -23,6 +28,14 @@ module.exports = (sequelize, DataTypes) => {
     pausetime_end_date: DataTypes.DATEONLY,
     pausetime_start_time: DataTypes.TIME,
     pausetime_end_time: DataTypes.TIME,
+    upiId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    bankAccountNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   });
 
   return Driver;

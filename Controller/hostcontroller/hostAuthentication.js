@@ -258,8 +258,22 @@ const hostVerifyOtp = async (req, res) => {
   const fixed_otp = user.otp;
   if (fixed_otp === otp) {
     const user = await User.findOne({ where: { phone } });
-      const token = jwt.sign({ id: user.id, role: 'host' }, 'your_secret_key');
-      return res.json({ message: 'OTP verified successfully', id: user.id, token , role: user.role });
+    
+    let isNewUser = false;
+    if (user.role === 'driver' || user.role === 'Driver') {
+      const driverAdditional = await DriverAdditional.findOne({ where: { id: user.id } });
+      if (!driverAdditional || !driverAdditional.FullName || !driverAdditional.AadharVfid || driverAdditional.FullName === "Not Provided" || driverAdditional.FullName === "") {
+        isNewUser = true;
+      }
+    } else {
+      const hostAdditional = await HostAdditional.findOne({ where: { id: user.id } });
+      if (!hostAdditional || !hostAdditional.FullName || !hostAdditional.Email || hostAdditional.FullName === "Not Provided" || hostAdditional.FullName === "") {
+        isNewUser = true;
+      }
+    }
+
+    const token = jwt.sign({ id: user.id, role: 'host' }, 'your_secret_key');
+    return res.json({ message: 'OTP verified successfully', id: user.id, token, role: user.role, isNewUser });
   } else {
     return res.status(401).json({ message: 'Invalid OTP' });
   }

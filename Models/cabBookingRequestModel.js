@@ -22,9 +22,32 @@ module.exports = (sequelize, DataTypes) => {
       startLocationLongitude: DataTypes.FLOAT,
       endLocationLatitude: DataTypes.FLOAT,
       endLocationLongitude: DataTypes.FLOAT,
+      startLocationAddress: DataTypes.TEXT,
+      endLocationAddress: DataTypes.TEXT,
       estimatedPrice: DataTypes.FLOAT,
+      subtotalBasePrice: { type: DataTypes.FLOAT, defaultValue: 0 },
+      gstAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+      commissionAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+      tdsAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+      driverEarnings: { type: DataTypes.FLOAT, defaultValue: 0 },
       finalPrice: DataTypes.FLOAT,
       otp: DataTypes.INTEGER, // OTP for trip initiation
+      cabType: {
+        type: DataTypes.ENUM("mini cab", "sedan", "suv", "12 seater", "luxury"),
+        allowNull: true,
+      },
+      bookingType: {
+        type: DataTypes.ENUM("Daily", "Local", "Rentals", "Outstation", "Airport"),
+        defaultValue: "Local",
+      },
+      paymentStatus: {
+        type: DataTypes.ENUM("pending", "paid", "failed"),
+        defaultValue: "pending",
+      },
+      amountPaid: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+      },
     });
   
     CabBookingRequest.associate = (models) => {

@@ -3,6 +3,8 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const axios = require('axios');
+const s3 = require('../s3Config');
+const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
 
   const generateLegalContractPDF = async (userEmail, hostEmail, bookingDetails) => {
@@ -215,15 +217,153 @@ const axios = require('axios');
     }
 };
 
+const generateInvoicePDF = async (userEmail, hostEmail, bookingDetails, pricingDetails) => {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ margin: 50 });
+        
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        
+        doc.on('end', async () => {
+            const pdfData = Buffer.concat(buffers);
+            const fileName = `invoice_${bookingDetails.bookingId || Date.now()}.pdf`;
+            
+            try {
+                const uploadParams = {
+                    Bucket: process.env.AWS_S3_BUCKET_NAME || 'spintrip-s3-prod',
+                    Key: `invoices/${fileName}`,
+                    Body: pdfData,
+                    ContentType: 'application/pdf',
+                };
+                await s3.send(new PutObjectCommand(uploadParams));
+                const s3Url = `https://${uploadParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
+                
+                resolve({ s3Url, pdfBuffer: pdfData });
+            } catch (error) {
+                reject(new Error('Failed to upload invoice to S3: ' + error.message));
+            }
+        });
+  
+        const logoPath = path.join(__dirname, 'assets', 'logo.png'); 
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, 50, 45, { width: 100 }).moveDown(5); 
+        } else {
+            doc.moveDown(5);
+        }
+  
+        doc
+          .fontSize(24)
+          .font('Helvetica-Bold')
+          .text('INVOICE', { align: 'right' })
+          .moveUp()
+          .fontSize(10)
+          .font('Helvetica')
+          .text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' })
+          .text(`Booking ID: ${bookingDetails.bookingId || 'N/A'}`, { align: 'right' })
+          .moveDown(2);
+  
+        doc
+          .moveTo(50, 150)
+          .lineTo(550, 150)
+          .stroke()
+          .moveDown(2);
+  
+        doc
+          .fontSize(12)
+          .font('Helvetica-Bold')
+          .text('Customer Details:', { underline: true })
+          .font('Helvetica')
+          .text(userEmail)
+          .moveDown(1);
+          
+        doc
+          .font('Helvetica-Bold')
+          .text('Trip Details:', { underline: true })
+          .font('Helvetica')
+          .text(`Vehicle: ${bookingDetails.carModel || 'N/A'}`)
+          .text(`Start: ${bookingDetails.startDate || ''} ${bookingDetails.startTime || ''}`)
+          .text(`End: ${bookingDetails.endDate || ''} ${bookingDetails.endTime || ''}`)
+          .moveDown(2);
+  
+        // Pricing Table
+        const tableTop = doc.y;
+        doc
+          .font('Helvetica-Bold')
+          .text('Description', 50, tableTop)
+          .text('Amount (INR)', 400, tableTop, { align: 'right' });
+        
+        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+        
+        let currentY = tableTop + 25;
+        
+        const drawRow = (desc, amount, isBold = false) => {
+            doc.font(isBold ? 'Helvetica-Bold' : 'Helvetica')
+               .text(desc, 50, currentY)
+               .text(`Rs. ${Number(amount).toFixed(2)}`, 400, currentY, { align: 'right' });
+            currentY += 20;
+        };
+
+        const safePrice = (val) => val ? Number(val) : 0;
+        
+        drawRow('Base Fare', safePrice(pricingDetails?.price));
+        if (safePrice(pricingDetails?.Taxamount) > 0) drawRow('Taxes (GST)', safePrice(pricingDetails?.Taxamount));
+        if (safePrice(pricingDetails?.convinienceFee) > 0) drawRow('Convenience Fee', safePrice(pricingDetails?.convinienceFee));
+        if (safePrice(pricingDetails?.Discountamount) > 0) drawRow('Discount Applied', -safePrice(pricingDetails?.Discountamount));
+        if (safePrice(pricingDetails?.deliveryFee) > 0) drawRow('Delivery Fee', safePrice(pricingDetails?.deliveryFee));
+        if (safePrice(pricingDetails?.ExtraHoursGst) > 0) drawRow('Extra Time Charges', safePrice(pricingDetails?.ExtraHoursGst));
+        
+        doc.moveTo(50, currentY).lineTo(550, currentY).stroke();
+        currentY += 15;
+        
+        drawRow('Total Amount', safePrice(pricingDetails?.FinalPrice), true);
+  
+        doc
+          .moveDown(4)
+          .fontSize(10)
+          .font('Helvetica-Oblique')
+          .text(
+            'Thank you for traveling with Spintrip! This is a computer generated invoice and does not require a signature.',
+            50, doc.y, { align: 'center' }
+          );
+  
+        doc.end();
+  
+      } catch (err) {
+        reject(new Error('Unexpected error generating invoice: ' + err.message));
+      }
+    });
+};
+
+const sendInvoiceEmail = async (userEmail, invoiceData, bookingDetails) => {
+    const subject = 'Your Spintrip Trip Invoice';
+    const bodyContent = `
+        <p>We hope you enjoyed your Spintrip journey! Your trip has concluded successfully.</p>
+        <p>Please find attached the official invoice for your booking (<strong>${bookingDetails.bookingId || 'N/A'}</strong>) of the <strong>${bookingDetails.carModel || 'Vehicle'}</strong>.</p>
+        <p>You can also access a permanent copy of your invoice from our secure cloud storage: <a href="${invoiceData.s3Url}">Download Invoice</a></p>
+        <p>If you have any questions or require assistance regarding this billing, feel free to contact us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
+        <p>We look forward to serving you again soon.</p>
+    `;
+    
+    // Attach the raw memory buffer directly to the email payload
+    sendEmailWithAttachments(userEmail, subject, bodyContent, [
+        { 
+            filename: `Spintrip_Invoice_${bookingDetails.bookingId || 'Booking'}.pdf`, 
+            content: invoiceData.pdfBuffer,
+            contentType: 'application/pdf'
+        },
+    ]);
+};
+
 
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.hostinger.com',
-    port: 465,
-    secure: true, // Use SSL/TLS
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false, // Brevo uses STARTTLS on port 587
     auth: {
-        user: 'info@spintrip.in', 
-        pass: 'PandaBhosdiKe24@',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
     }
 });
 
@@ -493,5 +633,7 @@ module.exports = {
     sendPaymentConfirmationEmail,
     sendBookingCancellationEmail,
     sendBookingCompletionEmail,
-    sendEmail
+    sendEmail,
+    generateInvoicePDF,
+    sendInvoiceEmail
 };

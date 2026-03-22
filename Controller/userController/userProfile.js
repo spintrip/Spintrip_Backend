@@ -35,7 +35,10 @@
       const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
       const dlFile = additionalInfo.dl ? [additionalInfo.dl] : [];
       const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
-  
+      
+      const { Driver } = require('../../Models');
+      const driverData = await Driver.findOne({ where: { id: userId } });
+
       let profile = {
         id: checkData(additionalInfo.id),
         dlNumber: checkData(additionalInfo.Dlverification),
@@ -46,7 +49,9 @@
         verificationStatus: checkStatus(additionalInfo.verification_status),
         dl: checkImage(dlFile),
         aadhar: checkImage(aadharFile),
-        profilePic: checkImage(profilePic)
+        profilePic: checkImage(profilePic),
+        upiId: driverData ? driverData.upiId : null,
+        bankAccountNumber: driverData ? driverData.bankAccountNumber : null
       };
   
       res.json({
@@ -75,9 +80,24 @@
       }
   
       // Update additional user information
-      const { dlNumber, fullName, aadharId, email, address, currentAddressVfId, mlData } = req.body;
-      await UserAdditional.update({
-        id: userId,
+      const { dlNumber, fullName, aadharId, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber } = req.body;
+      
+      if (user.role === 'Driver' || user.role === 'driver') {
+        const { Driver } = require('../../Models');
+        const driverExists = await Driver.findOne({ where: { id: userId } });
+        if (driverExists) {
+           await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: userId } });
+        } else {
+           await Driver.create({ id: userId, hostid: null, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
+        }
+      }
+
+      const [userAdditional, created] = await UserAdditional.findOrCreate({
+        where: { id: userId },
+        defaults: { id: userId }
+      });
+
+      await userAdditional.update({
         Dlverification: dlNumber,
         FullName: fullName,
         AadharVfid: aadharId,
@@ -85,7 +105,7 @@
         Address: address,
         CurrentAddressVfid: currentAddressVfId,
         ml_data: mlData
-      }, { where: { id: userId } });
+      });
   
       res.status(200).json({ message: 'Profile Updated successfully' });
     } catch (error) {

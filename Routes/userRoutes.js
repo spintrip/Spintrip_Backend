@@ -1,15 +1,16 @@
 // userRoutes.js
 const express = require('express');
 const { authenticate } = require('../Middleware/authMiddleware');
- const {
+const {
   searchForCabs,
   bookCab,
   getEstimate,
+  getCabAvailability,
 } = require('../Controller/cabController');
-const {signup , login, verify, getprofile, putprofile, uploadProfile, deleteuser,getbrand, features,findvehicles, onevehicle, getvehicleadditional,
-   postwishlist, cancelwishlist, getwishlist, getallVehicles, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
-   chat, chathistory,updateDeviceToken,toprating, postaddress , getaddress, findCabs
-  } = require('../Controller/userController/userController');
+const { signup, login, verify, getprofile, putprofile, uploadProfile, deleteuser, getbrand, features, findvehicles, onevehicle, getvehicleadditional,
+  postwishlist, cancelwishlist, getwishlist, getallVehicles, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
+  chat, chathistory, updateDeviceToken, toprating, postaddress, getaddress, findCabs, getWalletDetails, initiateRecharge, walletWebhook, walletWithdraw
+} = require('../Controller/userController/userController');
 const { getAllBlogs } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
@@ -50,13 +51,13 @@ router.get('/profile', authenticate, getprofile);
 router.put('/profile', authenticate, putprofile);
 
 // Verify route with image resizing
-router.put('/verify', authenticate, upload.fields([ { name: 'aadharFile', maxCount: 1 },{ name: 'dlFile', maxCount: 1 },{ name: 'profilePic', maxCount: 1 }]), uploadProfile);
+router.put('/verify', authenticate, upload.fields([{ name: 'aadharFile', maxCount: 1 }, { name: 'dlFile', maxCount: 1 }, { name: 'profilePic', maxCount: 1 }]), uploadProfile);
 
 router.get('/delete_user', authenticate, deleteuser);
 
 router.get('/get-brand', getbrand);
 
-router.post('/features', authenticate,features);
+router.post('/features', authenticate, features);
 
 //Get All Vehicles
 router.get('/vehicles', getallVehicles);
@@ -85,6 +86,7 @@ router.post('/extend-booking', authenticate, extend);
 router.post('/view-breakup', authenticate, breakup);
 
 //cab booking
+router.post('/cab-availability', authenticate, getCabAvailability);
 router.post('/search-cabs', authenticate, searchForCabs);
 router.post('/get-estimate', authenticate, getEstimate);
 router.post('/book-cab', authenticate, bookCab);
@@ -128,5 +130,14 @@ router.get('/view-blog', getAllBlogs);
 
 router.get('/transactions', authenticate, transactions);
 router.post('/update-device-token', authenticate, updateDeviceToken);
+
+// Wallet Endpoints
+router.get('/wallet', authenticate, getWalletDetails);
+router.post('/wallet/initiate-recharge', authenticate, initiateRecharge);
+router.post('/wallet/webhook/cashfree', walletWebhook);
+router.post('/wallet/withdraw', authenticate, walletWithdraw);
+
+const { updateFcmToken } = require('../Controller/notificationController');
+router.put('/fcm-token', authenticate, updateFcmToken);
 
 module.exports = router;

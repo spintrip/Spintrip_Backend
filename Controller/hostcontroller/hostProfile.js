@@ -37,8 +37,18 @@ const upload = multer({ storage: profileImageStorage });
 const hostProfile = async (req, res) => {
   try {
     const hostId = req.user.id;
+    
+    const userRoleCheck = await User.findByPk(hostId);
+    if (userRoleCheck && (userRoleCheck.role === 'Driver' || userRoleCheck.role === 'driver')) {
+       return await driverProfile(req, res);
+    }
+    
     const host = await Host.findByPk(hostId);
     if (!host) {
+      const driver = await Driver.findByPk(hostId);
+      if (driver) {
+         return await driverProfile(req, res);
+      }
       return res.status(404).json({ message: 'Host not found' });
     }
     const user = await User.findOne({ where: { id: hostId } });
@@ -107,6 +117,9 @@ const hostProfile = async (req, res) => {
     // }));
     const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
     const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
+    
+    const hostDriverLookup = await Driver.findOne({ where: { id: hostId } });
+
     let profile = {
       id: additionalInfo.id,
       GSTnumber: checkData(additionalInfo.GSTnumber),
@@ -120,6 +133,8 @@ const hostProfile = async (req, res) => {
       profilePic: checkProfileImg(profilePic),
       aadhar: checkProfileImg(aadharFile),
       businessName: checkData(additionalInfo.businessName),
+      upiId: hostDriverLookup ? hostDriverLookup.upiId : null,
+      bankAccountNumber: hostDriverLookup ? hostDriverLookup.bankAccountNumber : null,
     }
     // You can include more fields as per your User model
     res.json({ hostDetails, vehicle: processedVehicles, profile });
@@ -166,6 +181,8 @@ const driverProfile = async (req, res) => {
       hostAssigned: !!driver.hostid,
       createdAt: driver.createdAt,
       updatedAt: driver.updatedAt,
+      upiId: driver.upiId || null,
+      bankAccountNumber: driver.bankAccountNumber || null,
     };
 
     res.status(200).json({ profile });
@@ -180,7 +197,25 @@ const updateProfile = async (req, res) => {
   try {
     const hostId = req.user.id;
     const host = await Host.findByPk(hostId);
+    
+    // Check if they are a driver
     if (!host) {
+      const driver = await Driver.findByPk(hostId);
+      if (driver) {
+         const { fullName, aadharId, email, address, upiId, bankAccountNumber } = req.body;
+         if (fullName || aadharId || email || address) {
+            await DriverAdditional.update({
+              FullName: fullName,
+              AadharVfid: aadharId,
+              Email: email,
+              Address: address,
+            }, { where: { id: hostId } });
+         }
+         
+         await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: hostId } });
+         
+         return res.status(200).json({ message: 'Driver Profile Updated successfully' });
+      }
       return res.status(404).json({ message: 'Host not found' });
     }
 
@@ -197,6 +232,14 @@ const updateProfile = async (req, res) => {
         Email: email,
         Address: address,
       }, { where: { id: hostId } });
+    }
+
+    const { upiId, bankAccountNumber } = req.body;
+    const hostDriverRecord = await Driver.findOne({ where: { id: hostId } });
+    if (hostDriverRecord) {
+       await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: hostId } });
+    } else if (upiId || bankAccountNumber) {
+       await Driver.create({ id: hostId, hostid: null, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
     }
 
     // Update host's preference for only verified users
@@ -225,6 +268,8 @@ const postDriver = async (req, res) => {
     const aadharId = (req.body.aadharId || '').toString().trim();
     const email = (req.body.email || '').toString().trim();
     const address = (req.body.address || '').toString().trim();
+    const upiId = (req.body.upiId || '').toString().trim();
+    const bankAccountNumber = (req.body.bankAccountNumber || '').toString().trim();
 
     if (!phone || !fullName) return res.status(400).json({ message: 'phone and fullName required' });
 
@@ -262,8 +307,12 @@ const postDriver = async (req, res) => {
       if (driverRow) {
 
         // If driver exists but is detached, reassign
-        if (!driverRow.hostid) {
-          await driverRow.update({ hostid: hostId });
+        if (!driverRow.hostid || upiId || bankAccountNumber) {
+          await driverRow.update({ 
+            hostid: hostId,
+            ...(upiId && { upiId }),
+            ...(bankAccountNumber && { bankAccountNumber })
+          });
         }
 
         // If driver belongs to another host (important security check)
@@ -283,7 +332,7 @@ const postDriver = async (req, res) => {
         });
       }
 
-      await Driver.create({ id: existingUser.id, hostid: hostId });
+      await Driver.create({ id: existingUser.id, hostid: hostId, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
       await upsertAdditional(existingUser.id);
 
 
@@ -296,8 +345,8 @@ const postDriver = async (req, res) => {
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash('1234', bcrypt.genSaltSync(10));
 
-    await User.create({ id: userId, phone, password: hashedPassword, role: 'Driver' });
-    await Driver.create({ id: userId, hostid: hostId });
+    await User.create({ id: userId, phone, password: hashedPassword, role: 'driver' });
+    await Driver.create({ id: userId, hostid: hostId, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
     await DriverAdditional.create({
       id: userId,
       FullName: fullName || 'Not Provided',
@@ -470,7 +519,7 @@ const verifyDriverProfile = async (req, res) => {
 
 
 
-    const { aadharFile, profilePic } = req.files || {};
+    const { aadharFile, profilePic, dlFile } = req.files || {};
 
     if (profilePic && profilePic[0]) {
       await DriverAdditional.update(
@@ -478,6 +527,13 @@ const verifyDriverProfile = async (req, res) => {
         { where: { id: driverId } }
       );
       console.log('Updated driver profile pic', { driverId, profilePic: profilePic[0].location });
+    }
+
+    if (dlFile && dlFile[0]) {
+      await DriverAdditional.update(
+        { dl: dlFile[0].location || null },
+        { where: { id: driverId } }
+      );
     }
 
     if (aadharFile && aadharFile[0]) {
@@ -498,12 +554,14 @@ const verifyDriverProfile = async (req, res) => {
 
 const verifyProfileHandler = upload.fields([
   { name: 'aadharFile', maxCount: 1 },
-  { name: 'profilePic', maxCount: 1 }
+  { name: 'profilePic', maxCount: 1 },
+  { name: 'dlFile', maxCount: 1 }
 ]);
 
 const verifyDriverProfileHandler = upload.fields([
   { name: 'aadharFile', maxCount: 1 },
-  { name: 'profilePic', maxCount: 1 }
+  { name: 'profilePic', maxCount: 1 },
+  { name: 'dlFile', maxCount: 1 }
 ]);
 const verifyProfile = async (req, res) => {
   try {
@@ -514,11 +572,18 @@ const verifyProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const { aadharFile, profilePic } = req.files || {};
+    const { aadharFile, profilePic, dlFile } = req.files || {};
 
     if (profilePic && profilePic[0]) {
       await HostAdditional.update(
         { profilepic: profilePic[0].location || null },
+        { where: { id: userId } }
+      );
+    }
+
+    if (dlFile && dlFile[0]) {
+      await HostAdditional.update(
+        { dl: dlFile[0].location || null },
         { where: { id: userId } }
       );
     }

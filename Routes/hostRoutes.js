@@ -124,11 +124,13 @@ router.post('/Cancel-Booking', authenticate, cancelbooking);
 router.get('/driverbookings', authenticate, DriverBookings );
 
 router.get('/driver/:id', authenticate, deleteDriver);
-
 router.get('/vendor/:id', authenticate, deleteVendor);
 
 router.get("/my-vendors", authenticate, getChildHosts);
 
 router.post("/addvendors", authenticate, addVendor);
+
+const { updateFcmToken } = require('../Controller/notificationController');
+router.put('/fcm-token', authenticate, updateFcmToken);
 
 module.exports = router;

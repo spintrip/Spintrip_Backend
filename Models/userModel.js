@@ -9,7 +9,8 @@ module.exports = (sequelize, DataTypes) => {
     timestamp: DataTypes.DATE,
     status:DataTypes.INTEGER,
     rating: DataTypes.FLOAT,
-    deviceToken: DataTypes.STRING, 
+    deviceToken: DataTypes.STRING,
+    fcmToken: DataTypes.STRING, 
   });
 
   return User;

@@ -91,10 +91,17 @@ const sendOTP = async(phone, otp) => {
     const fixed_otp = user.otp;
     if (fixed_otp === otp) {
       const user = await User.findOne({ where: { phone } });
+      const userAdditional = await UserAdditional.findOne({ where: { id: user.id } });
+      
+      let isNewUser = false;
+      if (!userAdditional || !userAdditional.FullName || !userAdditional.Email || userAdditional.FullName === "Not Provided" || userAdditional.FullName === "") {
+        isNewUser = true;
+      }
+
       const token = generateToken(user);
       const id = user.id;
   
-      return res.json({ message: 'OTP verified successfully', id, token });
+      return res.json({ message: 'OTP verified successfully', id, token, isNewUser });
     } else {
       return res.status(401).json({ message: 'Invalid OTP' });
     }

@@ -1,20 +1,27 @@
 const express = require('express');
-const { authenticate } = require('../Middleware/authMiddleware');
+const { authenticate, restrictToSuperadmin } = require('../Middleware/authMiddleware');
 const {
   adminLogin, verifyOTP,
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
   getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
-  getAllBookings, getBookingById, updateBookingById, deleteBookingById,
+  getAllBookings, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
   sendNotification, adminProfile, deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars,
   allTransactions, getTransactionById, updateTransactionById, deleteTransactionById,getDevice, getDeviceById,
-  postCarDevice,getCarDevice, getCarDeviceById, updateCarDevice, deleteCarDeviceById, pendingProfile, approveProfile, 
-  rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile, subscriptions, postActiveVehicle
+  pendingProfile, approveProfile, rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile, subscriptions, postActiveVehicle,
+
+  getAllFeedbacks, deleteFeedback,
+  createVehicleType, getAllVehicleTypes, deleteVehicleType,
+  createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
+  getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
+  getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile,
+  getAllWithdrawals, approveWithdrawal, rejectWithdrawal
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
+const { addCab, addDriver, assignDriverToVehicle } = require('../Controller/cabController');
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
@@ -54,93 +61,119 @@ router.post('/login', adminLogin);
 router.post('/verify-otp', verifyOTP);
 router.get('/profile', authenticate, adminProfile);
 // User routes
-router.get('/users', authenticate, getAllUsers);
-router.get('/users/:id', authenticate, getUserById);
-router.delete('/users/:id', authenticate, deleteUser);
-router.put('/users/:id', authenticate, updateUser);
+router.get('/users', authenticate, restrictToSuperadmin, getAllUsers);
+router.get('/users/:id', authenticate, restrictToSuperadmin, getUserById);
+router.delete('/users/:id', authenticate, restrictToSuperadmin, deleteUser);
+router.put('/users/:id', authenticate, restrictToSuperadmin, updateUser);
+
+// Removed broken duplicate Driver & Cab Admin routes
+router.post('/cab/add-cab', authenticate, addCab);
+router.post('/cab/add-driver', authenticate, addDriver);
+router.post('/cab/assign-driver-vehicle', authenticate, assignDriverToVehicle);
+
+// Missing Frontend Render Routes for Drivers and Cabs Dashboard
+router.get('/cabs', authenticate, getAllCabs);
+router.get('/cabs/:id', authenticate, getCabById);
+router.put('/approve-cab/:id', authenticate, approveCabProfile);
+router.put('/reject-cab/:id', authenticate, rejectCabProfile);
+
+router.get('/drivers', authenticate, getAllDrivers);
+router.get('/drivers/:id', authenticate, getDriverById);
+router.put('/approve-driver/:id', authenticate, approveDriverProfile);
+router.put('/reject-driver/:id', authenticate, rejectDriverProfile);
+
+// Driver Withdrawal routes
+router.get('/withdrawals', authenticate, restrictToSuperadmin, getAllWithdrawals);
+router.put('/withdrawals/:id/approve', authenticate, restrictToSuperadmin, approveWithdrawal);
+router.put('/withdrawals/:id/reject', authenticate, restrictToSuperadmin, rejectWithdrawal);
+
+// Feedback routes
+router.get('/feedbacks', authenticate, restrictToSuperadmin, getAllFeedbacks);
+router.delete('/feedbacks/:id', authenticate, restrictToSuperadmin, deleteFeedback);
+
+// Vehicle Type routes
+router.post('/vehicle-types', authenticate, restrictToSuperadmin, createVehicleType);
+router.get('/vehicle-types', authenticate, restrictToSuperadmin, getAllVehicleTypes);
+router.delete('/vehicle-types/:id', authenticate, restrictToSuperadmin, deleteVehicleType);
 
 // Host routes
-router.get('/hosts', authenticate, getAllHosts);
-router.get('/hosts/:id', authenticate, getHostById);
-router.delete('/hosts/:id', authenticate, deleteHost);
+router.get('/hosts', authenticate, restrictToSuperadmin, getAllHosts);
+router.get('/hosts/:id', authenticate, restrictToSuperadmin, getHostById);
+router.delete('/hosts/:id', authenticate, restrictToSuperadmin, deleteHost);
 
 
-router.get('/cars', authenticate, cars);
+router.get('/cars', authenticate, restrictToSuperadmin, cars);
 // Get Car by ID
-router.get('/cars/:id', authenticate, carsById);
+router.get('/cars/:id', authenticate, restrictToSuperadmin, carsById);
 // Update Car by ID
-router.put('/cars/:vehicleid', authenticate, updateCars);
+router.put('/cars/:vehicleid', authenticate, restrictToSuperadmin, updateCars);
 
-router.delete('/cars/:id', authenticate, deleteCars);
+router.delete('/cars/:id', authenticate, restrictToSuperadmin, deleteCars);
 
 
-router.get('/bike', authenticate, bikes);
+router.get('/bike', authenticate, restrictToSuperadmin, bikes);
 // Get Car by ID
-router.get('/bike/:id', authenticate, bikeById);
+router.get('/bike/:id', authenticate, restrictToSuperadmin, bikeById);
 // Update Car by ID
-router.put('/bike/:vehicleid', authenticate, updateBike);
+router.put('/bike/:vehicleid', authenticate, restrictToSuperadmin, updateBike);
 
-router.delete('/bike/:id', authenticate, deleteBike);
-
-
-
-router.get('/transaction', authenticate, allTransactions);
-
-router.get('/transaction/:id', authenticate, getTransactionById);
-
-router.put('/transaction/:id', authenticate, updateTransactionById);
+router.delete('/bike/:id', authenticate, restrictToSuperadmin, deleteBike);
 
 
-router.delete('/transaction/:id', authenticate, deleteTransactionById);
+
+router.get('/transaction', authenticate, restrictToSuperadmin, allTransactions);
+router.get('/transaction/:id', authenticate, restrictToSuperadmin, getTransactionById);
+router.put('/transaction/:id', authenticate, restrictToSuperadmin, updateTransactionById);
+router.delete('/transaction/:id', authenticate, restrictToSuperadmin, deleteTransactionById);
+
+router.post('/createBlog', authenticate, restrictToSuperadmin, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), createBlog);
+router.post('/updateBlog', authenticate, restrictToSuperadmin, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), updateBlog);
+router.get('/deleteBlog/:id', authenticate, restrictToSuperadmin, deleteBlog);
+router.get('/getAllBlogs', authenticate, restrictToSuperadmin, getAllBlogs);
+router.get('/getBlogById/:id', authenticate, restrictToSuperadmin, getBlogById);
+router.get('/device', authenticate, restrictToSuperadmin, getDevice);
+router.get('/device/:id', authenticate, restrictToSuperadmin, getDeviceById);
+router.get('/activate-vehicle/:id', authenticate, restrictToSuperadmin, postActiveVehicle);
+// router.get('/car-device', getCarDevice);
+
+// router.get('/car-device/:id', getCarDeviceById);
 
 
-router.post('/createBlog', authenticate, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), createBlog);
-
-router.post('/updateBlog', authenticate, upload1.fields([{ name: 'blogImage_1', maxCount: 1 }, { name: 'blogImage_2', maxCount: 1 }]), updateBlog);
-
-router.get('/deleteBlog/:id', authenticate, deleteBlog);
-router.get('/getAllBlogs', getAllBlogs);
-router.get('/getBlogById/:id', getBlogById);
-router.get('/device', getDevice);
-router.get('/device/:id', getDeviceById);
-router.get('/activate-vehicle/:id', authenticate,  postActiveVehicle);
-
-router.post('/car-device', postCarDevice);
-
-// READ - Get all mappings
-router.get('/car-device', getCarDevice);
-
-router.get('/car-device/:id', getCarDeviceById);
+// router.put('/car-device', updateCarDevice);
 
 
-router.put('/car-device', updateCarDevice);
+// router.delete('/car-device/:id', deleteCarDeviceById);
 
+router.get('/pending-profile', authenticate, restrictToSuperadmin, pendingProfile);
+router.put('/approve-profile', authenticate, restrictToSuperadmin, approveProfile);
+router.put('/reject-profile', authenticate, restrictToSuperadmin, rejectProfile);
 
-router.delete('/car-device/:id', deleteCarDeviceById);
+router.get('/pending-vehicleprofile', authenticate, restrictToSuperadmin, pendingVehicleProfile);
+router.put('/approve-vehicleprofile', authenticate, restrictToSuperadmin, approveVehicleProfile);
+router.put('/reject-vehicleprofile', authenticate, restrictToSuperadmin, rejectVehicleProfile);
 
-router.get('/pending-profile', authenticate, pendingProfile);
+// Cabs and Drivers Verification Routes
+router.get('/cabs', authenticate, restrictToSuperadmin, getAllCabs);
+router.get('/cabs/:id', authenticate, restrictToSuperadmin, getCabById);
+router.put('/approve-cab/:id', authenticate, restrictToSuperadmin, approveCabProfile);
+router.put('/reject-cab/:id', authenticate, restrictToSuperadmin, rejectCabProfile);
 
-
-router.put('/approve-profile', authenticate, approveProfile);
-router.get('/pending-vehicleprofile', authenticate, pendingVehicleProfile);
-
-router.put('/approve-vehicleprofile', authenticate, approveVehicleProfile);
-
-router.put('/reject-profile', authenticate, rejectProfile);
-
-router.put('/reject-vehicleprofile', authenticate, rejectVehicleProfile);
+router.get('/drivers', authenticate, restrictToSuperadmin, getAllDrivers);
+router.get('/drivers/:id', authenticate, restrictToSuperadmin, getDriverById);
+router.put('/approve-driver/:id', authenticate, restrictToSuperadmin, approveDriverProfile);
+router.put('/reject-driver/:id', authenticate, restrictToSuperadmin, rejectDriverProfile);
 
 // vehicles routes
-router.get('/vehicles', authenticate, getAllvehicles);
-router.get('/vehicles/:id', authenticate, getvehicleById);
-router.put('/vehicles/:id', authenticate, updatevehicleById);
-router.delete('/vehicles/:id', authenticate, deletevehicleById);
+router.get('/vehicles', authenticate, restrictToSuperadmin, getAllvehicles);
+router.get('/vehicles/:id', authenticate, restrictToSuperadmin, getvehicleById);
+router.put('/vehicles/:id', authenticate, restrictToSuperadmin, updatevehicleById);
+router.delete('/vehicles/:id', authenticate, restrictToSuperadmin, deletevehicleById);
 
 // Listing routes
-router.get('/listings', authenticate, getAllListings);
-router.get('/listings/:id', authenticate, getListingById);
-router.put('/listings/:id', authenticate, updateListingById);
-router.delete('/listings/:id', authenticate, deleteListingById);
+router.get('/listings', authenticate, restrictToSuperadmin, getAllListings);
+router.get('/listings/:id', authenticate, restrictToSuperadmin, getListingById);
+router.put('/listings/:id', authenticate, restrictToSuperadmin, updateListingById);
+router.delete('/listings/:id', authenticate, restrictToSuperadmin, deleteListingById);
 
 // Payment Host routes
 // router.get('/hostPayments', authenticate, getAllHostPayments);
@@ -153,38 +186,49 @@ router.get('/bookings', authenticate, getAllBookings);
 router.get('/bookings/:id', authenticate, getBookingById);
 router.put('/bookings/:id', authenticate, updateBookingById);
 router.delete('/bookings/:id', authenticate, deleteBookingById);
+router.put('/bookings/:id/cancel', authenticate, cancelCabBooking);
+router.post('/bookings/:id/send-invoice', authenticate, sendCabInvoice);
 
-router.post('/Subscriptions', authenticate, subscriptions);
+router.post('/Subscriptions', authenticate, restrictToSuperadmin, subscriptions);
 
 // Brand routes
-router.post('/brand', authenticate, upload.single('carImage'), createOrUpdateBrand);
-router.get('/brands', authenticate, getAllBrands);
-router.put('/brand/:id', authenticate, updateBrandById);
+router.post('/brand', authenticate, restrictToSuperadmin, upload.single('carImage'), createOrUpdateBrand);
+router.get('/brands', authenticate, restrictToSuperadmin, getAllBrands);
+router.put('/brand/:id', authenticate, restrictToSuperadmin, updateBrandById);
 
 // Pricing routes
-router.get('/pricing', authenticate, getPricing);
-router.put('/pricing/:id', authenticate, updatePricingById);
+router.get('/pricing', authenticate, restrictToSuperadmin, getPricing);
+router.put('/pricing/:id', authenticate, restrictToSuperadmin, updatePricingById);
 
 // Tax routes
-router.post('/tax', authenticate, createTax);
-router.get('/taxes', authenticate, getAllTaxes);
-router.put('/tax/:id', authenticate, updateTaxById);
-router.delete('/tax/:id', authenticate, deleteTaxById);
+router.post('/tax', authenticate, restrictToSuperadmin, createTax);
+router.get('/taxes', authenticate, restrictToSuperadmin, getAllTaxes);
+router.put('/tax/:id', authenticate, restrictToSuperadmin, updateTaxById);
+router.delete('/tax/:id', authenticate, restrictToSuperadmin, deleteTaxById);
 
 // Feature routes
-router.post('/feature', authenticate, createFeature);
-router.get('/features', authenticate, getAllFeatures);
-router.delete('/feature/:id', authenticate, deleteFeatureById);
+router.post('/feature', authenticate, restrictToSuperadmin, createFeature);
+router.get('/features', authenticate, restrictToSuperadmin, getAllFeatures);
+router.delete('/feature/:id', authenticate, restrictToSuperadmin, deleteFeatureById);
 
 // Support routes
-router.get('/support-tickets', authenticate, viewAllSupportTickets);
-router.post('/support-tickets/reply', authenticate, replyToSupportTicket);
-router.post('/support-tickets/escalate', authenticate, escalateSupportTicket);
-router.post('/support-tickets/resolve', authenticate, resolveSupportTicket);
-router.get('/chats', authenticate, viewAllChats);
-router.get('/support-chats/:ticketId', authenticate, viewAllChats);
+router.get('/support-tickets', authenticate, restrictToSuperadmin, viewAllSupportTickets);
+router.post('/support-tickets/reply', authenticate, restrictToSuperadmin, replyToSupportTicket);
+router.post('/support-tickets/escalate', authenticate, restrictToSuperadmin, escalateSupportTicket);
+router.post('/support-tickets/resolve', authenticate, restrictToSuperadmin, resolveSupportTicket);
+router.get('/chats', authenticate, restrictToSuperadmin, viewAllChats);
+router.get('/support-chats/:ticketId', authenticate, restrictToSuperadmin, viewAllChats);
 
 // Notification routes
-router.post('/notifications', authenticate, sendNotification);
+router.post('/notifications', authenticate, restrictToSuperadmin, sendNotification);
+
+// ----------------------------------------------------------------------
+// GENERIC CRUD ROUTES FOR ALL MODELS
+// ----------------------------------------------------------------------
+router.post('/crud/:modelName', authenticate, restrictToSuperadmin, createRecord);
+router.get('/crud/:modelName', authenticate, restrictToSuperadmin, getAllRecords);
+router.get('/crud/:modelName/:id', authenticate, restrictToSuperadmin, getRecordById);
+router.put('/crud/:modelName/:id', authenticate, restrictToSuperadmin, updateRecord);
+router.delete('/crud/:modelName/:id', authenticate, restrictToSuperadmin, deleteRecord);
 
 module.exports = router;

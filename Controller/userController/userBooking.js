@@ -1,5 +1,5 @@
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction } = require('../../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction, CabBookingRequest, CabBookingAccepted } = require('../../Models');
 const uuid = require('uuid');
 const { Op } = require('sequelize');
 const moment = require('moment');
@@ -115,8 +115,11 @@ const booking = async (req, res) => {
 
     console.log('Received booking request with data:', { vehicleid, startDate, endDate, startTime, endTime, pickup, destination, features, userId });
 
-    // Fetch vehicle
-    const vehicle = await Vehicle.findByPk(vehicleid);
+    const t = await sequelize.transaction();
+
+    try {
+      // Fetch vehicle
+      const vehicle = await Vehicle.findByPk(vehicleid, { transaction: t });
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
@@ -273,6 +276,8 @@ const booking = async (req, res) => {
           ],
         },
         include: [Vehicle],
+        transaction: t,
+        lock: t.LOCK.UPDATE
       });
 
       if (!listing) {
@@ -334,7 +339,9 @@ const booking = async (req, res) => {
       driverid: isCab ? driverId : null,
       pickup: isCab ? pickup : null,
       destination: isCab ? destination : null,
-    });
+    }, { transaction: t });
+
+    await t.commit();
 
     const bookings = {
       bookingId: booking.Bookingid,
@@ -356,6 +363,10 @@ const booking = async (req, res) => {
 
     res.status(201).json({ message: 'Booking successful', bookings });
 
+    } catch (innerError) {
+      await t.rollback();
+      throw innerError;
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error processing booking' });
@@ -640,8 +651,6 @@ const cancelbooking = async (req, res) => {
           },
           { where: { Bookingid: bookingId } }
         );
-        const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
-        // sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
         res.status(201).json({ message: 'Trip Has been Cancelled' });
       }
       else {
@@ -649,7 +658,21 @@ const cancelbooking = async (req, res) => {
       }
     }
     else {
-      res.status(404).json({ message: 'Booking Not found' });
+      // Fallback for Spintrip live cab bookings
+      const cabBooking = await CabBookingRequest.findOne({ where: { bookingId } });
+      if (cabBooking) {
+        if (cabBooking.status === 'pending' || cabBooking.status === 'accepted') {
+           await CabBookingRequest.update(
+             { status: 'cancelled' },
+             { where: { bookingId } }
+           );
+           res.status(201).json({ message: 'Trip Has been Cancelled' });
+        } else {
+           res.status(404).json({ message: 'Ride Already Started' });
+        }
+      } else {
+        res.status(404).json({ message: 'Booking Not found' });
+      }
     }
   }
   catch (err) {
@@ -661,6 +684,7 @@ const userbookings = async (req, res) => {
   try {
     let userId = req.user.userid;
     const bookings = await Booking.findAll({ where: { id: userId } });
+    const cabBookings = await CabBookingRequest.findAll({ where: { userId } });
     const user = await User.findOne({ where: { id: userId } });
     if (bookings && bookings.length > 0) {
       const featureList = await Feature.findAll();
@@ -756,12 +780,192 @@ const userbookings = async (req, res) => {
       });
 
       const userBookings = (await Promise.all(userBookingPromises)).filter(booking => booking !== null);
-      res.status(201).json({ message: userBookings });
+
+      // PARSE AND FORMAT NEW CAB BOOKING REQUESTS
+      const taxRow = await Tax.findOne({ where: { id: 1 } });
+      const GST_RATE = taxRow ? taxRow.GST : 18.0;
+      const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
+      const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
+      const cabBookingPromises = cabBookings.map(async (cab) => {
+        const vehicle = cab.vehicleId ? await Vehicle.findOne({ where: { vehicleid: cab.vehicleId } }) : null;
+        let vehicleModel = cab.cabType || "Mini Cab";
+        let vehicleImage1 = noVehicleImg;
+        if (vehicle) {
+          const cabData = await Cab.findOne({ where: { vehicleid: vehicle.vehicleid } });
+          const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
+          if (cabData && cabData.brand) vehicleModel = cabData.brand.charAt(0).toUpperCase() + cabData.brand.slice(1).toLowerCase();
+          if (vehicleAdditional && vehicleAdditional.vehicleImage1) vehicleImage1 = vehicleAdditional.vehicleImage1;
+        }
+
+        let pickupObj = {
+          latitude: cab.startLocationLatitude || 0,
+          longitude: cab.startLocationLongitude || 0,
+          address: cab.startLocationAddress || ""
+        };
+        let destObj = {
+          latitude: cab.endLocationLatitude || 0,
+          longitude: cab.endLocationLongitude || 0,
+          address: cab.endLocationAddress || ""
+        };
+
+        // Map Status string to Int (1=Upcoming, 2=Ongoing, 3=Complete, 4=Cancelled, 5=Confirmed, 6=Reviewed)
+        let intStatus = 5; // Default Booking Confirmed
+        if (cab.status === 'accepted' || cab.status === 'assigned') intStatus = 1;
+        if (cab.status === 'started' || cab.status === 'ongoing') intStatus = 2;
+        if (cab.status === 'completed') intStatus = 3;
+        if (cab.status === 'cancelled' || cab.paymentStatus === 'failed') intStatus = 4;
+
+        let cabDriver = null;
+        const did = cab.driverid || cab.driverId;
+        if (did) {
+          const driverData = await Driver.findOne({ where: { id: did } });
+          const driverAdditional = await DriverAdditional.findOne({ where: { id: did } });
+          const driverPhoneUser = await User.findOne({ where: { id: did } });
+          if (driverData) {
+            cabDriver = {
+              id: driverData.id,
+              name: driverAdditional?.FullName || driverData.name || null,
+              phone: driverPhoneUser?.phone || driverData.phoneNumber || driverData.phone || null
+            };
+          }
+        }
+
+        const amt = cab.estimatedPrice || cab.finalPrice || 0;
+        const gstOut = amt - (amt * (100 / (100 + GST_RATE)));
+        const netBaseAmount = amt - gstOut;
+        const commOut = (netBaseAmount * COMMISSION_RATE) / 100;
+        const tdsOut = (netBaseAmount * TDS_RATE) / 100;
+        const dEarn = netBaseAmount - commOut - tdsOut;
+
+        return {
+          bookingId: cab.bookingId,
+          vehicleid: cab.vehicleId || "",
+          id: cab.userId,
+          status: intStatus,
+          amount: amt,
+          gstAmount: gstOut,
+          commissionAmount: commOut,
+          tdsAmount: tdsOut,
+          driverEarnings: dEarn,
+          startTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
+          endTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
+          startTripTime: checkData(cab.time || cab.createdAt.toISOString().split('T')[1].slice(0, 5)),
+          endTripTime: checkTime(cab.endTripTime),
+          hostId: vehicle ? vehicle.hostId : "",
+          vehicleModel: vehicleModel,
+          vehicletype: 3, // CAB Type
+          vehicleImage1: vehicleImage1,
+          vehicleImage2: noVehicleImg,
+          vehicleImage3: noVehicleImg,
+          vehicleImage4: noVehicleImg,
+          vehicleImage5: noVehicleImg,
+          latitude: cab.startLocationLatitude,
+          longitude: cab.startLocationLongitude,
+          cancelDate: null,
+          cancelReason: null,
+          features: [],
+          pickup: pickupObj,
+          destination: destObj,
+          driver: cabDriver,
+          userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
+          createdAt: checkData(cab.createdAt)
+        };
+      });
+
+      const formattedCabBookings = (await Promise.all(cabBookingPromises)).filter(b => b !== null);
+      
+      const allUserBookings = [...userBookings, ...formattedCabBookings];
+      // Sort unified list cleanly by Date Created
+      allUserBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      res.status(201).json({ message: allUserBookings });
+    } else if (cabBookings && cabBookings.length > 0) {
+      // Edge case: user never rented a car, only booked a cab. 
+      // The massive if statement on line 676 failed. We must gracefully catch it here and duplicate the logic.
+       const cabBookingPromises = cabBookings.map(async (cab) => {
+        const vehicle = cab.vehicleId ? await Vehicle.findOne({ where: { vehicleid: cab.vehicleId } }) : null;
+        let vehicleModel = cab.cabType || "Mini Cab";
+        let vehicleImage1 = noVehicleImg;
+        if (vehicle) {
+          const cabData = await Cab.findOne({ where: { vehicleid: vehicle.vehicleid } });
+          const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
+          if (cabData && cabData.brand) vehicleModel = cabData.brand.charAt(0).toUpperCase() + cabData.brand.slice(1).toLowerCase();
+          if (vehicleAdditional && vehicleAdditional.vehicleImage1) vehicleImage1 = vehicleAdditional.vehicleImage1;
+        }
+        // Map Status string to Int (1=Upcoming, 2=Ongoing, 3=Complete, 4=Cancelled, 5=Confirmed, 6=Reviewed)
+        let intStatus = 5; // Default Booking Confirmed
+        if (cab.status === 'accepted' || cab.status === 'assigned') intStatus = 1;
+        if (cab.status === 'started' || cab.status === 'ongoing') intStatus = 2;
+        if (cab.status === 'completed') intStatus = 3;
+        if (cab.status === 'cancelled' || cab.paymentStatus === 'failed') intStatus = 4;
+
+        let pickupObj = {
+          latitude: cab.startLocationLatitude || 0,
+          longitude: cab.startLocationLongitude || 0,
+          address: cab.startLocationAddress || ""
+        };
+        let destObj = {
+          latitude: cab.endLocationLatitude || 0,
+          longitude: cab.endLocationLongitude || 0,
+          address: cab.endLocationAddress || ""
+        };
+
+        let cabDriver = null;
+        const did = cab.driverid || cab.driverId;
+        if (did) {
+          const driverData = await Driver.findOne({ where: { id: did } });
+          const driverAdditional = await DriverAdditional.findOne({ where: { id: did } });
+          const driverPhoneUser = await User.findOne({ where: { id: did } });
+          if (driverData) {
+            cabDriver = {
+              id: driverData.id,
+              name: driverAdditional?.FullName || driverData.name || null,
+              phone: driverPhoneUser?.phone || driverData.phoneNumber || driverData.phone || null
+            };
+          }
+        }
+
+        return {
+          bookingId: cab.bookingId,
+          vehicleid: cab.vehicleId || "",
+          id: cab.userId,
+          status: intStatus,
+          amount: cab.estimatedPrice || cab.finalPrice || 0,
+          startTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
+          endTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
+          startTripTime: checkData(cab.time || cab.createdAt.toISOString().split('T')[1].slice(0, 5)),
+          endTripTime: checkTime(cab.endTripTime),
+          hostId: vehicle ? vehicle.hostId : "",
+          vehicleModel: vehicleModel,
+          vehicletype: 3, 
+          vehicleImage1: vehicleImage1,
+          vehicleImage2: noVehicleImg,
+          vehicleImage3: noVehicleImg,
+          vehicleImage4: noVehicleImg,
+          vehicleImage5: noVehicleImg,
+          latitude: cab.startLocationLatitude,
+          longitude: cab.startLocationLongitude,
+          cancelDate: null,
+          cancelReason: null,
+          features: [],
+          pickup: pickupObj,
+          destination: destObj,
+          driver: cabDriver,
+          userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
+          createdAt: checkData(cab.createdAt)
+        };
+      });
+
+      let formattedCabBookings = (await Promise.all(cabBookingPromises)).filter(b => b !== null);
+      formattedCabBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      res.status(201).json({ message: formattedCabBookings });
     } else {
       res.status(404).json({ message: 'Booking Not found' });
     }
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\nUserBookings Crash: ' + (err.stack || err.message) + '\\n\\n');
+    console.error(err);
+    res.status(500).json({ message: 'Server error: ' + (err.message || '') });
   }
 }
 
@@ -818,30 +1022,43 @@ const rating = async (req, res) => {
       }
     });
 
-    const booking = await Booking.findOne({
+    let booking = await Booking.findOne({
       where: {
         Bookingid: bookingId,
       }
     });
+
+    let isCab = false;
+    if (!booking) {
+      booking = await CabBookingRequest.findOne({ where: { bookingId: bookingId } });
+      isCab = true;
+    }
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    const vehicleIdVal = isCab ? booking.vehicleId : booking.vehicleid;
+
     const vehicle = await Vehicle.findOne({
       where: {
-        vehicleid: booking.vehicleid,
+        vehicleid: vehicleIdVal,
       }
     });
     if (!vehicle) {
       return res.status(404).json({ message: 'vehicle not found' });
     }
 
-    const bookingCount = await Booking.count({
-      where: {
-        vehicleid: booking.vehicleid,
-        status: 3,
-      }
-    });
+    let bookingCount = 1;
+    if (!isCab) {
+      bookingCount = await Booking.count({
+        where: {
+          vehicleid: vehicle.vehicleid,
+          status: 3,
+        }
+      });
+      if (bookingCount === 0) bookingCount = 1;
+    }
 
     let new_rating;
     if (bookingCount == 1) {
@@ -852,26 +1069,26 @@ const rating = async (req, res) => {
 
     await vehicle.update({ rating: new_rating });
 
-    const vehicle_ratings = await Vehicle.sum('rating', {
-      where: {
-        hostId: vehicle.hostId,
-      }
-    });
-
     if (feedback) {
       await Feedback.create({
         vehicleid: vehicle.vehicleid,
         userId: userId,
-        userName: user.FullName,
-        hostId: vehicle.hostId,
+        userName: user?.FullName || 'User',
+        hostId: isCab ? booking.driverid : vehicle.hostId, // For Cabs, driver is the host
         rating: rating,
         comment: feedback
       });
-      res.status(200).json({ message: 'Thank you for your response with feedback' });
-    } else {
-      // This block handles the case where there is no feedback
-      res.status(200).json({ message: 'Thank you for your response' });
     }
+
+    // Attempt to tag booking with status 6 (Completed with Review) where supported natively
+    try {
+      if (!isCab) {
+        await booking.update({ status: 6 });
+      }
+    } catch (ignoreStatusErr) {}
+
+    // Return successfully regardless of model enum strictness
+    res.status(200).json({ message: feedback ? 'Thank you for your response with feedback' : 'Thank you for your response' });
 
   } catch (error) {
     console.error(error);

@@ -2,6 +2,7 @@ const axios = require("axios");
 const jwt = require('jsonwebtoken');
 const uuid = require("uuid");
 const {
+  User,
   Host,
   Vehicle,
   VehicleAdditional,
@@ -11,12 +12,18 @@ const {
   CabBookingRequest,
   CabBookingAccepted,
   Driver,
+  DriverAdditional,
   CabToDriver,
+  Wallet,
+  WalletTransaction,
+  HostCabRateCard,
+  Tax,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
 const { sendOTP, generateOTP } = require('./hostcontroller/hostBooking');
+const { sendPushNotification } = require('../utils/notificationService');
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -43,6 +50,31 @@ const verifyDriverOtp = async (req, res) => {
 };
 
 /**
+ * Toggle Driver Online/Offline status
+ */
+const toggleDriverStatus = async (req, res) => {
+  const driverId = req.user.id;
+  try {
+    const driver = await Driver.findByPk(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    // Toggle the boolean value
+    driver.isActive = !driver.isActive;
+    await driver.save();
+
+    res.status(200).json({
+      message: `Driver status updated successfully`,
+      isActive: driver.isActive
+    });
+  } catch (error) {
+    console.error("Error toggling driver status:", error.message);
+    res.status(500).json({ message: "Error toggling driver status", error: error.message });
+  }
+};
+
+/**
  * Driver Keep-Alive
  */
 const driverKeepAlive = async (req, res) => {
@@ -61,7 +93,7 @@ const driverKeepAlive = async (req, res) => {
       return res.status(400).json({ message: "Invalid longitude" });
     }
 
-    const vehicleMapping = await CabToDriver.findOne({ where: { driverid: driverId } });
+    const vehicleMapping = await Cab.findOne({ where: { driverId: driverId } });
     if (!vehicleMapping) {
       return res.status(404).json({ message: "Driver is not assigned to a vehicle" });
     }
@@ -86,26 +118,63 @@ const driverKeepAlive = async (req, res) => {
 const addDriver = async (req, res) => {
   const { name, phone } = req.body;
   const hostId = req.user.id;
-  const driver = await Driver.findOne({ where: { phone: phone } });
-  if (driver) {
-    res.status(500).json({ message: "Driver already exists, please assign the driver." });
-  }
-  try {
-    const driverId = uuid.v4();
-    const otp = generateOTP();
+  const t = await sequelize.transaction();
 
+  try {
+    if (req.user.role === 'admin') {
+      let hostCheck = await Host.findByPk(hostId, { transaction: t });
+      if (!hostCheck) {
+        await Host.create({ id: hostId }, { transaction: t });
+      }
+    }
+    
+    // Check if user already exists
+    let user = await User.findOne({ where: { phone: phone }, transaction: t });
+    let driverId;
+
+    if (user) {
+      // If user exists, check if they are already acting as a driver
+      const existingDriver = await Driver.findByPk(user.id, { transaction: t });
+      if (existingDriver) {
+        await t.rollback();
+        return res.status(400).json({ message: "Driver profile already exists for this phone number." });
+      }
+      driverId = user.id;
+    } else {
+      driverId = uuid.v4();
+      const otp = generateOTP();
+      
+      // 1. Create User Identity
+      user = await User.create({
+        id: driverId,
+        phone,
+        password: "1234",
+        otp,
+        role: "driver"
+      }, { transaction: t });
+      
+      // Send OTP to the new phone
+      sendOTP(phone, otp);
+    }
+
+    // 2. Create nested Driver Identity
     const driver = await Driver.create({
       id: driverId,
       hostid: hostId,
-      name,
-      phone,
-      otp,
-      password: "1234",
-    });
-    console.log(driver)
-    sendOTP(phone, otp);
-    res.status(201).json({ message: "Driver added. OTP sent for verification.", driver });
+      isActive: false
+    }, { transaction: t });
+
+    // 3. Create nested Driver Additional info (name, etc)
+    await DriverAdditional.create({
+      id: driverId,
+      FullName: name
+    }, { transaction: t });
+
+    await t.commit();
+    res.status(201).json({ message: "Driver identity established successfully.", driverId });
+
   } catch (error) {
+    await t.rollback();
     console.error("Error adding driver:", error.message);
     res.status(500).json({ message: "Error adding driver", error: error.message });
   }
@@ -115,8 +184,16 @@ const addDriver = async (req, res) => {
  * Assign Driver to Vehicle
  */
 const assignDriverToVehicle = async (req, res) => {
-  const { driverId, vehicleId } = req.body;
+  const driverId = req.body.driverId || req.body.driverid;
+  const vehicleId = req.body.vehicleId || req.body.vehicleid;
   const hostId = req.user.id;
+
+  if (req.user.role === 'admin') {
+    let hostCheck = await Host.findByPk(hostId);
+    if (!hostCheck) {
+      await Host.create({ id: hostId });
+    }
+  }
 
   try {
     const driver = await Driver.findOne({ where: { id: driverId, hostid: hostId } });
@@ -125,7 +202,7 @@ const assignDriverToVehicle = async (req, res) => {
     const vehicle = await Vehicle.findOne({ where: { vehicleid: vehicleId, hostId } });
     if (!vehicle) return res.status(404).json({ message: "Vehicle not found or unauthorized" });
 
-    await CabToDriver.upsert({ driverid: driverId, vehicleid: vehicleId, assignedAt: new Date() });
+    await Cab.update({ driverId: driverId }, { where: { vehicleid: vehicleId } });
 
     res.status(200).json({ message: "Driver assigned to vehicle successfully" });
   } catch (error) {
@@ -138,15 +215,15 @@ const assignDriverToVehicle = async (req, res) => {
  * Search for nearby cabs
  */
 
-const estimatePrice = async ({ origin, destination, vehicleId }) => {
+const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini cab", bookingType = "Local", address = "" }) => {
 
   try {
 
-    if (!origin || !destination || !vehicleId) {
+    if (!origin) {
       throw new Error("Missing parameters");
     }
 
-    console.log("Estimating price with origin:", origin, "destination:", destination, "vehicleId:", vehicleId);
+    console.log("Estimating price with origin:", origin, "destination:", destination, "vehicleId:", vehicleId, "cabType:", cabType, "bookingType:", bookingType);
 
     let distanceKm = 0;
     let durationMin = 0;
@@ -219,104 +296,121 @@ const estimatePrice = async ({ origin, destination, vehicleId }) => {
 
     }
 
-    /// GET PRICING
-    const pricing = await Pricing.findOne({
-      where: { vehicleid: vehicleId }
+    /// NEW PRICING MATH VIA HOSTCABRATECARD
+    let subtotalBasePrice = 0;
+    
+    // Attempting to resolve global Rate Card explicitly for the cab type and city.
+    // Ensure we normalize cabType strings.
+    const normalizedCabType = cabType.toLowerCase();
+    
+    let rateCardCabType = "Mini"; // default fallback
+    if (normalizedCabType.includes("sedan")) rateCardCabType = "Sedan";
+    else if (normalizedCabType.includes("suv")) rateCardCabType = "SUV";
+    else if (normalizedCabType.includes("12")) rateCardCabType = "12 Seater";
+    else if (normalizedCabType.includes("lux")) rateCardCabType = "Luxury";
+    else rateCardCabType = "Mini"; // Fallback to Mini
+
+    // Find all rate cards for this Cab Type
+    const rateCards = await HostCabRateCard.findAll({
+       where: { cabType: rateCardCabType },
+       order: [['createdAt', 'DESC']]
     });
-    console.log("Pricing details:", pricing);
-    if (!pricing) {
-      throw new Error("Pricing not found");
+
+    let rateCard = null;
+    if (address && address.trim() !== "") {
+       let addrLower = address.toLowerCase().trim();
+       addrLower = addrLower.replace(/bengaluru/g, "bangalore");
+       addrLower = addrLower.replace(/bombay/g, "mumbai");
+       addrLower = addrLower.replace(/gurugram/g, "gurgaon");
+       addrLower = addrLower.replace(/mysuru/g, "mysore");
+
+       const matchedCards = rateCards.filter(rc => {
+         if (!rc.city) return false;
+         let dbCity = rc.city.toLowerCase().trim();
+         dbCity = dbCity.replace(/bengaluru/g, "bangalore");
+         dbCity = dbCity.replace(/bombay/g, "mumbai");
+         return addrLower.includes(dbCity) || dbCity.includes(addrLower);
+       });
+       if (matchedCards.length > 0) rateCard = matchedCards[0];
+    } else {
+       // Old fallback logic if no address is provided (global search)
+       if (rateCards.length > 0) rateCard = rateCards[0];
     }
 
-    let basePrice = 0;
-
-    switch (pricing.pricingType) {
-
-      case "Per KM":
-
-        basePrice = distanceKm * (pricing.priceperkm || 0);
-
-        break;
-
-      case "Fixed Price":
-
-        basePrice = pricing.fixedPrice || 0;
-
-        break;
-
-      case "Package (Base KM + Extra)":
-
-        const baseKm = pricing.baseKm || 0;
-
-        if (distanceKm <= baseKm) {
-
-          basePrice = pricing.packagePrice || 0;
-
-        } else {
-
-          const extraKm = distanceKm - baseKm;
-          console.log("Calculating package price with extra km:", { distanceKm, baseKm, extraKm });
-          basePrice =
-            (pricing.packagePrice || 0) +
-            (extraKm * (pricing.extraKmPrice || 0));
-
-        }
-
-        break;
-
-      default:
-
-        basePrice = distanceKm * 20;
-
+    if (rateCard) {
+      if (bookingType === 'Airport') {
+         subtotalBasePrice = rateCard.airportTransferPrice || 1200;
+         distanceKm = 30; durationMin = 60; // display defaults
+      } else if (bookingType === 'Rentals') {
+         subtotalBasePrice = rateCard.fullDayPrice || 2500;
+         distanceKm = 80; durationMin = 480; 
+      } else if (bookingType === 'Outstation') {
+         const driverAllowance = rateCard.driverAllowancePerDay || 300;
+         subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + driverAllowance;
+         distanceKm = 300; durationMin = 1440;
+      } else {
+         // Daily (Generic Point to point mapping)
+         // Assuming halfDayPrice mapped roughly to base
+         subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
+      }
+    } else {
+        // Stop generating fake generic rates. If the local Admin didn't add it, it shouldn't exist.
+        return { estimatedPrice: null, message: `No rate cards active for ${rateCardCabType} in your city.` };
     }
 
-    /// TRAFFIC MULTIPLIER
-    // const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+    /// APPLY CAB RATE CARD MULTIPLIERS, TRAFFIC/SURGE & TOLLS
+    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+    let trafficMultiplier = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+    
+    let hostSurgeMultiplier = rateCard ? (rateCard.surgeMultiplier || 1.0) : 1.0;
+    let flatTollCharges = rateCard ? (rateCard.tollCharges || 0.0) : 0.0;
+    
+    // Minimum Subtotal + Dynamic Surge Multipliers + Static Tolls
+    subtotalBasePrice = Math.max(Math.round((subtotalBasePrice * trafficMultiplier * hostSurgeMultiplier) + flatTollCharges), 100);
 
-    let multiplier = 1;
+    /// APPLY TAXES AND WITHHOLDINGS
+    const taxRule = await Tax.findOne({ order: [['createdAt', 'DESC']] }) || { GST: 18, TDS: 1 };
+    const gstRate = taxRule.GST / 100.0;
+    const tdsRate = (taxRule.TDS || 1) / 100.0;
+    const commissionRate = 0.20; // Explicit 20%
+    
+    // Calculate final invoice vectors
+    const gstAmount = Math.round(subtotalBasePrice * gstRate * 100) / 100;
+    const finalEstimatedPrice = subtotalBasePrice + gstAmount;
 
-    // if (ratio > 2.5) multiplier = 1.3;
-    // else if (ratio > 1.5) multiplier = 1.1;
-
-    /// NIGHT SURCHARGE
-    // const hour = new Date().getHours();
-
-    // if (hour >= 22 || hour < 6) {
-    //   multiplier *= 1.1;
-    // }
-
-    /// MINIMUM FARE
-    const minimumFare = 100;
-
-    const estimatedPrice = Math.max(
-      Math.round(basePrice * multiplier),
-      minimumFare
-    );
+    // Calculate Internal Withholdings
+    const tdsAmount = Math.round(subtotalBasePrice * tdsRate * 100) / 100;
+    const commissionAmount = Math.round(subtotalBasePrice * commissionRate * 100) / 100;
+    
+    const driverEarnings = subtotalBasePrice - commissionAmount - tdsAmount;
 
     return {
-
       distance: distanceKm,
       duration: durationMin,
-      estimatedPrice,
-      basePrice,
-      multiplier
-
+      subtotalBasePrice,
+      gstAmount,
+      estimatedPrice: finalEstimatedPrice,
+      commissionAmount,
+      tdsAmount,
+      driverEarnings,
     };
 
   } catch (err) {
-
     console.error("Error estimating price:", err.message);
 
+    // Default 100 Rs logic
+    const fallbackBase = 100;
+    const gstFallback = 18;
     return {
-
       distance: 0,
       duration: 0,
-      estimatedPrice: 100,
-      basePrice: 100,
-      multiplier: 1
-
+      subtotalBasePrice: fallbackBase,
+      gstAmount: gstFallback,
+      estimatedPrice: fallbackBase + gstFallback,
+      commissionAmount: 20,
+      tdsAmount: 1,
+      driverEarnings: 79 // 100 - 20 - 1
     };
-
   }
 
 };
@@ -339,7 +433,7 @@ const haversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 const searchForCabs = async (req, res) => {
-  const { fromLocation, searchRadius } = req.body;
+  const { fromLocation, searchRadius, cabType } = req.body;
 
   try {
     if (!fromLocation || !searchRadius) {
@@ -353,6 +447,35 @@ const searchForCabs = async (req, res) => {
 
     const fiveMinutesAgo = new Date(new Date() - 5 * 60 * 1000);
 
+    const vehicleInclude = cabType ? {
+      model: Vehicle,
+      required: true,
+      include: [{
+        model: Cab,
+        required: true,
+        where: { type: cabType },
+        attributes: ['driverId', 'type'],
+        include: [{
+           model: Driver,
+           required: true,
+           where: { isActive: true }
+        }]
+      }]
+    } : {
+      model: Vehicle,
+      required: true,
+      include: [{
+        model: Cab,
+        required: true,
+        attributes: ['driverId', 'type'],
+        include: [{
+           model: Driver,
+           required: true,
+           where: { isActive: true }
+        }]
+      }]
+    };
+
     // PostGIS spatial query
     const nearbyVehicles = await VehicleAdditional.findAll({
       attributes: [
@@ -361,36 +484,23 @@ const searchForCabs = async (req, res) => {
         'longitude',
         [
           sequelize.literal(
-            `ST_Distance(
-              geography(location),
-              geography(ST_MakePoint(${longitude}, ${latitude}))
-            ) / 1000`
+            `(6371 * acos(least(1.0, cos(radians(${latitude})) * cos(radians("VehicleAdditional"."latitude")) * cos(radians("VehicleAdditional"."longitude") - radians(${longitude})) + sin(radians(${latitude})) * sin(radians("VehicleAdditional"."latitude")))))`
           ),
           'distance', // Distance in kilometers
         ],
       ],
-      include: [
-        {
-          model: CabToDriver,
-          attributes: ['driverid'],
-          required: true, // Ensure the vehicle has a driver assigned
-        },
-      ],
+      include: [ vehicleInclude ],
       where: {
         timestamp: { [Op.gte]: fiveMinutesAgo },
         [Op.and]: sequelize.literal(
-          `ST_DWithin(
-            geography(location),
-            geography(ST_MakePoint(${longitude}, ${latitude})),
-            ${searchRadius * 1000}
-          )`
+          `(6371 * acos(least(1.0, cos(radians(${latitude})) * cos(radians("VehicleAdditional"."latitude")) * cos(radians("VehicleAdditional"."longitude") - radians(${longitude})) + sin(radians(${latitude})) * sin(radians("VehicleAdditional"."latitude"))))) <= ${searchRadius}`
         ),
       },
       order: [[sequelize.literal('distance'), 'ASC']],
     });
 
     if (!nearbyVehicles.length) {
-      return res.status(404).json({ message: "No active vehicles found within the specified radius." });
+      return res.status(404).json({ message: "No active vehicles found within the specified radius for this category." });
     }
 
     res.status(200).json({
@@ -400,6 +510,7 @@ const searchForCabs = async (req, res) => {
         latitude: vehicle.latitude,
         longitude: vehicle.longitude,
         distance: parseFloat(vehicle.get('distance')), // Sequelize raw attribute
+        cabType: vehicle.Vehicle?.Cab?.type
       })),
     });
   } catch (error) {
@@ -414,60 +525,123 @@ const searchForCabs = async (req, res) => {
 
 
 const bookCab = async (req, res) => {
-  const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
-  const userId = req.user.id
+  const { startLocation, endLocation, startDate, startTime, vehicleId, cabType, bookingType, estimatedPrice: reqEstimatedPrice } = req.body;
+  const userId = req.user.id;
   try {
-    // Validate input
-    if (!startLocation || !endLocation || !vehicleId) {
+    // Validate input (Rentals don't need an end location)
+    if (!startLocation || (!endLocation && bookingType !== 'Rentals')) {
       return res.status(400).json({ message: "Missing required parameters." });
     }
 
-    // Estimate price internally
-    const { estimatedPrice } = await estimatePrice({
-      origin: startLocation,
-      destination: endLocation,
-      vehicleId,
-    });
+    let estimatedPrice = reqEstimatedPrice;
+    let commissionAmount = 0;
 
-    if (!estimatedPrice) {
-      return res.status(500).json({ message: "Failed to estimate price." });
+    if (estimatedPrice) {
+      // Trust the Flutter frontend cart price perfectly
+      commissionAmount = Math.round(estimatedPrice * 0.20 * 100) / 100;
+    } else {
+      // Fallback estimate price internally
+      const estimate = await estimatePrice({
+        origin: startLocation,
+        destination: endLocation || startLocation,
+        vehicleId,
+        cabType,
+        bookingType
+      });
+      estimatedPrice = estimate.estimatedPrice;
+      commissionAmount = estimate.commissionAmount;
+    }
+
+    if (!estimatedPrice || !commissionAmount) {
+      return res.status(500).json({ message: "Failed to estimate price or calculate commission." });
     }
 
     const bookingId = uuid.v4();
+    const t = await sequelize.transaction();
 
-    // Create the booking request
-    await CabBookingRequest.create({
-      bookingId,
-      userId,
-      vehicleId,
-      startLocationLatitude: startLocation.latitude,
-      startLocationLongitude: startLocation.longitude,
-      endLocationLatitude: endLocation.latitude,
-      endLocationLongitude: endLocation.longitude,
-      estimate_price: estimatedPrice,
-      status: "pending",
-    });
+    try {
+      // Wallet check using exact estimatedPrice (100% Prepaid)
+      // Wallet check for sufficient funds
+      const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
-    // Notify drivers
-    const notificationText = "New booking request nearby";
-    const notificationMetadata = { bookingId, startLocation, endLocation, estimatedPrice };
+      if (!wallet || wallet.balance < estimatedPrice) {
+        await t.rollback();
+        return res.status(402).json({ 
+          message: `Insufficient Spintrip wallet balance to request trip. The total prepaid fare is Rs. ${estimatedPrice}. Please recharge your wallet before booking.` 
+        });
+      }
 
-    const drivers = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
+      // We only verify balance here. Actual full deduction is deferred to startTrip.
 
-    //for (const driver of drivers.nearbyDrivers) {
-    //  if (driver.deviceToken) {
-    //    await publishMessage(`driver-${driver.driverId}`, { text: notificationText, metadata: notificationMetadata });
-    //  }
-    //  await sendNotification({
-    //    receiverIds: [driver.driverId],
-    //    receiverType: "driver",
-    //    text: notificationText,
-    //    metadata: notificationMetadata,
-    //  });
-    //}
+      let dbCabType = cabType;
+      if (dbCabType) {
+        let lower = dbCabType.toLowerCase();
+        if (lower.includes('mini')) dbCabType = 'mini cab';
+        else if (lower.includes('sedan')) dbCabType = 'sedan';
+        else if (lower.includes('suv')) dbCabType = 'suv';
+        else if (lower.includes('12')) dbCabType = '12 seater';
+        else if (lower.includes('lux')) dbCabType = 'luxury';
+        else dbCabType = 'mini cab'; // Fallback
+      }
+
+      // Generate a secure 4-digit Ride OTP for this booking
+      const rideOtp = Math.floor(1000 + Math.random() * 9000);
+
+      // Create the booking request
+      await CabBookingRequest.create({
+        bookingId,
+        userId,
+        vehicleId,
+        date: startDate || null,
+        time: startTime || null,
+        startLocationLatitude: startLocation.latitude,
+        startLocationLongitude: startLocation.longitude,
+        startLocationAddress: startLocation.address || "",
+        endLocationLatitude: endLocation?.latitude || startLocation.latitude,
+        endLocationLongitude: endLocation?.longitude || startLocation.longitude,
+        endLocationAddress: endLocation?.address || startLocation.address || "",
+        estimatedPrice: estimatedPrice,
+        status: "pending",
+        cabType: dbCabType,
+        otp: rideOtp,
+        bookingType: bookingType || "Local"
+      }, { transaction: t });
+
+      await t.commit();
+    } catch (innerError) {
+      await t.rollback();
+      throw innerError;
+    }
+
+    // Notify drivers ONLY if this is a live Local ride or a specific vehicle was already picked.
+    if (bookingType === 'Local' || bookingType === 'Daily' || vehicleId) {
+      const notificationText = "New booking request nearby";
+      const notificationMetadata = { bookingId, startLocation, endLocation, estimatedPrice };
+
+      // DISABLED - Express Route cannot be called directly without res object
+      // const drivers = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
+
+      //for (const driver of drivers.nearbyDrivers) {
+      //  if (driver.deviceToken) {
+      //    await publishMessage(`driver-${driver.driverId}`, { text: notificationText, metadata: notificationMetadata });
+      //  }
+      //  await sendNotification({
+      //    receiverIds: [driver.driverId],
+      //    receiverType: "driver",
+      //    text: notificationText,
+      //    metadata: notificationMetadata,
+      //  });
+      //}
+    }
+
+    const customer = await User.findByPk(userId);
+    if (customer && customer.fcmToken) {
+      await sendPushNotification(customer.fcmToken, "Booking Confirmed", `Your Cab Booking for Rs. ${estimatedPrice} is confirmed! Waiting for Driver Assignment.`);
+    }
 
     res.status(201).json({ message: "Booking created and drivers notified", bookingId, estimatedPrice });
   } catch (error) {
+    require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\n' + (error.stack || error.message) + '\\n\\n');
     console.error("Error booking cab:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -498,9 +672,13 @@ const addCab = async (req, res) => {
 
   try {
     // Validate host
-    const host = await Host.findByPk(req.user.id);
+    let host = await Host.findByPk(req.user.id);
     if (!host) {
-      return res.status(401).json({ message: "Host not found" });
+      if (req.user.role === 'admin' || req.user.role === 'Driver' || req.user.role === 'driver' || req.user.role === 'host') {
+        host = await Host.create({ id: req.user.id }); // Auto-create host profile to satisfy Vehicle foreign key
+      } else {
+        return res.status(401).json({ message: "Unauthorized: You must be a Host, Driver, or Admin to register a Cab." });
+      }
     }
 
     // Generate vehicle ID
@@ -527,26 +705,21 @@ const addCab = async (req, res) => {
       address,
     });
 
+    // Check if the user generating the Cab is actually a Driver
+    const userRoleCheck = await User.findByPk(req.user.id);
+    const isDriver = userRoleCheck && (userRoleCheck.role === 'Driver' || userRoleCheck.role === 'driver');
+
     // Create Cab entry
     await Cab.create({
       vehicleid: vehicleId,
-      cabmodel: vehicleModel,
+      model: vehicleModel,
       type,
       brand,
       variant,
       color,
       bodytype: bodyType,
       city,
-    });
-
-    // Validate and Create Pricing entry
-    if (!costperkm || costperkm <= 0) {
-      return res.status(400).json({ message: "Invalid cost per km. Please provide a positive value." });
-    }
-
-    await Pricing.create({
-      vehicleid: vehicleId,
-      costperhr: costperkm, // Save costperkm as costperhr
+      driverId: isDriver ? req.user.id : null,
     });
 
     // Create Listing entry
@@ -591,15 +764,15 @@ const login = async (req, res) => {
 const getEstimate = async (req, res) => {
   try {
     // Extract data from the request body
-    const { origin, destination, vehicleId, trafficConditions } = req.body;
+    const { origin, destination, vehicleId, trafficConditions, cabType, bookingType, address } = req.body;
 
-    // Validate the input
-    if (!origin || !destination || !vehicleId) {
-      return res.status(400).json({ message: "Missing required parameters: origin, destination, or vehicleId." });
+    // Validate the input (vehicleId is optional now for generic quotes)
+    if (!origin) {
+      return res.status(400).json({ message: "Missing required parameters: origin." });
     }
 
     // Call the estimatePrice function with the required parameters
-    const result = await estimatePrice({ origin, destination, vehicleId, trafficConditions });
+    const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, trafficConditions, cabType, bookingType, address });
 
     // Return the result to the client
     res.status(200).json(result);
@@ -657,31 +830,55 @@ const createSoftBooking = async (req, res) => {
       return res.status(400).json({ message: "Missing required parameters." });
     }
 
-    // Estimate price internally
-    const { estimatedPrice, distance } = await estimatePrice({
-      origin: startLocation,
-      destination: endLocation,
-      vehicleId,
-    });
+    // Estimate price internally (Now includes exact commission breakdown)
+    const {
+      subtotalBasePrice,
+      gstAmount,
+      estimatedPrice,
+      commissionAmount,
+      tdsAmount,
+      driverEarnings,
+    } = await estimatePrice({ origin: startLocation, destination: endLocation, cabType, bookingType });
 
-    if (!estimatedPrice) {
-      return res.status(500).json({ message: "Failed to estimate price." });
+    if (!estimatedPrice || !commissionAmount) {
+      return res.status(500).json({ message: "Failed to estimate price or calculate commission." });
     }
 
-    const bookingId = uuid.v4();
+    const t = await sequelize.transaction();
+    try {
+      // Wallet check for exact estimatedPrice calculation
+      const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
-    // Create a soft booking entry in the database
-    await CabBookingRequest.create({
-      bookingId,
-      userId,
-      vehicleId,
-      startLocationLatitude: startLocation.latitude,
-      startLocationLongitude: startLocation.longitude,
-      endLocationLatitude: endLocation.latitude,
-      endLocationLongitude: endLocation.longitude,
-      estimate_price: estimatedPrice,
-      status: "soft_booked", // Soft booking status
-    });
+      if (!wallet || wallet.balance < estimatedPrice) {
+        await t.rollback();
+        return res.status(402).json({ 
+          message: `Insufficient Spintrip wallet balance. The total prepaid fare is Rs. ${estimatedPrice}. Please recharge your wallet.` 
+        });
+      }
+
+      // Verify user has balance before searching for cab
+      // Wallet WILL BE DEBITED explicitly ONLY when the Trip strictly Starts natively.
+      const bookingId = uuid.v4();
+
+      // Create a soft booking entry in the database
+      await CabBookingRequest.create({
+        bookingId,
+        userId,
+        endTripTime: null,
+        vehicleId,
+        startLocationLatitude: startLocation.latitude,
+        startLocationLongitude: startLocation.longitude,
+        endLocationLatitude: endLocation.latitude,
+        endLocationLongitude: endLocation?.longitude || startLocation.longitude,
+        estimatedPrice: estimatedPrice,
+        status: 5, // Status 5 is 'Assigning Driver'
+      }, { transaction: t });
+      
+      await t.commit();
+    } catch (innerError) {
+      await t.rollback();
+      throw innerError;
+    }
 
     // Search for nearby cabs
     const driversResponse = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
@@ -739,16 +936,19 @@ const acceptBooking = async (req, res) => {
 
   try {
     // Fetch the soft booking
-    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: "soft_booked" } });
+    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 5 } });
     if (!booking) {
       return res.status(404).json({ message: "Soft booking not found or already taken." });
     }
 
-    // Update soft booking to confirmed
+    // Update soft booking to confirmed (status 1)
     await CabBookingRequest.update(
-      { status: "confirmed", driverId },
+      { status: 1, driverId },
       { where: { bookingId } }
     );
+
+    // Set Driver to Offline so they don't appear in new ping searches
+    await Driver.update({ isActive: false }, { where: { id: driverId } });
 
     // Generate an OTP for the trip
     const tripOtp = generateOTP();
@@ -760,7 +960,10 @@ const acceptBooking = async (req, res) => {
       vehicleid: booking.vehicleId,
       id: booking.userId,
       status: 1, // 1 indicates "confirmed"
-      amount: booking.estimate_price,
+      amount: booking.subtotalBasePrice || booking.estimatedPrice, // Save exact base fare
+      GSTAmount: booking.gstAmount || 0,
+      TDSAmount: booking.tdsAmount || 0,
+      totalUserAmount: booking.estimatedPrice, // Total charged to customer
       startTripDate: new Date(),
     });
 
@@ -800,16 +1003,114 @@ const checkBookingStatus = async (req, res) => {
       return res.status(404).json({ message: "Booking not found." });
     }
 
-    res.status(200).json({
-      status: booking.status,
-      driverId: booking.driverId || null,
-      tripOtp: booking.CabBookingAccepted?.tripOtp || null,
-    });
+    res.status(200).json({ status: booking.status, tripOtp: booking.CabBookingAccepted?.tripOtp });
   } catch (error) {
     console.error("Error checking booking status:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+/**
+ * Superhost Assign Driver to Booking
+ */
+const superhostAssignDriver = async (req, res) => {
+  const { bookingId, driverId, vehicleId } = req.body;
+  const superhostId = req.user.id; 
+
+  try {
+    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 5 } });
+    if (!booking) {
+      return res.status(400).json({ message: "Booking not found or not in searching state." });
+    }
+
+    // Verify ownership via hostId or parentHostId
+    const vehicle = await Vehicle.findOne({
+      include: [{ model: Host, where: { [Op.or]: [{ id: superhostId }, { parentHostId: superhostId }] } }],
+      where: { vehicleid: vehicleId }
+    });
+
+    if (!vehicle) return res.status(403).json({ message: "Unauthorized: Vehicle does not belong to your fleet." });
+
+    // Link vehicle to booking and assign driver
+    booking.vehicleId = vehicleId;
+    booking.driverid = driverId;
+    booking.status = 1; // 1 = Upcoming / Confirmed
+    await booking.save();
+
+    // Notify Driver
+    const device = await Driver.findOne({ where: { id: driverId } });
+    if (device && device.fcmToken) {
+      await sendPushNotification(device.fcmToken, "New Ride Assigned", "You have been assigned a new ride by your Fleet Admin.");
+    }
+    
+    // Notify User
+    const userDevice = await User.findOne({ where: { id: booking.userId } });
+    if (userDevice && userDevice.fcmToken) {
+      await sendPushNotification(userDevice.fcmToken, "Driver Assigned", "Your cab is on the way!");
+    }
+
+    res.status(200).json({ message: "Driver and vehicle assigned successfully.", booking });
+  } catch (error) {
+    console.error("Error assigning driver:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * Bank Transfer Upload/Confirmation
+ */
+const confirmBankPayment = async (req, res) => {
+  const { bookingId, transactionRef } = req.body;
+
+  try {
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    if (!booking) return res.status(404).json({ message: "Booking not found." });
+
+    // Mock verification
+    booking.paymentStatus = "paid";
+    booking.amountPaid = booking.estimatedPrice || booking.finalPrice || 0;
+    await booking.save();
+
+    res.status(200).json({ message: "Payment confirmed via bank transfer. Waiting for assignment.", booking });
+  } catch (error) {
+    console.error("Error confirming payment:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * Track Driver Live Location
+ */
+const trackDriverLocation = async (req, res) => {
+  const { bookingId } = req.params;
+
+  try {
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    if (!booking || !booking.vehicleId) {
+      return res.status(404).json({ message: "Booking or assigned vehicle not found." });
+    }
+
+    const vehicleLocation = await VehicleAdditional.findOne({
+      where: { vehicleid: booking.vehicleId },
+      attributes: ['latitude', 'longitude', 'timestamp']
+    });
+
+    if (!vehicleLocation) {
+      return res.status(404).json({ message: "Location data unavailable." });
+    }
+
+    res.status(200).json({
+      latitude: vehicleLocation.latitude,
+      longitude: vehicleLocation.longitude,
+      lastUpdated: vehicleLocation.timestamp
+    });
+  } catch (error) {
+    console.error("Error tracking driver:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
 
 const checkPendingBookings = async (req, res) => {
   const driverId = req.user.id; // Driver's ID from JWT authentication
@@ -833,9 +1134,106 @@ const checkPendingBookings = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-const endTrip = async (req, res) => {
-  const { bookingId } = req.body;
+const startTrip = async (req, res) => {
+  const { bookingId, otp } = req.body;
   const driverId = req.user.id;
+
+  if (!otp) {
+    return res.status(400).json({ message: "OTP is required to start the trip." });
+  }
+
+  const transaction = await sequelize.transaction();
+  try {
+    const booking = await Booking.findOne({
+      where: { Bookingid: bookingId, status: 1 }, // 1 = confirmed
+      transaction,
+    });
+
+    if (!booking) {
+      await transaction.rollback();
+      return res.status(404).json({ message: "Booking not found or not in confirmed state." });
+    }
+
+    const acceptedBooking = await CabBookingAccepted.findOne({
+      where: { bookingId },
+      transaction
+    });
+
+    if (!acceptedBooking || String(acceptedBooking.tripOtp) !== String(otp)) {
+      await transaction.rollback();
+      return res.status(400).json({ message: "Invalid OTP to start trip." });
+    }
+
+    const assignedDriver = await Cab.findOne({
+      where: { driverId: driverId, vehicleid: booking.vehicleId },
+      transaction,
+    });
+
+    if (!assignedDriver) {
+      await transaction.rollback();
+      return res.status(403).json({ message: "Driver not authorized for this booking." });
+    }
+
+    // The Passenger Prepaid Fare was cleanly deducted structurally ahead of time inside 'createSoftBooking'.
+    // Double-Billing logic organically prevented natively.
+
+    // Process Wallet Deduction (100% Prepaid Fare)
+    const userId = booking.id;
+    const estimatedPrice = booking.amount || 0; // The total booking amount
+
+    const wallet = await Wallet.findOne({ where: { userId }, transaction });
+    if (!wallet || wallet.balance < estimatedPrice) {
+      await transaction.rollback();
+      return res.status(402).json({ message: `User has insufficient wallet balance to start trip. Required: Rs. ${estimatedPrice}.` });
+    }
+
+    // Deduct full prepaid fare natively upon trip commencement natively
+    wallet.balance = parseFloat(wallet.balance) - parseFloat(estimatedPrice);
+    await wallet.save({ transaction });
+
+    await WalletTransaction.create({
+      id: uuid.v4(),
+      walletId: wallet.id,
+      amount: parseFloat(estimatedPrice),
+      type: 'DEBIT',
+      description: 'Cab Booking Prepaid Fare',
+      referenceId: bookingId,
+    }, { transaction });
+
+    // Update statuses
+    await Booking.update(
+      { status: 2, startTripDate: new Date() }, // 2 = started
+      { where: { Bookingid: bookingId }, transaction }
+    );
+
+    await CabBookingRequest.update(
+      { status: "started", startTripTime: new Date() },
+      { where: { bookingId }, transaction }
+    );
+
+    await transaction.commit();
+
+    // Notify User
+    const userDevice = await Device.findOne({ where: { userId: booking.id } });
+    if (userDevice && userDevice.token) {
+      sendPushNotification(userDevice.token, "Trip Started", "Your ride has officially started. Have a safe journey!");
+    }
+
+    res.status(200).json({ message: "Trip started successfully.", bookingId });
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Error starting trip:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const endTrip = async (req, res) => {
+  const { bookingId, otp } = req.body;
+  const driverId = req.user.id;
+
+  if (!otp) {
+    return res.status(400).json({ message: "OTP is required to end the trip." });
+  }
 
   const transaction = await sequelize.transaction(); // Start a transaction
   try {
@@ -849,9 +1247,20 @@ const endTrip = async (req, res) => {
       return res.status(404).json({ message: "Booking not found or already completed." });
     }
 
+    // OTP Verification against CabBookingAccepted
+    const acceptedBooking = await CabBookingAccepted.findOne({
+      where: { cabBookingId: bookingId },
+      transaction
+    });
+
+    if (!acceptedBooking || acceptedBooking.tripOtp !== otp) {
+      await transaction.rollback();
+      return res.status(400).json({ message: "Invalid OTP for ending trip." });
+    }
+
     // Validate that the driver is authorized for this booking
-    const assignedDriver = await CabToDriver.findOne({
-      where: { driverid: driverId, vehicleid: booking.vehicleid },
+    const assignedDriver = await Cab.findOne({
+      where: { driverId: driverId, vehicleid: booking.vehicleid },
       transaction,
     });
 
@@ -900,17 +1309,27 @@ const endTrip = async (req, res) => {
     // Update the booking as completed
     await Booking.update(
       {
-        status: 2, // 2 = completed
+        status: 3, // 3 = completed (matches Self-drive invoice trigger)
         endTripDate: new Date(),
         endTripTime: new Date(),
       },
       { where: { Bookingid: bookingId }, transaction }
     );
 
+    // Set Driver to Online so they can receive new pings
+    await Driver.update({ isActive: true }, { where: { id: driverId }, transaction });
+
     // Remove the soft booking entry
     await CabBookingRequest.destroy({ where: { bookingId }, transaction });
 
     await transaction.commit(); // Commit the transaction
+    
+    // Notify User
+    const userDevice = await Device.findOne({ where: { userId: booking.id } });
+    if (userDevice && userDevice.token) {
+      sendPushNotification(userDevice.token, "Trip Ended", "Your ride has been completed successfully.");
+    }
+
     res.status(200).json({
       message: "Trip ended successfully.",
       bookingId,
@@ -922,7 +1341,53 @@ const endTrip = async (req, res) => {
   }
 };
 
+const getCabAvailability = async (req, res) => {
+  const { address } = req.body;
+  
+  try {
+     const rateCards = await HostCabRateCard.findAll();
+     
+     if (!address || address.trim() === "") {
+        return res.status(200).json({ available: false, services: [] });
+     }
+     
+     let addrLower = address.toLowerCase().trim();
+     addrLower = addrLower.replace(/bengaluru/g, "bangalore");
+     addrLower = addrLower.replace(/bombay/g, "mumbai");
+     addrLower = addrLower.replace(/gurugram/g, "gurgaon");
+     addrLower = addrLower.replace(/mysuru/g, "mysore");
+
+     const matchedCards = rateCards.filter(rc => {
+       if (!rc.city) return false;
+       let dbCity = rc.city.toLowerCase().trim();
+       dbCity = dbCity.replace(/bengaluru/g, "bangalore");
+       dbCity = dbCity.replace(/bombay/g, "mumbai");
+       return addrLower.includes(dbCity) || dbCity.includes(addrLower);
+     });
+     
+     if (matchedCards.length === 0) {
+        return res.status(200).json({ available: false, services: [] });
+     }
+     
+     let services = new Set(['Local']);
+     for (const card of matchedCards) {
+        if (card.airportTransferPrice) services.add('Airport');
+        if (card.halfDayPrice || card.fullDayPrice) services.add('Rentals');
+        if (card.outstationPerKmPrice) services.add('Outstation');
+     }
+     
+     return res.status(200).json({
+        available: true,
+        services: Array.from(services)
+     });
+  } catch (error) {
+     console.error("Error getting cab availability", error);
+     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
+  getCabAvailability,
   searchForCabs,
   bookCab,
   addCab,
@@ -939,5 +1404,10 @@ module.exports = {
   acceptBooking,
   createSoftBooking,
   checkPendingBookings,
-  endTrip
+  startTrip,
+  endTrip,
+  superhostAssignDriver,
+  confirmBankPayment,
+  trackDriverLocation,
+  toggleDriverStatus
 };

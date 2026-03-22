@@ -1,4 +1,4 @@
-const { User, Host, Admin, UserAdditional } = require('../../Models');
+const { User, Host, Admin, UserAdditional, HostAdditional } = require('../../Models');
 
 
 const getAllUsers = async (req, res) => {
@@ -122,8 +122,23 @@ const getAllHosts = async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' });
     }
-    const hosts = await Host.findAll();
-    res.status(200).json({ "message": "All available Hosts", hosts });
+    const hosts = await Host.findAll({
+      include: [
+        { model: HostAdditional },
+        { model: User, attributes: ['phone', 'role'] }
+      ]
+    });
+
+    const formattedHosts = hosts.map(h => {
+      const json = h.toJSON();
+      json.FullName = json.HostAdditional?.FullName || json.HostAdditional?.businessName || '--';
+      json.phone = json.User?.phone || '--';
+      json.role = 'host';
+      json.additionalInfo = json.HostAdditional || {}; // Map legacy frontend dependency
+      return json;
+    });
+
+    res.status(200).json({ "message": "All available Hosts", hosts: formattedHosts });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching host', error });

@@ -11,8 +11,8 @@ const DB_NAME = process.env.DB_NAME;
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`, {
   dialect: 'postgres',
   pool: {
-    max: 2000, // Adjust pool size based on expected traffic
-    min: 50,
+    max: 30, // Safely tuned for single-EC2 co-location
+    min: 5,
     acquire: 30000,
     idle: 10000,
   },
@@ -77,25 +77,31 @@ db.carFeature = require('./carFeaturesModel')(sequelize, DataTypes);
 db.carDevices = require('./carDeviceModel')(sequelize, DataTypes);
 db.HostPayment = require('./hostPaymentModel')(sequelize, DataTypes);
 db.Driver = require('./driverModel')(sequelize, DataTypes);
-db.CabToDriver = require('./CabtoDriverModel')(sequelize, DataTypes);
 db.Cab = require('./cabModel')(sequelize, DataTypes);
 db.CabSchedule = require('./cabSchedule')(sequelize, DataTypes);
 db.CabBookingRequest = require('./cabBookingRequestModel')(sequelize, DataTypes);
 db.CabBookingAccepted = require('./cabBookingAcceptModel')(sequelize, DataTypes);
 db.UserAddress = require('./userAddress')(sequelize, DataTypes);
+db.Wallet = require('./walletModel')(sequelize, DataTypes);
+db.WalletTransaction = require('./walletTransactionModel')(sequelize, DataTypes);
+db.HostCabRateCard = require('./rateCardModel')(sequelize, DataTypes);
+db.DriverWithdrawal = require('./driverWithdrawalModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
     User, Admin, Host, Car, Bike, Vehicle, UserAdditional, HostAdditional, VehicleAdditional, DriverAdditional,
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
-    Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver, CabToDriver,
-    CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule
+    Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
+    CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal
   } = sequelize.models;
 
   // User and related associations
   User.hasOne(Admin, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasOne(Host, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasOne(Driver, { foreignKey: 'id', onDelete: 'SET NULL' });
+  User.hasOne(Wallet, { foreignKey: 'userId', sourceKey: 'id', onDelete: 'CASCADE' });
+  User.hasOne(UserAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
   User.hasMany(Support, { foreignKey: 'userId', onDelete: 'CASCADE' });
   User.hasMany(Booking, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(UserAddress, { foreignKey: 'userid', onDelete: 'SET NULL' });
@@ -115,6 +121,7 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   // Host and Vehicle associations
   Host.hasMany(Vehicle, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Host.hasMany(Driver, { foreignKey: 'hostId' });
+  Host.hasMany(HostCabRateCard, { foreignKey: 'hostId', onDelete: 'CASCADE' });
   Vehicle.belongsTo(Host, { foreignKey: 'hostId', onDelete: 'CASCADE' });
 
   // Vehicle-specific associations
@@ -154,9 +161,8 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
   // Cab SaaS associations
-  Driver.hasMany(CabToDriver, { foreignKey: 'driverid' });
-  CabToDriver.belongsTo(Driver, { foreignKey: 'driverid', onDelete: 'CASCADE' });
-  CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
+  Driver.hasOne(Cab, { foreignKey: 'driverId' });
+  Cab.belongsTo(Driver, { foreignKey: 'driverId' });
   // Driver.belongsTo(Host, { foreignKey: 'hostid' , onDelete: 'CASCADE' });
   // Driver.hasOne(DriverAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
   // Driver.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
@@ -183,11 +189,16 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   SupportChat.belongsTo(UserAdditional, { foreignKey: 'userId', onDelete: 'CASCADE' });
   SupportChat.belongsTo(Admin, { foreignKey: 'adminId', onDelete: 'CASCADE' });
 
-  Vehicle.hasOne(CabToDriver, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-  CabToDriver.belongsTo(Vehicle, { foreignKey: 'vehicleid', onDelete: 'CASCADE' });
-  VehicleAdditional.hasOne(CabToDriver, { sourceKey: 'vehicleid', foreignKey: 'vehicleid' });
-  CabToDriver.belongsTo(VehicleAdditional, { targetKey: 'vehicleid', foreignKey: 'vehicleid' });
 
+
+  // Wallet associations
+  Wallet.belongsTo(User, { foreignKey: 'userId', targetKey: 'id' });
+  Wallet.hasMany(WalletTransaction, { foreignKey: 'walletId', sourceKey: 'id', onDelete: 'CASCADE' });
+  WalletTransaction.belongsTo(Wallet, { foreignKey: 'walletId', targetKey: 'id' });
+
+  // Driver Withdrawal associations
+  DriverWithdrawal.belongsTo(Driver, { foreignKey: 'driverId', targetKey: 'id' });
+  Driver.hasMany(DriverWithdrawal, { foreignKey: 'driverId', sourceKey: 'id', onDelete: 'CASCADE' });
 
 };
 

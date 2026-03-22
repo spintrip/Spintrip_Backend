@@ -15,6 +15,7 @@ const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
 const cabRoutes = require('./Routes/cabRoutes');
+// const { initCronJobs } = require('./Utils/cronJobs');
 
 // Setting up your port
 const PORT = process.env.PORT || 2000;
@@ -64,14 +65,23 @@ const logger = winston.createLogger({
     ],
 });
 
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.simple(),
-    }));
-}
+// Always log to Console for Docker/AWS CloudWatch streams
+logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+}));
 
 // Middleware
 app.use(helmet());
+
+// Prevent aggressive browser/proxy caching on dynamic API endpoints
+app.use('/api', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+});
+
 app.use(cors({ 
     origin: [
         'https://spintrip-admin.netlify.app', 
@@ -133,6 +143,7 @@ app.use('/api/cab', cabRoutes);
 // Synchronizing the database
 db.sequelize.sync().then(() => {
     console.log('Database is connected');
+    // initCronJobs(); // Start background tasks
 });
 
 // Default route
@@ -158,15 +169,22 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    logger.error('Unhandled Exception: ' + err.stack);
+    res.status(500).json({ message: 'Internal server error', error: process.env.NODE_ENV === 'production' ? 'Server exception occurred.' : err.message });
 });
 
 // Graceful shutdown handler
-const shutdownHandler = () => {
+const shutdownHandler = async () => {
     console.log('\nGracefully shutting down...');
+    try {
+        await db.sequelize.close();
+        console.log('Database connections successfully closed.');
+    } catch (err) {
+        console.error('Error closing database connections:', err);
+    }
+    
     server.close(() => {
-        console.log('Server closed');
+        console.log('Server process terminated explicitly');
         process.exit(0);
     });
 };
@@ -183,3 +201,6 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection:', reason);
     // Add logging or monitoring here if necessary
 });
+
+// Forced nodemon restart
+// Freed port 2000 for nodemon

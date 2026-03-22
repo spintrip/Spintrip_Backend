@@ -5,10 +5,10 @@ const s3 = require('../../s3Config');
 const path = require('path');
 const uuid = require('uuid');
 const { Sequelize, Op, where } = require('sequelize');;
-const { parseString } = require('xml2js');
 const { npm } = require('winston/lib/winston/config');
 const hostPaymentModel = require('../../Models/hostPaymentModel');
 const bikeModel = require('../../Models/bikeModel');
+const { sendPushNotification } = require('../../utils/notificationService');
 const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 
 
@@ -18,14 +18,20 @@ const vehicleImageStorage = multerS3({
   contentType: multerS3.AUTO_CONTENT_TYPE,
   key: function (req, file, cb) {
     const vehicleid = req.body.vehicleid;
-    const imageNumber = file.fieldname.split('_')[1];
-    const fileName = `vehicleImage_${imageNumber}${path.extname(file.originalname)}`;
+    let fileName = '';
+    if (file.fieldname.includes('_')) {
+        const imageNumber = file.fieldname.split('_')[1];
+        fileName = `vehicleImage_${imageNumber}${path.extname(file.originalname)}`;
+    } else {
+        fileName = `${file.fieldname}${path.extname(file.originalname)}`; // e.g rcFile.jpg
+    }
     cb(null, `vehicleAdditional/${vehicleid}/${fileName}`);
   }
 });
-const uploadvehicleImages = multer({ storage: vehicleImageStorage }).fields(
-  Array.from({ length: 5 }, (_, i) => ({ name: `vehicleImage_${i + 1}` }))
-);
+const vehicleImageFields = Array.from({ length: 5 }, (_, i) => ({ name: `vehicleImage_${i + 1}` }));
+vehicleImageFields.push({ name: 'rcFile', maxCount: 1 });
+vehicleImageFields.push({ name: 'pucFile', maxCount: 1 });
+const uploadvehicleImages = multer({ storage: vehicleImageStorage }).fields(vehicleImageFields);
 
 
 async function deleteFromS3(key) {
@@ -62,10 +68,9 @@ const postVehicle = async (req, res) => {
   const { vehicletype } = req.body;
 
   try {
-    // If it's a cab, delegate to addCab function from cabRoutes
-    // if (vehicletype === '3') {
-    //   return addCab(req, res); // Pass request and response directly to addCab
-    // }
+    if (vehicletype === '3') {
+      return res.status(400).json({ message: "To add a Cab, please explicitly use the dedicated /api/cab/add-cab endpoint to ensure correct driver mappings." });
+    }
 
     // For other vehicle types, handle the logic here (e.g., bikes or cars)
     const {
@@ -118,10 +123,17 @@ const postVehicle = async (req, res) => {
         missingFields,
       });
     }
+    // Check if user is Host or Driver
     const host = await Host.findByPk(req.user.id);
+    const driver = await Driver.findByPk(req.user.id);
 
-    if (!host) {
-      return res.status(401).json({ message: 'Host not found' });
+    if (!host && !driver) {
+      return res.status(401).json({ message: 'Host/Driver not found' });
+    }
+
+    // Role Enforcement: Drivers can ONLY add cabs (vehicletype = 3)
+    if (req.user.role === 'Driver' && vehicletype !== '3') {
+      return res.status(403).json({ message: 'Forbidden: Drivers can only add Cabs (vehicletype 3).' });
     }
 
     const vehicleId = uuid.v4();
@@ -171,30 +183,14 @@ const postVehicle = async (req, res) => {
       });
     }
 
-    if (vehicletype === '3') {
-      // Cab - store cab-specific fields (no driver info)
-      // Ensure your Models export a Cab model with these columns:
-      // vehicleid, cabmodel (or use carmodel/vehicleModel), permitNumber, serviceType, seatingCapacity, brand, variant, color, bodytype, city
-      console.log('Creating cab with data:', { vehicleId, vehicleModel, type, brand, variant, color, bodyType, city, permitNumber, serviceType, seatingCapacity });
-      await Cab.create({
+
+
+
+    if (vehicletype !== '3') {
+      await Pricing.create({
         vehicleid: vehicleId,
-        model: vehicleModel,
-        type,
-        brand,
-        variant,
-        color,
-        bodytype: bodyType,
-        city,
-        permitNumber: permitNumber || null,
-        serviceType: serviceType || null,
-        seatingCapacity: seatingCapacity || null,
       });
     }
-
-
-    await Pricing.create({
-      vehicleid: vehicleId,
-    });
 
     const listingId = uuid.v4();
 
@@ -297,16 +293,24 @@ const putVehicleAdditional = async (req, res) => {
       }
     }
 
+    if (req.files['rcFile'] && req.files['rcFile'][0]) {
+      await Vehicle.update(
+        { RcImage: req.files['rcFile'][0].location },
+        { where: { vehicleid: vehicleid } }
+      );
+    }
+
+    if (req.files['pucFile'] && req.files['pucFile'][0]) {
+      await Vehicle.update(
+        { PucImage: req.files['pucFile'][0].location },
+        { where: { vehicleid: vehicleid } }
+      );
+    }
+
     const updatedvehicleAdditional = await vehicleAdditional.update(updateData, { where: { vehicleid: vehicleid } });
 
     const pricingPayload = {
       costperhr: costperhr || null,
-      pricingType: pricingType || null,
-      priceperkm: priceperkm || null,
-      fixedPrice: fixedPrice || null,
-      packagePrice: packagePrice || null,
-      baseKm: baseKm || null,
-      extraKmPrice: extraKmPrice || null,
     };
 
     let price = await Pricing.findOne({ where: { vehicleid } });
@@ -396,6 +400,10 @@ const assignDriver = async (req, res) => {
 
     await Cab.update({ driverId: driverId }, { where: { vehicleid: carId } });
 
+    if (driver.fcmToken) {
+      await sendPushNotification(driver.fcmToken, "New Ride Assigned", "You have been assigned a new Cab by the Fleet Admin!");
+    }
+
     res.status(200).json({ message: "Driver assigned successfully" });
   } catch (error) {
     console.error(error);
@@ -466,10 +474,7 @@ const getVehicleAdditional = async (req, res) => {
         variant: checkData(bikeDetails?.variant),
         color: checkData(bikeDetails?.color),
         bodyType: checkData(bikeDetails?.bodytype),
-        costperhr: pricing.costperhr,
-        pricingType: pricing?.pricingType || null,
         costperhr: pricing?.costperhr || null,
-        priceperkm: pricing?.priceperkm || null,
       };
 
       // Populate booleanSpecs for bikes
@@ -529,13 +534,6 @@ const getVehicleAdditional = async (req, res) => {
       additional = {
         vehicleModel: cabDetails?.model || "None",
         driverId: cabDetails?.driverId || "None",
-        costperhr: pricing.costperhr,
-        pricingType: pricing?.pricingType || null,
-        priceperkm: pricing?.priceperkm || null,
-        fixedPrice: pricing?.fixedPrice || null,
-        packagePrice: pricing?.packagePrice || null,
-        baseKm: pricing?.baseKm || null,
-        extraKmPrice: pricing?.extraKmPrice || null,
       };
 
       // Populate booleanSpecs for cars
@@ -548,6 +546,8 @@ const getVehicleAdditional = async (req, res) => {
       latitude: vehicleAdditional.latitude,
       longitude: vehicleAdditional.longitude,
       rcNumber: vehicle.Rcnumber,
+      rcImage: vehicle.RcImage || "None",
+      pucImage: vehicle.PucImage || "None",
       registrationYear: vehicle.Registrationyear,
     };
     const vehicleImages = [

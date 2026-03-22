@@ -133,3 +133,17 @@ uploads
 payloads.csv
 data
 config/firebaseServiceAccountKey.json
+
+# Ignored Scripts and Scratch Files
+*.txt
+*.json.json
+invoice_*.pdf
+test_*.js
+create*.js
+add_*.js
+check_*.js
+patch_*.js
+deploy_*.js
+simulate_*.js
+deposit_*.js
+admins.json

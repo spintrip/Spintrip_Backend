@@ -7,13 +7,17 @@ const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicle
 //Listing
 const getListing = async (req, res) => {
 
-  const hostid = req.user.userid;
+  const hostid = req.user.userid || req.user.id;
   let hostIds = [hostid];
-
 
   let host = await Host.findOne({ where: { id: hostid } });
   if (!host) {
-    return;
+    const driver = await Driver.findOne({ where: { id: hostid } });
+    if (driver && driver.hostid) {
+       host = await Host.findOne({ where: { id: driver.hostid } });
+       if (host) hostIds = [host.id];
+    }
+    if (!host) return res.status(200).json({ message: "Listing successfully queried", hostListings: [] });
   }
   if (host.parentHostId === null) {
     const vendors = await Host.findAll({

@@ -1,7 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
     const Cab = sequelize.define("Cab", {
       model: DataTypes.STRING,
-      type: DataTypes.STRING,
+      type: {
+        type: DataTypes.ENUM('Mini Cab', 'Sedan', 'SUV', '12 Seater'),
+        allowNull: false
+      },
       brand: DataTypes.STRING,
       variant: DataTypes.STRING,
       color: DataTypes.STRING,

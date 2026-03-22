@@ -1,0 +1,68 @@
+{
+  "info": {
+    "name": "Spintrip Full API Collection",
+    "description": "Complete collection of the Spintrip Backend APIs organized by User, Host, Driver, and Admin roles.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. User / Rider (Self-Drive & Cabs)",
+      "item": [
+        { "name": "Auth - Signup", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/signup", "body": { "mode": "raw", "raw": "{\"name\":\"Test User\",\"phone\":\"9999999999\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Auth - Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/login", "body": { "mode": "raw", "raw": "{\"phone\":\"9999999999\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Auth - Verify OTP", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/verify-otp", "body": { "mode": "raw", "raw": "{\"phone\":\"9999999999\",\"otp\":\"1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Wallet - Deposit", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/wallet/deposit", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"amount\":500,\"paymentMethod\":\"UPI\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Cabs - Search Cabs", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/search-cabs", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"fromLocation\":{\"latitude\":17.3850,\"longitude\":78.4867},\"searchRadius\":5}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Cabs - Get Estimate", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/get-estimate", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"origin\":{\"latitude\":17.3850,\"longitude\":78.4867},\"destination\":{\"latitude\":17.4400,\"longitude\":78.3489},\"vehicleId\":\"uuid-here\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Cabs - Book Cab", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/book-cab", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"startLocation\":{\"latitude\":17.3850,\"longitude\":78.4867},\"endLocation\":{\"latitude\":17.4400,\"longitude\":78.3489},\"vehicleId\":\"uuid-here\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "SelfDrive - Find Vehicles", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/findvehicles", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"city\":\"Hyderabad\",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-03-22\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "SelfDrive - Book Vehicle", "request": { "method": "POST", "url": "{{baseUrl}}/api/users/booking", "header": [ { "key": "Authorization", "value": "Bearer {{userToken}}" } ], "body": { "mode": "raw", "raw": "{\"vehicleid\":\"uuid-here\",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-03-22\",\"totalAmount\":1500}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "2. Host (Car / Fleet Owner)",
+      "item": [
+        { "name": "Auth - Signup", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/signup", "body": { "mode": "raw", "raw": "{\"name\":\"Test Host\",\"phone\":\"8888888888\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Auth - Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/login", "body": { "mode": "raw", "raw": "{\"phone\":\"8888888888\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "SelfDrive - Add Vehicle", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/vehicle", "header": [ { "key": "Authorization", "value": "Bearer {{hostToken}}" } ], "body": { "mode": "raw", "raw": "{\"vehicletype\":\"1\",\"Rcnumber\":\"TS09EA1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "SelfDrive - Add Pricing", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/pricing", "header": [ { "key": "Authorization", "value": "Bearer {{hostToken}}" } ], "body": { "mode": "raw", "raw": "{\"vehicleid\":\"uuid-here\",\"costperhr\":100,\"deposit\":1000}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Fleet - Add Cab", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/cab/add-cab", "header": [ { "key": "Authorization", "value": "Bearer {{hostToken}}" } ], "body": { "mode": "raw", "raw": "{\"type\":\"Sedan\",\"costperkm\":15,\"rcNumber\":\"TS09EA1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Fleet - Add Driver", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/cab/add-driver", "header": [ { "key": "Authorization", "value": "Bearer {{hostToken}}" } ], "body": { "mode": "raw", "raw": "{\"name\":\"Driver Joe\",\"phone\":\"7777777777\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Fleet - Assign Driver", "request": { "method": "POST", "url": "{{baseUrl}}/api/host/cab/assign-driver", "header": [ { "key": "Authorization", "value": "Bearer {{hostToken}}" } ], "body": { "mode": "raw", "raw": "{\"driverId\":\"driver-uuid\",\"vehicleId\":\"vehicle-uuid\"}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "3. Driver (Cab Driver App)",
+      "item": [
+        { "name": "Auth - Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/driver/login", "body": { "mode": "raw", "raw": "{\"phone\":\"7777777777\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Auth - Verify OTP", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/driver/verify-otp", "body": { "mode": "raw", "raw": "{\"phone\":\"7777777777\",\"otp\":\"1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Actions - Toggle Status (Online/Offline)", "request": { "method": "PUT", "url": "{{baseUrl}}/api/cab/driver/status", "header": [ { "key": "Authorization", "value": "Bearer {{driverToken}}" } ] } },
+        { "name": "Actions - Keep Alive (GPS Ping)", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/driver/keep-alive", "header": [ { "key": "Authorization", "value": "Bearer {{driverToken}}" } ], "body": { "mode": "raw", "raw": "{\"latitude\":17.3850,\"longitude\":78.4867}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Ride - Accept Booking", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/accept-booking", "header": [ { "key": "Authorization", "value": "Bearer {{driverToken}}" } ], "body": { "mode": "raw", "raw": "{\"bookingId\":\"booking-uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Ride - Start Trip", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/driver/start-trip", "header": [ { "key": "Authorization", "value": "Bearer {{driverToken}}" } ], "body": { "mode": "raw", "raw": "{\"bookingId\":\"booking-uuid\",\"otp\":\"trip-otp-from-user\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Ride - End Trip", "request": { "method": "POST", "url": "{{baseUrl}}/api/cab/driver/end-trip", "header": [ { "key": "Authorization", "value": "Bearer {{driverToken}}" } ], "body": { "mode": "raw", "raw": "{\"bookingId\":\"booking-uuid\",\"otp\":\"end-otp-from-user\"}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "4. Admin / Superhost (Web Dashboard)",
+      "item": [
+        { "name": "Auth - Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/login", "body": { "mode": "raw", "raw": "{\"phone\":\"superadmin-phone\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Auth - Verify OTP", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/verify-otp", "body": { "mode": "raw", "raw": "{\"phone\":\"superadmin-phone\",\"otp\":\"1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Mgmt - Get Cabs", "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/cabs", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ] } },
+        { "name": "Mgmt - Get Drivers", "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/drivers", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ] } },
+        { "name": "Operations - Add Cab", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/cab/add-cab", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ], "body": { "mode": "raw", "raw": "{\"type\":\"Sedan\",\"costperkm\":15,\"rcNumber\":\"TS09EA1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Operations - Add Driver", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/cab/add-driver", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ], "body": { "mode": "raw", "raw": "{\"name\":\"Driver Joe\",\"phone\":\"7777777777\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Operations - Assign Driver to Vehicle", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/cab/assign-driver-vehicle", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ], "body": { "mode": "raw", "raw": "{\"driverId\":\"driver-uuid\",\"vehicleId\":\"vehicle-uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Operations - Force Trip Assignment", "request": { "method": "POST", "url": "{{baseUrl}}/api/admin/cab/assign-driver", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ], "body": { "mode": "raw", "raw": "{\"bookingId\":\"booking-uuid\",\"driverId\":\"driver-uuid\",\"vehicleId\":\"vehicle-uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Dynamic CRUD - Update Surge Multiplier", "request": { "method": "PUT", "url": "{{baseUrl}}/api/admin/crud/pricing/:pricingId", "header": [ { "key": "Authorization", "value": "Bearer {{adminToken}}" } ], "body": { "mode": "raw", "raw": "{\"surgeMultiplier\":1.5,\"tollCharges\":50}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:2000", "type": "string" },
+    { "key": "userToken", "value": "YOUR_USER_JWT", "type": "string" },
+    { "key": "hostToken", "value": "YOUR_HOST_JWT", "type": "string" },
+    { "key": "driverToken", "value": "YOUR_DRIVER_JWT", "type": "string" },
+    { "key": "adminToken", "value": "YOUR_ADMIN_JWT", "type": "string" }
+  ]
+}

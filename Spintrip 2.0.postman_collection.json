@@ -1,0 +1,5133 @@
+{
+	"info": {
+		"_postman_id": "e0cbf0ac-b632-4691-ba71-5ff7846ff9b8",
+		"name": "Spintrip 2.0",
+		"description": "A startup app coming soon...",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31654335",
+		"_collection_link": "https://deadpool555.postman.co/workspace/Spintrip~b02eac4f-9e25-4f25-bef2-63f00d8f3f95/collection/31654335-e0cbf0ac-b632-4691-ba71-5ff7846ff9b8?action=share&source=collection_link&creator=31654335"
+	},
+	"item": [
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "Post vehicle",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"pm.collectionVariables.set('listingId', res.postedCar.listingId);\r",
+									"\r",
+									"// var res = pm.response.json();\r",
+									"// //console.log(res.token)\r",
+									"pm.collectionVariables.set('vehicleid', res.postedCar.carId);\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('hostId', res.posted.hostId);\r",
+									"// Parse the response body to JSON\r",
+									"// var responseData = pm.response.json();\r",
+									"\r",
+									"// // Extract the values you need\r",
+									"// var listingId = responseData.listing.id;\r",
+									"// var carId = responseData.listing.carid;\r",
+									"// var hostId = responseData;\r",
+									"\r",
+									"// // Set the values as collection or environment variables\r",
+									"// pm.collectionVariables.set('listingId', listingId);\r",
+									"// pm.collectionVariables.set('carId', carId);\r",
+									"// pm.collectionVariables.set('hostId', hostId);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicleModel\":\"baleno\",\n    \"vehicletype\": \"2\",\n    \"type\": \"Hatchback\",\n    \"brand\": \"MarutiSuzuki\",\n    \"chassisNo\":\"8945047389294732059\", \n    \"engineNumber\":\"6739\", \n    \"registrationYear\":\"2020\",\n    \"bodyType\":\"iron\", \n    \"variant\": \"\",\n    \"color\": \"\",\n    \"mileage\": \"\",\n    \"address\": \"\",\n    \"latitude\": 15.27,\n    \"longitude\":23.57,\n    \"city\": \"bengaluru\",\n    \"costperhr\": 200\n}\n\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/vehicle",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"vehicle"
+							]
+						},
+						"description": "\n### Create Car Information\nThis endpoint allows the user to create car information by sending a POST request to the specified URL.\n\n#### Request Body\n- `carModel` (string, required): The model of the car.\n- `type` (string, required): The type of the car.\n- `brand` (string, required): The brand of the car.\n- `chassisNo` (string, required): The chassis number of the car.\n- `rcNumber` (string, required): The RC number of the car.\n- `engineNumber` (string, required): The engine number of the car.\n- `registrationYear` (string, required): The registration year of the car.\n- `bodyType` (string, required): The body type of the car.\n\n#### Response\nThe response of this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Post car additional",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "carId",
+									"value": "720adc18-2361-47ec-b859-cb3e007d4637",
+									"type": "text"
+								},
+								{
+									"key": "carImage_1",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								},
+								{
+									"key": "carImage_2",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								},
+								{
+									"key": "ac",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "musicSystem",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "autoWindow",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "sunRoof",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "touchScreen",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "sevenSeater",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "reverseCamera",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "transmission",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "fuelType",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "airBags",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "horsePower",
+									"value": "120",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/carAdditional",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"carAdditional"
+							]
+						},
+						"description": "\nThis endpoint allows you to update additional details of a car. The request should be sent as an HTTP PUT to {{baseUrl}}/host/carAdditional. The request body should be of form-data type and include the following parameters:\n- carId (text): The ID of the car.\n- carImage_1 (file): The image file of the car.\n- carImage_2 (file): An additional image file of the car.\n- ac (text): Description of the air conditioning system.\n- musicSystem (text): Description of the music system in the car.\n- autoWindow (text): Description of the automatic window system.\n- sunRoof (text): Description of the sunroof feature.\n- touchScreen (text): Description of the touchscreen system in the car.\n- sevenSeater (text): Description of the seven-seater configuration.\n- reverseCamera (text): Description of the reverse camera feature.\n- transmission (text): Description of the transmission type.\n- fuelType (text): Description of the fuel type used.\n- airBags (text): Description of the airbag system in the car.\n- horsePower (text): Description of the horsepower of the car.\n\nThe response to this request will be documented as a JSON schema.\n"
+					},
+					"response": [
+						{
+							"name": "Post car additional",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "carid",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "image1",
+											"type": "file",
+											"src": "/C:/Users/pande/Downloads/milad-fakurian-bexwsdM5BCw-unsplash.jpg"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/host/carAdditional",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"host",
+										"carAdditional"
+									]
+								}
+							},
+							"_postman_previewlanguage": "Text",
+							"header": [],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Post Pricing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"vehicleid\":\"d8c2d937-6467-46d6-9994-6f463b055a78\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/pricing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"pricing"
+							]
+						},
+						"description": "\n## Host Pricing\n\nThis endpoint allows you to retrieve pricing information for a specific car.\n\n### Request\n\n- Method: POST\n- URL: `{{baseUrl}}/host/pricing`\n- Body:\n  - `carId` (string, required): The ID of the car for which you want to retrieve pricing information.\n\nExample:\n```json\n{\n  \"carId\": \"example_car_id\"\n}\n```\n\n### Response\n\nThe response for this request follows the JSON schema below:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    // Add properties based on the actual response schema\n  }\n}\n```\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Car Additional",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"vehicleid\":\"d8c2d937-6467-46d6-9994-6f463b055a78\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/getCarAdditional",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"getCarAdditional"
+							]
+						},
+						"description": "\n### Get Car Additional Information\n\nThis endpoint allows you to retrieve additional information about a car.\n\n#### Request\n\n- Method: `POST`\n- URL: `{{baseUrl}}/host/getCarAdditional`\n- Body:\n  - `carId` (string, required): The ID of the car for which additional information is requested.\n\n#### Response\n\nThe response for this request is a JSON object conforming to the following schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"carDetails\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"make\": {\n          \"type\": \"string\"\n        },\n        \"model\": {\n          \"type\": \"string\"\n        },\n        \"year\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"additionalInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"mileage\": {\n          \"type\": \"integer\"\n        },\n        \"color\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				}
+			],
+			"description": "In this, cars are posted by hosts in the app."
+		},
+		{
+			"name": "Listing",
+			"item": [
+				{
+					"name": "Get Listing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/host/listing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"listing"
+							]
+						},
+						"description": "\n### Get Host Listing\n\nThis endpoint is used to retrieve a list of hosts.\n\n#### Response\nThe response for this request is a JSON object representing the list of hosts. Below is an example of the JSON schema for the response:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"hosts\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"hostId\": {\n            \"type\": \"string\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"location\": {\n            \"type\": \"string\"\n          },\n          \"rating\": {\n            \"type\": \"number\"\n          }\n        }\n      }\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Listing",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/host/listing",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"host",
+								"listing"
+							]
+						},
+						"description": "\nThe `GET` request to `/host/listing` endpoint retrieves a list of hosts. \n\n### Response\nThe response for this request can be documented as a JSON schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"hosts\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"host_id\": {\n            \"type\": \"string\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"location\": {\n            \"type\": \"string\"\n          },\n          \"rating\": {\n            \"type\": \"number\"\n          },\n          \"description\": {\n            \"type\": \"string\"\n          }\n          // Add more properties as per the actual response\n        }\n      }\n    }\n  }\n}\n```\n\nThis JSON schema describes the structure of the response for the `/host/listing` request, including the properties of each host object in the `hosts` array.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Listing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"pm.test(\"Response status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"",
+									"pm.test(\"start_date is in a valid date format\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData.start_date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"});",
+									"",
+									"",
+									"pm.test(\"The end_date should be in a valid date format\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData).to.be.an('object');",
+									"    pm.expect(responseData.end_date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"});",
+									"",
+									"",
+									"pm.test(\"pausetime_start_date is in a valid date format\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData.pausetime_start_date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"});",
+									"",
+									"",
+									"",
+									"",
+									"pm.test(\"start_time and end_time are in a valid time format\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData.start_time).to.match(/^\\d{2}:\\d{2}$/);",
+									"    pm.expect(responseData.end_time).to.match(/^\\d{2}:\\d{2}$/);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Pausetime end date is after pausetime start date\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData).to.be.an('object');",
+									"    pm.expect(responseData.pausetime_start_date).to.exist.and.to.be.a('string');",
+									"    pm.expect(responseData.pausetime_end_date).to.exist.and.to.be.a('string');",
+									"    pm.expect(responseData.pausetime_start_date).to.be.below(responseData.pausetime_end_date);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Listingid is null or a non-negative integer\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData.listingid).to.exist.and.to.satisfy(function (listingid) {",
+									"        return listingid === null || (Number.isInteger(listingid) && listingid >= 0);",
+									"    }, \"Listingid should be null or a non-negative integer\");",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"listingId\": \"{{listingId}}\",\n    \"vehicleid\": \"{{vehicleid}}\",\n    \"details\": \"premium car\",\n    \"pauseTimeStartDate\": \"2024-08-15\",\n    \"pauseTimeEndDate\": \"2024-08-17\",\n    \"pauseTimeStartTime\": \"09:00:00\",\n    \"pauseTimeEndTime\": \"21:00:00\",\n    \"hourCount\": 10\n  \n}\n"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/listing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"listing"
+							]
+						},
+						"description": "\n### Update Listing\n\nThis endpoint is used to update a listing with the provided details.\n\n#### Request Body\n- `listingId` (string): The ID of the listing to be updated.\n- `carId` (string): The ID of the car associated with the listing.\n- `details` (string): Additional details about the listing.\n- `startDate` (string): The start date of the listing.\n- `startTime` (string): The start time of the listing.\n- `endDate` (string): The end date of the listing.\n- `endTime` (string): The end time of the listing.\n- `pauseTimeStartDate` (string): The start date of any pause time during the listing.\n- `pauseTimeEndDate` (string): The end date of any pause time during the listing.\n- `pauseTimeStartTime` (string): The start time of any pause time during the listing.\n- `pauseTimeEndTime` (string): The end time of any pause time during the listing.\n- `hourCount` (integer): The count of hours for the listing.\n\n#### Response\nThe response will contain the updated details of the listing.\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Listing",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwicm9sZSI6Imhvc3QiLCJpYXQiOjE2OTQyNjI0MTF9._cliCDuhlgxIB7AwvOzzKvm1awUQHN29uWIPmLhVHjQ",
+								"type": "text"
+							},
+							{
+								"key": "listingId",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"listingId\":6\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/host/listing",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"host",
+								"listing"
+							]
+						},
+						"description": "\n### Delete Host Listing\n\nThis endpoint is used to delete a specific host listing.\n\n**Request Body**\n- `listingId`: The ID of the listing to be deleted. \n\n**Response**\nThe response will not contain a message body. A successful deletion will return a status code of 200.\n\n"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Host Login/Signup",
+			"item": [
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"+919120408658\",\n    \"password\":\"1234\",\n    \"role\":\"host\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/signup",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"signup"
+							]
+						},
+						"description": "### Host Signup\n\nThis endpoint is used to sign up a new host.\n\n#### Request Body\n\n- `phone` (string, required): The phone number of the host.\n- `password` (string, required): The password for the host account.\n- `role` (string, required): The role of the host.\n    \n\n#### Response\n\nThe response of this request is a JSON object conforming to the following schema:\n\n``` json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"pm.test(\"Response status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Token is a non-empty string\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData.token).to.be.a('string').and.to.have.lengthOf.at.least(1, \"Token should not be empty\");",
+									"    ",
+									"});",
+									"",
+									"",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});",
+									"",
+									"var res = pm.response.json();",
+									"//console.log(res.token)",
+									"pm.collectionVariables.set('otp', res.otp);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// var otp = pm.environment.get(\"otp\"); // Retrieves the OTP saved in the environment variable\r",
+									"// pm.variables.set(\"otp\", otp); // Sets the OTP in a variable accessible in the request body or URL\r",
+									"\r",
+									"// // If you need to directly manipulate the request body, you can do so like this (assuming JSON body):\r",
+									"// var requestBody = {\r",
+									"//     \"otp\": otp,\r",
+									"//     // other parameters here\r",
+									"// };\r",
+									"// pm.request.body = JSON.stringify(requestBody);\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"+919120408657\",\n    \"password\":\"1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/login",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"login"
+							]
+						},
+						"description": "# Host Login\n\nThis endpoint is used to authenticate a user by logging in with their phone number and password.\n\n## Request Body\n\n- `phone` (string, required): The phone number of the user.\n- `password` (string, required): The password for the user's account.\n    \n\n## Response\n\nThe response of this request is a JSON object with the following properties:\n\n- `token` (string): The authentication token for the logged-in user.\n- `userId` (string): The unique identifier of the user.\n    \n\n### Example\n\n``` json\n{\n    \"token\": \"************\",\n    \"userId\": \"************\"\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('hostToken', res.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"+919120408658\",\n    \"otp\":\"{{otp}}\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/verify-otp",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"verify-otp"
+							]
+						},
+						"description": "### Verify OTP\n\nThe `Verify OTP` endpoint is used to verify the OTP (One-Time Password) sent to a phone number.\n\n#### Request Body\n\n- `phone` (string, required): The phone number for which the OTP was sent.\n- `otp` (string, required): The OTP to be verified.\n    \n\n#### Response\n\nThe response for this request can be represented as a JSON schema:\n\n``` json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/host/profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"profile"
+							]
+						},
+						"description": "\n### Get Host Profile\n\nThis endpoint is used to retrieve the profile of a host.\n\n#### Request\n\n- Method: GET\n- URL: `{{baseUrl}}/host/profile`\n\n#### Response\nThe response for this request is a JSON object conforming to the following schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"hostId\": {\n      \"type\": \"string\"\n    },\n    \"name\": {\n      \"type\": \"string\"\n    },\n    \"email\": {\n      \"type\": \"string\"\n    },\n    \"phone\": {\n      \"type\": \"string\"\n    },\n    \"address\": {\n      \"type\": \"string\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "update profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/multipart/form-data",
+								"disabled": true
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"fullName\": \"Pratyay\",\r\n    \"businessName\": \"Spintrip India PVT Limited\",\r\n    \"GSTnumber\": \"123456789\",\r\n    \"PANnumber\": \"123456789\",\r\n    \"aadharId\": \"9084\",\r\n    \"email\": \"pratyay@gmail.com\",\r\n    \"address\": \"ajhdaidla\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"profile"
+							]
+						},
+						"description": "\n# Update User Profile\n\nThis endpoint is used to update the profile of a user.\n\n## Request\n\n- Method: PUT\n- URL: `{{baseUrl}}/users/profile`\n- Headers: \n  - Content-Type: application/json\n- Body:\n\n| Key               | Type   | Description       |\n| ----------------- | ------ | ----------------- |\n| id                | string | User ID           |\n| dlVerification    | string | Driving License Verification status |\n| fullName          | string | Full name of the user |\n| aadharVfid        | string | Aadhar Verification ID |\n| Address           | string | User's address |\n| currentAddressVfid| null   | Current Address Verification ID |\n| mlData            | null   | Machine Learning Data (if any) |\n\n## Response\n\nThe response for this request is a JSON object with the updated user profile information.\n\n### JSON Schema\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"userId\": {\n      \"type\": \"string\"\n    },\n    \"fullName\": {\n      \"type\": \"string\"\n    },\n    \"dlVerification\": {\n      \"type\": \"string\"\n    },\n    \"aadharVfid\": {\n      \"type\": \"string\"\n    },\n    \"address\": {\n      \"type\": \"string\"\n    }\n  }\n}\n"
+					},
+					"response": []
+				},
+				{
+					"name": "rating",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"BookingId\": \"{{bookingId}}\",\n   \"rating\":\"\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/rating",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"rating"
+							]
+						},
+						"description": "\n### Host Rating\n\nThis endpoint allows the client to submit a rating for a host.\n\n**Request Body**\n- `BookingId` (string, required): The ID of the booking for which the rating is being submitted.\n- `rating` (string, required): The rating value provided by the client.\n\n**Response**\nThe response for this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "request-accept",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"bookingId\": \"544beba8-9dcc-4399-8819-6e34fe2986c4\",\n   \"status\": \"1\",\n   \"cancelReason\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/booking-request",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"booking-request"
+							]
+						},
+						"description": "\n### Host Rating\n\nThis endpoint allows the client to submit a rating for a host.\n\n**Request Body**\n- `BookingId` (string, required): The ID of the booking for which the rating is being submitted.\n- `rating` (string, required): The rating value provided by the client.\n\n**Response**\nThe response for this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "get monthly data",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"carId\":\"\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/monthly-data",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"monthly-data"
+							]
+						},
+						"description": "\n### Host Rating\n\nThis endpoint allows the client to submit a rating for a host.\n\n**Request Body**\n- `BookingId` (string, required): The ID of the booking for which the rating is being submitted.\n- `rating` (string, required): The rating value provided by the client.\n\n**Response**\nThe response for this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "get_reg",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"RegID\": \"kA01mr8734\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/getCarReg",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"getCarReg"
+							]
+						},
+						"description": "### Get Car Registration Details\n\nThis endpoint allows you to retrieve car registration details.\n\n#### Request Body\n\n- `RegID` (string, required): The registration ID of the car.\n    \n\n#### Response\n\nThe response for this request is a JSON schema representing the structure of the response data."
+					},
+					"response": []
+				},
+				{
+					"name": "host-bookings",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						},
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/host-bookings",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"host-bookings"
+							]
+						},
+						"description": "\nThis endpoint retrieves the host bookings from the server.\n\n### Response\nThe response of this request is a JSON object representing the host bookings. Below is a JSON schema representing the structure of the response:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"bookingId\": {\n      \"type\": \"string\"\n    },\n    \"guestName\": {\n      \"type\": \"string\"\n    },\n    \"checkInDate\": {\n      \"type\": \"string\",\n      \"format\": \"date\"\n    },\n    \"checkOutDate\": {\n      \"type\": \"string\",\n      \"format\": \"date\"\n    },\n    \"totalAmount\": {\n      \"type\": \"number\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "host send message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"a747d4d5-81ee-460d-a66c-8a943cd75fbd\",\n  \"senderId\": \"3bfc90ff-1d75-4ace-88fb-f00ccf3c7407\",\n  \"receiverId\": \"41534c46-35d5-496b-a5bb-e9c07785fe10\",\n  \"message\": \"Hello, I have a question about my booking.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/chat/send",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"chat",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/multipart/form-data"
+							},
+							{
+								"key": "token",
+								"value": "{{hostToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "aadharFile",
+									"type": "file",
+									"src": "postman-cloud:///1ef20062-12e9-4bd0-9272-9698ade82559",
+									"disabled": true
+								},
+								{
+									"key": "dlFile",
+									"type": "file",
+									"src": "postman-cloud:///1ef20062-15f9-46e0-a330-f122d20f7007",
+									"disabled": true
+								},
+								{
+									"key": "profilePic",
+									"type": "file",
+									"src": "/C:/Users/Pratyay Mazumdar/OneDrive/Desktop/Spintrip.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/verify",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"verify"
+							]
+						},
+						"description": "\nThe `PUT /users/verify` endpoint is used to verify user information. The request should be sent with a form-data body containing the `aadharFile` and `dlFile` parameters, both of type file.\n\n### Response\nThe response for this request can be documented as a JSON schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "get chat",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/host/chat/a747d4d5-81ee-460d-a66c-8a943cd75fbd",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"chat",
+								"a747d4d5-81ee-460d-a66c-8a943cd75fbd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete host",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/host/delete_host",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"delete_host"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add car-feature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureid\": \"8c3b82bc-84ab-4c50-bf08-dbe36b62b084\",\n    \"carid\": \"54c283aa-6759-4862-9e0e-5b9059f886a9\",\n    \"price\": 200\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/api/host/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"api",
+								"host",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update car-feature",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureid\": \"8c3b82bc-84ab-4c50-bf08-dbe36b62b084\",\n    \"carid\": \"54c283aa-6759-4862-9e0e-5b9059f886a9\",\n    \"price\": 300\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/api/host/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"api",
+								"host",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "car-feature",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureid\": \"0fe86db8-39c9-4f73-921f-1e9020cca84d\",\n    \"carid\": \"54c283aa-6759-4862-9e0e-5b9059f886a9\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/api/host/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"api",
+								"host",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-features",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/host/chat/a747d4d5-81ee-460d-a66c-8a943cd75fbd",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"chat",
+								"a747d4d5-81ee-460d-a66c-8a943cd75fbd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get chat history",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/host/chat/a747d4d5-81ee-460d-a66c-8a943cd75fbd",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"chat",
+								"a747d4d5-81ee-460d-a66c-8a943cd75fbd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-blog",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/host/view-blog",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"view-blog"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Support Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\n   \"subject\": \"Issue with truck Booking\",\n   \"message\": \"Good grief\",\n   \"status\": \"open\",\n   \"priority\": 1,\n   \"escalations\": 0\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/support",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"support"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view Support Tickets",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/support",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"support"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reply Support Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supportId\": \"5567224b-888a-4f23-b8b1-d7653c55ebf1\",\n  \"userId\": \"ffe8ba30-4b54-47d6-b9df-6ec348bc3649\",\n  \"adminId\": null,\n  \"senderId\": \"ffe8ba30-4b54-47d6-b9df-6ec348bc3649\",\n  \"message\": \"I would like to add more details to my issue. The booking ID is 12345, and it is not showing up in my dashboard.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/support/message",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"support",
+								"message"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View support chats",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"supportId\" : \"2c2df8a0-304b-47aa-ab12-ef2ca86ec039\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/support/supportChat",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"support",
+								"supportChat"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get car location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/host/device/b00e5590-8cde-4cdb-81bf-8d74c54e668e",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"device",
+								"b00e5590-8cde-4cdb-81bf-8d74c54e668e"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "host payouts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/host/payouts",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"host",
+								"payouts"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test to check if the response contains a valid token",
+									"pm.test(\"Response contains a valid token\", function() {",
+									"    pm.expect(pm.response.json()).to.have.property('token').that.is.a('string').and.not.empty;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone\":\"smriti\",\r\n    \"password\":\"1234\",\r\n    \"role\":\"user\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/signup",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"signup"
+							]
+						},
+						"description": "### API Request Description\n\nThis endpoint is used to sign up a new user by providing their phone number, password, and role.\n\n### API Response\n\nThe response of this request is a JSON schema, which includes the structure and data types of the response fields."
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('userotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"smriti\",\n    \"password\":\"1234\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/login",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						},
+						"description": "\n# User Login\n\nThis endpoint allows users to log in by providing their phone number and password.\n\n## Request Body\n- `phone` (string, required): The phone number of the user.\n- `password` (string, required): The password of the user.\n\n## Response\nThe response will be a JSON object following the schema below:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"token\": {\n      \"type\": \"string\"\n    },\n    \"userId\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('userToken', res.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"smriti\",\n    \"otp\":\"{{userotp}}\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/verify-otp",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"verify-otp"
+							]
+						},
+						"description": "\n### Verify OTP for User\n\nThis endpoint is used to verify the OTP (One-Time Password) for a user.\n\n#### Request Body\n- `phone` (string, required): The phone number of the user.\n- `otp` (string, required): The OTP entered by the user for verification.\n\n#### Response\nThe response for this request can be documented as a JSON schema:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									" var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('userId', res.profile.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/users/profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						},
+						"description": "\n# Get User Profile\n\nThis endpoint retrieves the profile of the user.\n\n## Request\n\n- Method: GET\n- URL: `{{baseUrl}}/users/profile`\n\n## Response\nThe response for this request is a JSON object representing the user's profile. Here is a JSON schema representing the response:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"userId\": {\n      \"type\": \"string\"\n    },\n    \"username\": {\n      \"type\": \"string\"\n    },\n    \"email\": {\n      \"type\": \"string\"\n    },\n    \"firstName\": {\n      \"type\": \"string\"\n    },\n    \"lastName\": {\n      \"type\": \"string\"\n    },\n    \"createdAt\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"updatedAt\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    }\n  }\n}\n"
+					},
+					"response": []
+				},
+				{
+					"name": "update profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/multipart/form-data",
+								"disabled": true
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": \"ad03e89b-e46f-4ee3-9ce3-1a58c5ed3229\",\r\n    \"dlNumber\": \"98756\",\r\n    \"fullName\": \"Pandaa\",\r\n    \"aadharId\": \"9084\",\r\n    \"email\":\"saswatp99@gmail.com\",\r\n    \"address\": \"ajhdaidla\",\r\n    \"currentAddressVfid\": null,\r\n    \"mlData\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						},
+						"description": "\n# Update User Profile\n\nThis endpoint is used to update the profile of a user.\n\n## Request\n\n- Method: PUT\n- URL: `{{baseUrl}}/users/profile`\n- Headers: \n  - Content-Type: application/json\n- Body:\n\n| Key               | Type   | Description       |\n| ----------------- | ------ | ----------------- |\n| id                | string | User ID           |\n| dlVerification    | string | Driving License Verification status |\n| fullName          | string | Full name of the user |\n| aadharVfid        | string | Aadhar Verification ID |\n| Address           | string | User's address |\n| currentAddressVfid| null   | Current Address Verification ID |\n| mlData            | null   | Machine Learning Data (if any) |\n\n## Response\n\nThe response for this request is a JSON object with the updated user profile information.\n\n### JSON Schema\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"userId\": {\n      \"type\": \"string\"\n    },\n    \"fullName\": {\n      \"type\": \"string\"\n    },\n    \"dlVerification\": {\n      \"type\": \"string\"\n    },\n    \"aadharVfid\": {\n      \"type\": \"string\"\n    },\n    \"address\": {\n      \"type\": \"string\"\n    }\n  }\n}\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Car Additional",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"vehicleId\":\"80ddd3cf-609a-44ba-a445-96d964dadddd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/getCarAdditional",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"getCarAdditional"
+							]
+						},
+						"description": "\n### Get Car Additional Information\n\nThis endpoint allows you to retrieve additional information about a car.\n\n#### Request\n\n- Method: `POST`\n- URL: `{{baseUrl}}/host/getCarAdditional`\n- Body:\n  - `carId` (string, required): The ID of the car for which additional information is requested.\n\n#### Response\n\nThe response for this request is a JSON object conforming to the following schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"carDetails\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"make\": {\n          \"type\": \"string\"\n        },\n        \"model\": {\n          \"type\": \"string\"\n        },\n        \"year\": {\n          \"type\": \"integer\"\n        }\n      }\n    },\n    \"additionalInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"mileage\": {\n          \"type\": \"integer\"\n        },\n        \"color\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "verify",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/multipart/form-data"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "aadharFile",
+									"type": "file",
+									"src": "postman-cloud:///1ef20062-12e9-4bd0-9272-9698ade82559"
+								},
+								{
+									"key": "dlFile",
+									"type": "file",
+									"src": "postman-cloud:///1ef20062-15f9-46e0-a330-f122d20f7007"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/verify",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"verify"
+							]
+						},
+						"description": "\nThe `PUT /users/verify` endpoint is used to verify user information. The request should be sent with a form-data body containing the `aadharFile` and `dlFile` parameters, both of type file.\n\n### Response\nThe response for this request can be documented as a JSON schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "view-blog",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/users/view-blog",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"view-blog"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// var res = pm.response.json();\r",
+									"// //console.log(res.token)\r",
+									"// pm.collectionVariables.set('bookingId', res.bookings.bookingId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicleid\": \"f988628c-2b45-4865-8698-9732061554fb\",    \n    \"startDate\": \"2027-05-12\",\n    \"endDate\": \"2027-05-13\",\n    \"startTime\":\"05:30:00\",\n    \"endTime\": \":05:31:00\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/booking",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"booking"
+							]
+						},
+						"description": "\n# Create User Booking\n\nThis endpoint allows the creation of a user booking for a car.\n\n## Request\n\n### Request Body\n\n- `carId` (string, required): The ID of the car for the booking.\n- `startDate` (string, required): The start date of the booking.\n- `endDate` (string, required): The end date of the booking.\n- `startTime` (string, required): The start time of the booking.\n- `endTime` (string, required): The end time of the booking.\n\nExample:\n\n```json\n{\n  \"carId\": \"\",\n  \"startDate\": \"\",\n  \"endDate\": \"\",\n  \"startTime\": \"\",\n  \"endTime\": \"\"\n}\n```\n\n## Response\n\nThe response for this request is a JSON object conforming to the following schema:\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"bookingId\": {\n      \"type\": \"string\"\n    },\n    \"carId\": {\n      \"type\": \"string\"\n    },\n    \"startDate\": {\n      \"type\": \"string\"\n    },\n    \"endDate\": {\n      \"type\": \"string\"\n    },\n    \"startTime\": {\n      \"type\": \"string\"\n    },\n    \"endTime\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "get cars",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						},
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUyZjJhMDY0LWVmNTItNGJmMi04Y2FlLTE4MzZkOGVmMzg5OSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzIwNjUyMDQxfQ.F12qhNGjcDe38twpgoIPCDFWUCSvetOfuQ4-7vmF6Co"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/cars",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"cars"
+							]
+						},
+						"description": "### Get User Cars\n\nThis endpoint retrieves a list of cars associated with the user.\n\n#### Request\n\n- Method: GET\n- URL: `{{baseUrl}}/users/cars`\n    \n\n#### Response\n\nThe response will include an array of car objects, each containing details such as the car's make, model, year, and other relevant information.\n\nExample response:\n\n``` json\n[\n    {\n        \"make\": \"Toyota\",\n        \"model\": \"Camry\",\n        \"year\": 2018\n    },\n    {\n        \"make\": \"Honda\",\n        \"model\": \"Civic\",\n        \"year\": 2019\n    }\n]\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "get cars Copy",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						},
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/cars",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"cars"
+							]
+						},
+						"description": "### Get User Cars\n\nThis endpoint retrieves a list of cars associated with the user.\n\n#### Request\n\n- Method: GET\n- URL: `{{baseUrl}}/users/cars`\n    \n\n#### Response\n\nThe response will include an array of car objects, each containing details such as the car's make, model, year, and other relevant information.\n\nExample response:\n\n``` json\n[\n    {\n        \"make\": \"Toyota\",\n        \"model\": \"Camry\",\n        \"year\": 2018\n    },\n    {\n        \"make\": \"Honda\",\n        \"model\": \"Civic\",\n        \"year\": 2019\n    }\n]\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "Booking-Completed",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\":\"4f467084-97d1-4893-a24c-b3502bb90149\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/booking-completed",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"booking-completed"
+							]
+						},
+						"description": "### Users Booking Completed\n\nThis endpoint is used to notify the system about a completed booking by sending a POST request to the specified URL.\n\n#### Request Body\n\n- `bookingId` (string, required): The ID of the completed booking.\n    \n\n#### Response\n\nThe response for this request is in JSON format and follows the schema below:\n\n``` json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"description\": \"The status of the booking completion.\"\n    },\n    \"confirmationNumber\": {\n      \"type\": \"string\",\n      \"description\": \"The confirmation number of the completed booking.\"\n    }\n  }\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "User-Bookings",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/users/User-Bookings",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"User-Bookings"
+							]
+						},
+						"description": "\n# Get User Bookings\n\nThis endpoint retrieves the bookings associated with a specific user.\n\n## Request\n\n- Method: `GET`\n- Endpoint: `{{baseUrl}}/users/User-Bookings`\n\n### Query Parameters\n- None\n\n### Request Body\n- Type: JSON\n- Description: The request body should include the bookingId of the user.\n\nExample:\n```json\n{\n    \"bookingId\": \"{{}}\"\n}\n\n## Response\n\nThe response for this request is a JSON object representing the user's bookings. Below is the JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"bookingId\": {\n            \"type\": \"string\"\n        },\n        \"bookingDetails\": {\n            \"type\": \"object\",\n            \"properties\": {\n                // Add properties for booking details if available\n            }\n        }\n    }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Trip-Start",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\":\"4f467084-97d1-4893-a24c-b3502bb90149\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/Trip-Started",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"Trip-Started"
+							]
+						},
+						"description": "\n### Trip Started\n\nThis endpoint is used to indicate that a trip has started for a specific user.\n\n#### Request Body\n- bookingId (string, required): The ID of the booking for which the trip has started.\n\n#### Response\nThe response for this request is a JSON schema. Please refer to the API documentation for the JSON schema definition.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Transaction history",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\":\"25973e64-a20d-40ca-a632-e08cfa1a017c\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/Trip-Started",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"Trip-Started"
+							]
+						},
+						"description": "\n### Trip Started\n\nThis endpoint is used to indicate that a trip has started for a specific user.\n\n#### Request Body\n- bookingId (string, required): The ID of the booking for which the trip has started.\n\n#### Response\nThe response for this request is a JSON schema. Please refer to the API documentation for the JSON schema definition.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel-Booking",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\":\"3d27ce85-f2ed-47ca-82e7-357458e8da5c\" \n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/Cancel-Booking",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"Cancel-Booking"
+							]
+						},
+						"description": "\n### Cancel Booking\n\nThis endpoint is used to cancel a booking for a user.\n\n#### Request Body\n- `bookingId` (string, required): The ID of the booking to be cancelled.\n\nExample:\n```json\n{\n    \"bookingId\": \"your_booking_id\"\n}\n```\n\n#### Response\nThe response will include the status of the cancellation request.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Extend-Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "token",
+								"value": "{{userToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\": \"f87d61f5-4bef-46e4-903a-ba9a58c8aa4f\",    \n    \"newEndDate\": \"2024-09-11\",\n    \"newEndTime\": \"10:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/extend-booking",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"extend-booking"
+							]
+						},
+						"description": "\n### Extend Booking for User\nThis endpoint is used to extend the booking for a user.\n\n#### Request Body\n- `bookingId` (string): The ID of the booking to be extended.\n- `newEndDate` (string): The new end date for the extended booking.\n- `newEndTime` (string): The new end time for the extended booking.\n\n#### Response\nThe response for this request is a JSON object with the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"success\": {\n      \"type\": \"boolean\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "findcar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"startDate\": \"2024-05-12\",\r\n    \"endDate\": \"2024-05-13\",\r\n    \"startTime\":\"00:30:00\",\r\n    \"endTime\": \"15:31:00\",\r\n    \"latitude\": \"12.95\",\r\n    \"longitude\": \"11.37\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/findcars",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"findcars"
+							]
+						},
+						"description": "The `POST /users/findcars` endpoint is used to find cars based on the specified start and end dates, as well as start and end times.\n\n### Request Body\n\n- `startDate` (string): The start date for the car search.\n- `endDate` (string): The end date for the car search.\n- `startTime` (string): The start time for the car search.\n- `endTime` (string): The end time for the car search.\n    \n\n### Response\n\nThe response for this request is a JSON schema representing the structure of the response data."
+					},
+					"response": []
+				},
+				{
+					"name": "wishlist",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\": \"f4c707a1-ab43-451d-b377-e5d54bb5ae8b\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/wishlist",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"wishlist"
+							]
+						},
+						"description": "The `POST /users/findcars` endpoint is used to find cars based on the specified start and end dates, as well as start and end times.\n\n### Request Body\n\n- `startDate` (string): The start date for the car search.\n- `endDate` (string): The end date for the car search.\n- `startTime` (string): The start time for the car search.\n- `endTime` (string): The end time for the car search.\n    \n\n### Response\n\nThe response for this request is a JSON schema representing the structure of the response data."
+					},
+					"response": []
+				},
+				{
+					"name": "wishlist",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}",
+								"disabled": true
+							},
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUyZjJhMDY0LWVmNTItNGJmMi04Y2FlLTE4MzZkOGVmMzg5OSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzIwNjUyMDQxfQ.F12qhNGjcDe38twpgoIPCDFWUCSvetOfuQ4-7vmF6Co"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/wishlist",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"wishlist"
+							]
+						},
+						"description": "The `POST /users/findcars` endpoint is used to find cars based on the specified start and end dates, as well as start and end times.\n\n### Request Body\n\n- `startDate` (string): The start date for the car search.\n- `endDate` (string): The end date for the car search.\n- `startTime` (string): The start time for the car search.\n- `endTime` (string): The end time for the car search.\n    \n\n### Response\n\nThe response for this request is a JSON schema representing the structure of the response data."
+					},
+					"response": []
+				},
+				{
+					"name": "onecar",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('usercarId', res.cars.carId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\": \"afb6d725-37a7-4c68-a87a-c094ad9c6d28\",\r\n    \"startDate\": \"2024-05-20\",\r\n    \"endDate\": \"2024-05-21\",\r\n    \"startTime\":\"00:30:00\",\r\n    \"endTime\": \"21:00:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/onecar",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"onecar"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"bookingId\": \"0331f1ba-3aed-483e-bc23-c003901f4884\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/phonepayment",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"phonepayment"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "cashfree-payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"bookingId\": \"0331f1ba-3aed-483e-bc23-c003901f4884\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/payment",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"payment"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "cashfree webhook",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"data\": {\r\n    \"link_amount\": \"2.46\",\r\n    \"link_currency\": \"INR\",\r\n    \"link_minimum_partial_amount\": null,\r\n    \"link_amount_paid\": \"2.46\",\r\n    \"link_purpose\": \"Booking Payment\",\r\n    \"link_notes\": {},\r\n    \"link_created_at\": \"2024-09-02T20:23:15+05:30\",\r\n    \"customer_details\": {\r\n      \"customer_phone\": \"8433745550\",\r\n      \"customer_email\": \"\",\r\n      \"customer_name\": \"\"\r\n    },\r\n    \"link_meta\": {\r\n      \"notify_url\": \"https://spintripbackend.site/api/users/webhook/cashfree\",\r\n      \"upi_intent\": false,\r\n      \"return_url\": null,\r\n      \"payment_methods\": null\r\n    },\r\n    \"cf_link_id\": 45116745,\r\n    \"link_id\": \"ce8d234d-69f4-4022-9f9b-4ab990d6a5ba\",\r\n    \"link_url\": \"https://payments.cashfree.com/links/F79bpd541c3g\",\r\n    \"link_expiry_time\": \"2024-10-02T20:23:14+05:30\",\r\n    \"order\": {\r\n      \"order_id\": \"CFPay_F79bpd541c3g_8btopp097\",\r\n      \"order_expiry_time\": \"2024-09-02T20:33:16+05:30\",\r\n      \"order_hash\": \"IZNvmTIjuCUcMYCuzFSM\",\r\n      \"order_amount\": \"2.46\",\r\n      \"transaction_id\": 3021917722,\r\n      \"transaction_status\": \"SUCCESS\"\r\n    },\r\n    \"link_status\": \"PAID\",\r\n    \"link_partial_payments\": false,\r\n    \"link_auto_reminders\": false,\r\n    \"link_notify\": {\r\n      \"send_sms\": false,\r\n      \"send_email\": false\r\n    }\r\n  },\r\n  \"type\": \"PAYMENT_LINK_EVENT\",\r\n  \"version\": 1,\r\n  \"event_time\": \"2024-09-02T20:24:00+05:30\",\r\n  \"host\": \"spintripbackend.site\",\r\n  \"x-real-ip\": \"52.66.101.190\",\r\n  \"x-forwarded-for\": \"52.66.101.190\",\r\n  \"x-forwarded-proto\": \"https\",\r\n  \"connection\": \"close\",\r\n  \"content-length\": \"1054\",\r\n  \"user-agent\": \"ReactorNetty/1.1.11\",\r\n  \"accept\": \"*/*\",\r\n  \"x-cashfree-signature\": \"uaYJvhXnaoX5tGZ2fIHyXNIq1hpatKu8iT5IyuFL8OQ=\",\r\n  \"x-cashfree-timestamp\": \"1725292613\",\r\n  \"x-webhook-attempt\": \"1\",\r\n  \"content-type\": \"application/json\",\r\n  \"x-datadog-trace-id\": \"3044030319101311478\",\r\n  \"x-datadog-parent-id\": \"3612955031397542315\",\r\n  \"x-datadog-sampling-priority\": \"-1\",\r\n  \"signature_verification\": {\r\n    \"computedSignature\": \"9bNsCDoXHF5u0AcpuFj4Yp9yY97jL7DngtBNNb6m2xo=\",\r\n    \"receivedSignature\": \"uaYJvhXnaoX5tGZ2fIHyXNIq1hpatKu8iT5IyuFL8OQ=\",\r\n    \"valid\": false\r\n  }\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/webhook/cashfree",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"webhook",
+								"cashfree"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Payment-Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/webhook/phonepe",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"webhook",
+								"phonepe"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "view-breakup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\": \"54c283aa-6759-4862-9e0e-5b9059f886a9\",\r\n    \"startDate\": \"2024-05-20\",\r\n    \"endDate\": \"2024-05-21\",\r\n    \"startTime\":\"00:30:00\",\r\n    \"endTime\": \"21:00:00\",\r\n    \"features\": [ \"54c283aa-6759-4862-9e0e-5b9059f886a9\", \"54c283aa-6759-4862-9e0e-5b9059f886a9\" ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/view-breakup",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"view-breakup"
+							]
+						},
+						"description": "\n# POST /users/onecar\n\nThis endpoint is used to [describe what the endpoint does, e.g. add a new car for a user].\n\n### Request\n- Method: `POST`\n- Endpoint: `{{baseUrl}}/users/onecar`\n- Headers: [Add any headers here]\n\n**Request Body**\n- Type: JSON\n    ```json\n    {\n        \"carId\": \"\",\n        \"startDate\": \"\",\n        \"endDate\": \"\",\n        \"startTime\": \"\",\n        \"endTime\": \"\"\n    }\n    ```\n\n| Parameter  | Type   | Description  |\n|------------|--------|--------------|\n| carId      | string | [Description of the car ID] |\n| startDate  | string | [Description of the start date] |\n| endDate    | string | [Description of the end date] |\n| startTime  | string | [Description of the start time] |\n| endTime    | string | [Description of the end time] |\n\n### Response\nThe response for this request will be in JSON format. Below is a JSON schema for the response:\n\n```json\n{\n    \"type\": \"object\",\n    \"properties\": {\n        \"status\": {\n            \"type\": \"string\"\n        },\n        \"message\": {\n            \"type\": \"string\"\n        }\n    }\n}\n```\n- `status` (string): [Description of the status field]\n- `message` (string): [Description of the message field]\n\n"
+					},
+					"response": []
+				},
+				{
+					"name": "rating",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"bookingId\":\"{{bookingId}}\",\r\n    \"rating\": 4,\r\n    \"feedback\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/rating",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"rating"
+							]
+						},
+						"description": "\n### POST /users/rating\n\nThis endpoint is used to submit a rating for a user's booking.\n\n#### Request Body\n- `bookingId` (string, required): The ID of the booking for which the rating is being submitted.\n- `rating` (number, required): The rating value given by the user for the booking.\n\n#### Response\nThe response for this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "feedback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{userToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\":\"7db8c4ba-8660-4ff5-9183-c976763010f4\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/getFeedback",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"getFeedback"
+							]
+						},
+						"description": "\n### POST /users/rating\n\nThis endpoint is used to submit a rating for a user's booking.\n\n#### Request Body\n- `bookingId` (string, required): The ID of the booking for which the rating is being submitted.\n- `rating` (number, required): The rating value given by the user for the booking.\n\n#### Response\nThe response for this request is a JSON object conforming to the following schema:\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}\n```\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Send message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bookingId\": \"a747d4d5-81ee-460d-a66c-8a943cd75fbd\",\n  \"senderId\": \"2c5a75e7-090e-48ac-87ba-4af1cf56c4d8\",\n  \"receiverId\": \"9d59acea-cfaa-4026-8dde-a81c84fdd088\",\n  \"message\": \"Hello, I have a question about my booking.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/chat/send",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"chat",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get chat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUyZjJhMDY0LWVmNTItNGJmMi04Y2FlLTE4MzZkOGVmMzg5OSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzIwNjUyMDQxfQ.F12qhNGjcDe38twpgoIPCDFWUCSvetOfuQ4-7vmF6Co",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/users/chat/a747d4d5-81ee-460d-a66c-8a943cd75fbd",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"chat",
+								"a747d4d5-81ee-460d-a66c-8a943cd75fbd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete user",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUyZjJhMDY0LWVmNTItNGJmMi04Y2FlLTE4MzZkOGVmMzg5OSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzIwNjUyMDQxfQ.F12qhNGjcDe38twpgoIPCDFWUCSvetOfuQ4-7vmF6Co",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/users/delete_user",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"delete_user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get brands",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/users/get-brand",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"get-brand"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View support chats Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"supportId\" : \"2c2df8a0-304b-47aa-ab12-ef2ca86ec039\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/support/supportChat",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"support",
+								"supportChat"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Support Ticket Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\n   \"subject\": \"Issue with truck Booking\",\n   \"message\": \"Good grief\",\n   \"status\": \"open\",\n   \"priority\": 1,\n   \"escalations\": 0\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/support",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"support"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view Support Tickets Copy",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/support",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"support"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reply Support Ticket Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supportId\": \"5567224b-888a-4f23-b8b1-d7653c55ebf1\",\n  \"userId\": \"ffe8ba30-4b54-47d6-b9df-6ec348bc3649\",\n  \"adminId\": null,\n  \"senderId\": \"ffe8ba30-4b54-47d6-b9df-6ec348bc3649\",\n  \"message\": \"I would like to add more details to my issue. The booking ID is 12345, and it is not showing up in my dashboard.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/users/support/message",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"users",
+								"support",
+								"message"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone\": \"smriti\",\r\n    \"password\":\"1234\",\r\n    \"SecurityQuestion\":\"Whats your favourite color\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/signup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('adminotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone\":\"deadpool\",\r\n    \"password\":\"1234\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/login",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify-otp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('admintoken', res.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"content-type": true
+						}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\":\"deadpool\",\n    \"otp\":\"{{adminotp}}\"\n}"
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/verify-otp",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create-blog",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('adminotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "blogImage_1",
+									"type": "file",
+									"src": "/C:/Users/Pratyay Mazumdar/OneDrive/Desktop/Spintrip.png"
+								},
+								{
+									"key": "blogImage_2",
+									"type": "file",
+									"src": "/C:/Users/Pratyay Mazumdar/OneDrive/Desktop/Spintrip.png"
+								},
+								{
+									"key": "blobId",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "blogName",
+									"value": "Welcome to SpinTrip",
+									"type": "text"
+								},
+								{
+									"key": "blogAuthor",
+									"value": "Pratyay",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Hello",
+									"type": "text"
+								},
+								{
+									"key": "keywords",
+									"value": "World",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/createBlog",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"createBlog"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-blog",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('adminotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "blogImage_1",
+									"type": "file",
+									"src": "/C:/Users/Pratyay Mazumdar/OneDrive/Desktop/Spintrip.png"
+								},
+								{
+									"key": "blogImage_2",
+									"type": "file",
+									"src": "/C:/Users/Pratyay Mazumdar/OneDrive/Desktop/Spintrip.png"
+								},
+								{
+									"key": "id",
+									"value": "da80055a-4bc0-41b1-8a5f-43df3d5018b9",
+									"type": "text"
+								},
+								{
+									"key": "blogName",
+									"value": "Welcome to SpinTrip",
+									"type": "text"
+								},
+								{
+									"key": "blogAuthor",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "keywords",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/updateBlog",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"updateBlog"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete-blog",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('adminotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/deleteBlog/da80055a-4bc0-41b1-8a5f-43df3d5018b9",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"deleteBlog",
+								"da80055a-4bc0-41b1-8a5f-43df3d5018b9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-users",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/users",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-users by id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/users/a1ad5bb5-9021-46e8-a271-1b69c41fb472",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"a1ad5bb5-9021-46e8-a271-1b69c41fb472"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update user",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"90988990020\",  \n  \"status\": 1,  \n  \"rating\": 4.5,  \n  \"role\": \"user\",\n  \"otp\": \"9225\",\n  \"additionalInfo\": {\n    \"Dlverification\": \"string\",  \n    \"FullName\": \"string\",  \n    \"Email\": \"string\",  \n    \"AadharVfid\": \"string\",  \n    \"Address\": \"string\",  \n    \"verification_status\": 2,  \n    \"CurrentAddressVfid\": \"string1\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/users/a1ad5bb5-9021-46e8-a271-1b69c41fb472",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"a1ad5bb5-9021-46e8-a271-1b69c41fb472"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-cars",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/cars",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"cars"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view car by id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/cars/0f9455c0-35be-4b10-adb6-9498510c7b8d",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"cars",
+								"0f9455c0-35be-4b10-adb6-9498510c7b8d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update car",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"carmodel\": \"Tesla Model S123\",\n  \"type\": \"Electric123\",\n  \"brand\": \"Tesla3252\",\n  \"variant\": \"Long Range235\",\n  \"color\": \"blue\",\n  \"chassisno\": \"5YJSA1E45MF1234561431\",\n  \"Rcnumber\": \"KA01AB123412\",\n  \"mileage\": 120,\n  \"Enginenumber\": \"A123B456C78923\",\n  \"Registrationyear\": 2024,\n  \"bodytype\": \"Hatchback\",\n  \"timestamp\": \"2024-08-13T12:00:00Z\",\n  \"rating\": 10,\n  \"additionalInfo\": {\n    \"HorsePower\": 123,\n    \"AC\": false,\n    \"Musicsystem\": false,\n    \"Autowindow\": false,\n    \"Sunroof\": false,\n    \"Touchscreen\": true,\n    \"Sevenseater\": false,\n    \"verification_status\": 1,\n    \"latitude\": 12.9716,\n    \"longitude\": 77.5946,\n    \"address\": \"123, Electric Avenue, Bangalore, India\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/cars/f5bfc041-aade-4890-a6f6-68793366080b",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"cars",
+								"f5bfc041-aade-4890-a6f6-68793366080b"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-transaction",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/transaction",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"transaction"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-transaction",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\" : 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/transaction/03586e68-65f0-4e50-bd2c-b668073ff547",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"transaction",
+								"03586e68-65f0-4e50-bd2c-b668073ff547"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-bookings",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/bookings",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-bookings by id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/bookings/3d27ce85-f2ed-47ca-82e7-357458e8da5c",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"bookings",
+								"3d27ce85-f2ed-47ca-82e7-357458e8da5c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-booking",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\n  \"status\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/bookings/legalContractPath",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"bookings",
+								"legalContractPath"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "brand-image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"//console.log(res.token)\r",
+									"pm.collectionVariables.set('adminotp', res.otp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "brand",
+									"value": "Maruti",
+									"type": "text"
+								},
+								{
+									"key": "carImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/new-brand",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"new-brand"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-hosts",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/hosts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"hosts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-all-cars-Pricing",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/pricing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"pricing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "put manual car pricing",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"carid\": \"597c4a1f-6014-459c-88ed-810ba9aae376\", \n\"costperhr\" : \"108\" \n} ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/pricing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"pricing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "auto pricing",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"carid\": \"b00e5590-8cde-4cdb-81bf-8d74c54e668e\"\n} ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/auto-pricing",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"auto-pricing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "single brand price",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"data\": [\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"volkswagen\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"toyota\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"suzuki\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"ssangyong\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"skoda\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"renault\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"nissan\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"mitsubishi\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"mg\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"mahindra\",\r\n      \"brand_value\": 12,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"kia\",\r\n      \"brand_value\": 7,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"jeep\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"isuzu\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"hyundai\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"honda\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"ford\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"force-motors\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"fiat\",\r\n      \"brand_value\": 5,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"datsun\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"citroen\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"byd\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"MUV\",\r\n      \"brand\": \"abarth\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"volkswagen\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"tata\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"toyota\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"suzuki\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"ssangyong\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"skoda\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"renault\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"nissan\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"mitsubishi\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"mg\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"mahindra\",\r\n      \"brand_value\": 12,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"kia\",\r\n      \"brand_value\": 7,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"jeep\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"isuzu\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"hyundai\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n     {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"honda\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"ford\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"force-motors\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"fiat\",\r\n      \"brand_value\": 5,\r\n      \"base_price\": 110\r\n    },\r\n        {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"datsun\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"citroen\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"byd\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Compact suv\",\r\n      \"brand\": \"abarth\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 110\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"volkswagen\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"tata\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"toyota\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"suzuki\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"ssangyong\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"skoda\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"renault\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"nissan\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"mitsubishi\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"mg\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"mahindra\",\r\n      \"brand_value\": 12,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"kia\",\r\n      \"brand_value\": 7,\r\n      \"base_price\": 100\r\n    },\r\n     {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"jeep\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 100\r\n    },\r\n     {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"isuzu\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"hyundai\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 100\r\n    },\r\n     {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"honda\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"ford\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"force-motors\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"fiat\",\r\n      \"brand_value\": 5,\r\n      \"base_price\": 100\r\n    },\r\n        {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"datsun\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"citroen\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"byd\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Hatchback\",\r\n      \"brand\": \"abarth\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 100\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"volkswagen\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"tata\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"toyota\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"suzuki\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"ssangyong\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"skoda\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"renault\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"nissan\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"mitsubishi\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"mg\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"mahindra\",\r\n      \"brand_value\": 12,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"kia\",\r\n      \"brand_value\": 7,\r\n      \"base_price\": 120\r\n    },\r\n     {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"jeep\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 120\r\n    },\r\n     {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"isuzu\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"hyundai\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 120\r\n    },\r\n     {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"honda\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"ford\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"force-motors\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"fiat\",\r\n      \"brand_value\": 5,\r\n      \"base_price\": 120\r\n    },\r\n        {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"datsun\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"citroen\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"byd\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"Sedan\",\r\n      \"brand\": \"abarth\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 120\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"volkswagen\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"tata\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"toyota\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"suzuki\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"ssangyong\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"skoda\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"renault\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"nissan\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"mitsubishi\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"mg\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"mahindra\",\r\n      \"brand_value\": 12,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"kia\",\r\n      \"brand_value\": 7,\r\n      \"base_price\": 150\r\n    },\r\n     {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"jeep\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 150\r\n    },\r\n     {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"isuzu\",\r\n      \"brand_value\": 50,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"hyundai\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 150\r\n    },\r\n     {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"honda\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"ford\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"force-motors\",\r\n      \"brand_value\": 15,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"fiat\",\r\n      \"brand_value\": 5,\r\n      \"base_price\": 150\r\n    },\r\n        {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"datsun\",\r\n      \"brand_value\": 0,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"citroen\",\r\n      \"brand_value\": 10,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"byd\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 150\r\n    },\r\n    {\r\n      \"type\": \"SUV\",\r\n      \"brand\": \"abarth\",\r\n      \"brand_value\": 20,\r\n      \"base_price\": 150\r\n    }\r\n\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/brand",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"brand"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "brand price update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "    {\r\n      \"id\": 19, \r\n      \"brand_value\": 10,\r\n      \"base_price\": 100\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/update_brand",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"update_brand"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "brand price",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/brand",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"brand"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "pending-verification",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/pending-profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"pending-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "pending-carprofile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{localUrl}}/admin/pending-carprofile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"pending-carprofile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "approve-verification",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\":\"bea5320e-a0d4-4b42-93d2-627d6b28dac7\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/approve-profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"approve-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "approve-carverification",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\":\"daf97e3e-66e1-4d65-bcd6-150ce9f198bd\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/approve-carprofile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"approve-carprofile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reject-carprofile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwicm9sZSI6bnVsbCwiaWF0IjoxNzAyNzA0MzA4fQ.ETuD1qRG9MNLnnjW6vieeeR19bVGOfSOg6zr_GlAIkM",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"carId\":\"597c4a1f-6014-459c-88ed-810ba9aae376\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/reject-carprofile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"reject-carprofile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reject-profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\":\"b9624f9b-93de-4532-8ab3-84dd1369f8b3\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/reject-profile",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"reject-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/admin/chat/all",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"chat",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Merge Extended Booking",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bookingId\": \"f87d61f5-4bef-46e4-903a-ba9a58c8aa4f\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/mergebooking",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"mergebooking"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tax",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"GST\": \"18\",\n    \"TDS\": \"1\",\n    \"HostGST\": \"5\",\n    \"Commission\": \"30\",\n    \"insurance\": \"14\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/tax",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"tax"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get tax",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"GST\": \"18\",\n    \"TDS\": \"1\",\n    \"HostGST\": \"5\",\n    \"Commission\": \"35\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/tax",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"tax"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update tax",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"GST\": \"18\",\n    \"TDS\": \"1\",\n    \"HostGST\": \"5\",\n    \"Commission\": \"30\",\n    \"insurance\": \"14\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/tax/1",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"tax",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "flag message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/api/admin/chat/flag/5",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"chat",
+								"flag",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "See all support tickets",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/support",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"support"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View Support Chats",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/support/supportChat",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"support",
+								"supportChat"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "escalate support chats",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"supportId\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/support/escalate",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"support",
+								"escalate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resolve support chats",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"supportId\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/support/resolve",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"support",
+								"resolve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "support reply",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ticketId\": \"5567224b-888a-4f23-b8b1-d7653c55ebf1\",\n  \"reply\": \"ffe8ba30-4b54-47d6-b9df-6ec348bc3649\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/support/reply",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"support",
+								"reply"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "feature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureName\": \"Cleaning\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-feature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureName\": \"cleaning\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete-feature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"featureName\": \"cleaning\" \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/features",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"features"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Push Location for device",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/device?id=spintrip003&lat=21.000000&lng=96.000000&alt=0.00&speed=0.00&course=0.00&date=0/0/2000&time=0:0:0",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"device"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "spintrip003"
+								},
+								{
+									"key": "lat",
+									"value": "21.000000"
+								},
+								{
+									"key": "lng",
+									"value": "96.000000"
+								},
+								{
+									"key": "alt",
+									"value": "0.00"
+								},
+								{
+									"key": "speed",
+									"value": "0.00"
+								},
+								{
+									"key": "course",
+									"value": "0.00"
+								},
+								{
+									"key": "date",
+									"value": "0/0/2000"
+								},
+								{
+									"key": "time",
+									"value": "0:0:0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Particular Device Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/device/spintrip009?limit=3",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"device",
+								"spintrip009"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all devices registered",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/alldevice",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"alldevice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Car-device Mapping addition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"deviceid\": \"spintrip002\",\n    \"carid\": \"0f9455c0-35be-4b10-adb6-9498510c7b8d\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/car-device",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"car-device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update Car-device Mapping",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n    \"deviceid\": \"spintrip001\",\n    \"carid\": \"f5678460-9637-4d36-811d-10441adea12e\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/car-device",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"car-device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all  Car-device Mapping",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/car-device",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"car-device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete  Car-device Mapping",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/car-device/spintrip002",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"car-device",
+								"spintrip002"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getallblog",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{localUrl}}/admin/getallblogs",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"getallblogs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/users/",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete host",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/hosts/48b59994-a274-4268-92a6-5fc209aaa228",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"hosts",
+								"48b59994-a274-4268-92a6-5fc209aaa228"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete cars",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/cars/48b59994-a274-4268-92a6-5fc209aaa228",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"cars",
+								"48b59994-a274-4268-92a6-5fc209aaa228"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete transaction",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/transaction/48b59994-a274-4268-92a6-5fc209aaa228",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"transaction",
+								"48b59994-a274-4268-92a6-5fc209aaa228"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete bookings",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{hostToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/bookings/48b59994-a274-4268-92a6-5fc209aaa228",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"bookings",
+								"48b59994-a274-4268-92a6-5fc209aaa228"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send-notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userIds\": [\"5a95fb24-1420-4fd9-9027-882023c858f6\", \"348f1583-2930-4a57-bb3b-68a1aa3fda3e\"],\n    \"subject\": \"Important Update from Spintrip\",\n    \"message\": \"<p>Dear user, we have an important update for you...</p>\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/send-notifications",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"send-notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add payout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"348f1583-2930-4a57-bb3b-68a1aa3fda3e\", \n    \"bookingIds\": [\"booking-id-1\", \"booking-id-2\", \"booking-id-3\"],\n    \"date\": \"2024-08-17\",\n    \"time\": \"15:30\",\n    \"modeOfPayment\": \"Bank Transfer\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{localUrl}}/admin/payouts",
+							"host": [
+								"{{localUrl}}"
+							],
+							"path": [
+								"admin",
+								"payouts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "add payout Copy",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "token",
+								"value": "{{admintoken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://spintrip.in/pages/privacy-policy",
+							"protocol": "https",
+							"host": [
+								"spintrip",
+								"in"
+							],
+							"path": [
+								"pages",
+								"privacy-policy"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "localUrl",
+			"value": "http://localhost:2000/api",
+			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:2000/api"
+		},
+		{
+			"key": "hostToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "otp",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userotp",
+			"value": ""
+		},
+		{
+			"key": "userToken",
+			"value": ""
+		},
+		{
+			"key": "listingId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "carId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "hostId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "adminotp",
+			"value": ""
+		},
+		{
+			"key": "admintoken",
+			"value": ""
+		},
+		{
+			"key": "bookingId",
+			"value": ""
+		},
+		{
+			"key": "ListingId",
+			"value": ""
+		},
+		{
+			"key": "usercarId",
+			"value": ""
+		}
+	]
+}

@@ -20,7 +20,7 @@ const sendOTP = async(phone, otp) => {
   }
 };
 const adminSignup = async (req, res) =>{
-  const { phone, password, securityQuestion } = req.body;
+  const { phone, password, securityQuestion, adminRole } = req.body;
 
   try {
     const user = await User.findOne({ where: { phone } });
@@ -43,7 +43,8 @@ const adminSignup = async (req, res) =>{
       timestamp: new Date(), // Set the current timestamp
       password: hashedPassword,
       UserId: user.id,
-      role: 'Admin'
+      role: 'Admin',
+      adminRole: adminRole || 'superadmin', // Use explicit adminRole if provided, otherwise default to superadmin
     });
 
     res.status(201).json({ message: 'Admin created', admin });
@@ -83,7 +84,11 @@ const verifyOTP = async (req, res) => {
     }
     const fixed_otp = admin.otp;
     if (fixed_otp === otp) {
-      const token = jwt.sign({ id: user.id, role: 'admin' }, 'your_secret_key');
+      // Include adminRole in the JWT token
+      const token = jwt.sign(
+        { id: user.id, role: 'admin', adminRole: user.adminRole || 'superadmin' }, 
+        'your_secret_key'
+      );
       return res.json({ message: 'OTP verified successfully', user, token });
     } else {
       return res.status(401).json({ message: 'Invalid OTP' });
@@ -104,7 +109,7 @@ const adminProfile = async (req, res)  => {
     }
     const additionalinfo = await UserAdditional.findByPk(adminId)
 
-    res.json({ phone: admin.phone, securityQuestion: admin.SecurityQuestion, additionalinfo });
+    res.json({ phone: admin.phone, securityQuestion: admin.SecurityQuestion, adminRole: admin.adminRole, additionalinfo });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error });
