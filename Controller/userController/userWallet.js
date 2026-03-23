@@ -170,14 +170,18 @@ const walletWebhook = async (req, res) => {
              await t.commit();
              console.log(`Wallet officially credited by Rs. ${link_amount} for Wallet ID: ${wallet.id}`);
 
-             // Push Notification
-             const device = await Device.findOne({ where: { userId: wallet.userId } });
-             if (device && device.token) {
-                await sendPushNotification(
-                   device.token,
-                   "Wallet Recharged Successfully",
-                   `Your Spintrip Wallet has been credited with Rs. ${link_amount}. Current Balance: Rs. ${wallet.balance}.`
-                );
+             // Push Notification (Isolated to prevent transaction rollback overlap)
+             try {
+                 const userObj = await User.findByPk(wallet.userId);
+                 if (userObj && userObj.fcmToken) {
+                    await sendPushNotification(
+                       userObj.fcmToken,
+                       "Wallet Recharged Successfully",
+                       `Your Spintrip Wallet has been credited with Rs. ${link_amount}. Current Balance: Rs. ${wallet.balance}.`
+                    );
+                 }
+             } catch (pushErr) {
+                 console.error("Non-critical Push Notification Error after Wallet Recharge:", pushErr.message);
              }
           } else {
              await t.rollback();
