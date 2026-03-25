@@ -369,7 +369,7 @@ const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini c
     subtotalBasePrice = Math.max(Math.round((subtotalBasePrice * trafficMultiplier * hostSurgeMultiplier) + flatTollCharges), 100);
 
     /// APPLY TAXES AND WITHHOLDINGS
-    const taxRule = await Tax.findOne({ order: [['createdAt', 'DESC']] }) || { GST: 18, TDS: 1 };
+    const taxRule = await Tax.findOne({ order: [['createdAt', 'DESC']] }) || { GST: 5, TDS: 1 };
     const gstRate = taxRule.GST / 100.0;
     const tdsRate = (taxRule.TDS || 1) / 100.0;
     const commissionRate = 0.20; // Explicit 20%
@@ -400,7 +400,7 @@ const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini c
 
     // Default 100 Rs logic
     const fallbackBase = 100;
-    const gstFallback = 18;
+    const gstFallback = 5;
     return {
       distance: 0,
       duration: 0,

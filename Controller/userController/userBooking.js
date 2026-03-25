@@ -782,8 +782,8 @@ const userbookings = async (req, res) => {
       const userBookings = (await Promise.all(userBookingPromises)).filter(booking => booking !== null);
 
       // PARSE AND FORMAT NEW CAB BOOKING REQUESTS
-      const taxRow = await Tax.findOne({ where: { id: 1 } });
-      const GST_RATE = taxRow ? taxRow.GST : 18.0;
+      const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+      const GST_RATE = taxRow ? taxRow.GST : 5.0;
       const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
       const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
       const cabBookingPromises = cabBookings.map(async (cab) => {

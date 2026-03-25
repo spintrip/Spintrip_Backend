@@ -183,18 +183,23 @@
   
       const { dlFile, aadharFile, profilePic } = req.files;
   
+      const [userAdditional, created] = await UserAdditional.findOrCreate({
+        where: { id: userId },
+        defaults: { id: userId }
+      });
+      
       if (dlFile || aadharFile) {
-        await UserAdditional.update({
+        await userAdditional.update({
           dl: dlFile ? dlFile[0].location : undefined,
           aadhar: aadharFile ? aadharFile[0].location : undefined,
           verification_status: 1
-        }, { where: { id: userId } });
+        });
       }
   
       if (profilePic) {
-        await UserAdditional.update({
+        await userAdditional.update({
           profilepic: profilePic[0].location,
-        }, { where: { id: userId } });
+        });
       }
   
       res.status(200).json({ message: 'Profile Updated successfully' });

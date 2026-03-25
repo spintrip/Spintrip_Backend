@@ -8,7 +8,13 @@ const getAllCabs = async (req, res) => {
                 { model: Driver, include: [{ model: DriverAdditional }] }
             ]
         });
-        res.status(200).json({ cabs });
+        const formattedCabs = cabs.map(c => {
+            const json = c.toJSON();
+            json.verification_status = json.Vehicle?.VehicleAdditional?.verification_status || 0;
+            json.registration_number = json.Vehicle?.Rcnumber || null;
+            return json;
+        });
+        res.status(200).json({ cabs: formattedCabs });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error fetching cabs', error: error.message });
@@ -53,7 +59,11 @@ const getAllDrivers = async (req, res) => {
         const drivers = await Driver.findAll({
             include: [
                 { model: DriverAdditional }, 
-                { model: User, include: [{ model: UserAdditional }] }
+                { model: User, include: [{ model: UserAdditional }] },
+                { 
+                    model: Cab, 
+                    include: [{ model: Vehicle, include: [{ model: VehicleAdditional }] }] 
+                }
             ]
         });
         // Frontend often expects basic properties flattened
@@ -62,10 +72,12 @@ const getAllDrivers = async (req, res) => {
             // DriverAdditional contains FullName and phone might be in User, but frontend drivers.js uses `row.name`?
             json.name = json.DriverAdditional?.FullName;
             json.phone = json.User?.phone;
-            json.verification_status = json.DriverAdditional?.verification_status || 0;
-            json.profilepic = json.DriverAdditional?.profilepic || null;
-            json.aadhar = json.DriverAdditional?.aadhar || null;
-            json.dl = json.DriverAdditional?.dl || null;
+            json.verification_status = json.DriverAdditional?.verification_status || json.User?.UserAdditional?.verification_status || 0;
+            json.profilepic = json.DriverAdditional?.profilepic || json.User?.UserAdditional?.profilepic || null;
+            json.aadhar = json.DriverAdditional?.aadhar || json.User?.UserAdditional?.aadhar || null;
+            json.dl = json.DriverAdditional?.dl || json.User?.UserAdditional?.dl || null;
+            json.latitude = json.Cab?.Vehicle?.VehicleAdditional?.latitude || null;
+            json.longitude = json.Cab?.Vehicle?.VehicleAdditional?.longitude || null;
             return json;
         });
         res.status(200).json({ drivers: formattedDrivers });
@@ -92,6 +104,7 @@ const getDriverById = async (req, res) => {
 
 const approveDriverProfile = async (req, res) => {
     try {
+        await UserAdditional.update({ verification_status: 2 }, { where: { id: req.params.id } });
         await DriverAdditional.update({ verification_status: 2 }, { where: { id: req.params.id } });
         res.status(200).json({ message: 'Driver profile approved' });
     } catch (error) {
@@ -101,6 +114,7 @@ const approveDriverProfile = async (req, res) => {
 
 const rejectDriverProfile = async (req, res) => {
     try {
+        await UserAdditional.update({ verification_status: null }, { where: { id: req.params.id } });
         await DriverAdditional.update({ verification_status: null }, { where: { id: req.params.id } });
         res.status(200).json({ message: 'Driver profile rejected' });
     } catch (error) {

@@ -7,7 +7,9 @@ module.exports = (sequelize, DataTypes) => {
       Address: DataTypes.TEXT,   
       businessName: DataTypes.STRING(100),
       profilepic: DataTypes.STRING,
-      aadhar: DataTypes.STRING
+      aadhar: DataTypes.STRING,
+      dl: DataTypes.STRING,
+      verification_status: DataTypes.INTEGER
     });
 
   

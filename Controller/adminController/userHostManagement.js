@@ -1,4 +1,4 @@
-const { User, Host, Admin, UserAdditional, HostAdditional } = require('../../Models');
+const { User, Host, Admin, UserAdditional, HostAdditional, Driver, DriverAdditional } = require('../../Models');
 
 
 const getAllUsers = async (req, res) => {
@@ -13,12 +13,21 @@ const getAllUsers = async (req, res) => {
 
     const users = await User.findAll();
     const userAdditional = await UserAdditional.findAll();
+    const drivers = await Driver.findAll({ include: [{ model: DriverAdditional }] });
 
     const usersWithAdditionalInfo = users.map(user => {
-      const additionalInfo = userAdditional.find(additional => additional.id === user.id);
+      let additionalInfo = userAdditional.find(additional => additional.id === user.id);
+      
+      if (user.role === 'driver' || user.role === 'Driver') {
+        const driverProfile = drivers.find(d => d.userId === user.id);
+        if (driverProfile && driverProfile.DriverAdditional) {
+           additionalInfo = driverProfile.DriverAdditional;
+        }
+      }
+
       return {
-        ...user.toJSON(),  // Convert Sequelize model instance to plain object
-        additionalInfo: additionalInfo ? additionalInfo.toJSON() : null
+        ...user.toJSON(),
+        additionalInfo: additionalInfo ? (additionalInfo.toJSON ? additionalInfo.toJSON() : additionalInfo) : null
       };
     });
 

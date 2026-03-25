@@ -23,10 +23,18 @@ const sendNotification = async ({ receiverIds, receiverType, text, title = "Noti
 
     // Fetch receivers (users or drivers)
     const receiverModel = receiverType === "user" ? User : Driver;
-    const receivers = await receiverModel.findAll({
-      where: { id: receiverIds },
-      attributes: ["id", "deviceToken"], // Include only necessary fields
-    });
+    
+    let receivers;
+    if (receiverIds.length === 1 && receiverIds[0] === 'all') {
+      receivers = await receiverModel.findAll({
+        attributes: ["id", "deviceToken"],
+      });
+    } else {
+      receivers = await receiverModel.findAll({
+        where: { id: receiverIds },
+        attributes: ["id", "deviceToken"], // Include only necessary fields
+      });
+    }
 
     if (!receivers || !receivers.length) {
       throw new Error("No receivers found");

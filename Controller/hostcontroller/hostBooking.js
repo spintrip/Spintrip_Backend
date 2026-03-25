@@ -210,8 +210,8 @@ const bookingcompleted = async (req, res) => {
       const t = await sequelize.transaction();
       try {
         const amt = cabBooking.estimatedPrice || cabBooking.finalPrice || 0;
-        const taxRow = await Tax.findOne({ where: { id: 1 }, transaction: t });
-        const GST_RATE = taxRow ? taxRow.GST : 18.0;
+        const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+        const GST_RATE = taxRow ? taxRow.GST : 5.0;
         const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
         const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
 
@@ -320,7 +320,7 @@ const bookingcompleted = async (req, res) => {
         { status: 3 },
         { where: { Bookingid: bookingId } }
       );
-      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookingId);
+      const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
       await sendBookingCompletionEmail(userEmail, hostEmail, bookingDetails, "Booking complete");
 
       // ====== Generate & Send Invoice ======
@@ -378,7 +378,7 @@ const cancelbooking = async (req, res) => {
     }
   }
   catch (err) {
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ message: 'Server error: ' + err.message });
   }
 }
 function checkTime(value) {
@@ -614,8 +614,8 @@ const DriverBookings = async (req, res) => {
     });
 
     // Formatting Cab Bookings
-    const taxRow = await Tax.findOne({ where: { id: 1 } });
-    const GST_RATE = taxRow ? taxRow.GST : 18.0;
+    const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+    const GST_RATE = taxRow ? taxRow.GST : 5.0;
     const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
     const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
 

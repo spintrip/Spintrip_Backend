@@ -647,8 +647,8 @@ const activateVehicle = async (req, res) => {
       PaymentDate: new Date(),
       PlanEndDate: planEndDate,
       Amount: amount,
-      GSTAmount: amount * 0.18,
-      TotalAmount: amount * 1.18,
+      GSTAmount: amount * 0.05,
+      TotalAmount: amount * 1.05,
       PaymentStatus: 1, // Assuming 1 means successful
       PaymentMethod: paymentMethod ? paymentMethod : 'Cashfree',
       Remarks: 'Vehicle activation payment'

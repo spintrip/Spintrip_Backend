@@ -87,12 +87,14 @@ app.use(cors({
     origin: [
         'https://spintrip-admin.netlify.app', 
         'https://spintrip.in', 
+        'https://www.spintrip.in',
         'http://localhost', 
         'http://localhost:3000',
         'http://localhost:4000',
         'http://13.232.236.183:3000', 
         'http://3.109.122.29:3000',
-        'http://spintrip.in'
+        'http://spintrip.in',
+        'http://www.spintrip.in'
     ],
 }));
 app.use(express.json({ limit: '50mb' }));

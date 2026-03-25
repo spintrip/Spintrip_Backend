@@ -523,7 +523,7 @@ const verifyDriverProfile = async (req, res) => {
 
     if (profilePic && profilePic[0]) {
       await DriverAdditional.update(
-        { profilepic: profilePic[0].location || null },
+        { profilepic: profilePic[0].location || null, verification_status: 1 },
         { where: { id: driverId } }
       );
       console.log('Updated driver profile pic', { driverId, profilePic: profilePic[0].location });
@@ -531,14 +531,14 @@ const verifyDriverProfile = async (req, res) => {
 
     if (dlFile && dlFile[0]) {
       await DriverAdditional.update(
-        { dl: dlFile[0].location || null },
+        { dl: dlFile[0].location || null, verification_status: 1 },
         { where: { id: driverId } }
       );
     }
 
     if (aadharFile && aadharFile[0]) {
       await DriverAdditional.update(
-        { aadhar: aadharFile[0].location || null },
+        { aadhar: aadharFile[0].location || null, verification_status: 1 },
         { where: { id: driverId } }
       );
     }
@@ -574,25 +574,32 @@ const verifyProfile = async (req, res) => {
 
     const { aadharFile, profilePic, dlFile } = req.files || {};
 
+    if (user.role === 'Driver' || user.role === 'driver') {
+      const [driverAdditional] = await DriverAdditional.findOrCreate({
+        where: { id: userId },
+        defaults: { id: userId, FullName: 'Not Provided', AadharVfid: 'Not Provided', Email: 'Not Provided', Address: 'Not Provided' }
+      });
+      if (profilePic && profilePic[0]) await driverAdditional.update({ profilepic: profilePic[0].location, verification_status: 1 });
+      if (dlFile && dlFile[0]) await driverAdditional.update({ dl: dlFile[0].location, verification_status: 1 });
+      if (aadharFile && aadharFile[0]) await driverAdditional.update({ aadhar: aadharFile[0].location, verification_status: 1 });
+      return res.status(200).json({ message: 'Driver Profile updated successfully' });
+    }
+
+    const [hostAdditional] = await HostAdditional.findOrCreate({
+      where: { id: userId },
+      defaults: { id: userId }
+    });
+
     if (profilePic && profilePic[0]) {
-      await HostAdditional.update(
-        { profilepic: profilePic[0].location || null },
-        { where: { id: userId } }
-      );
+      await hostAdditional.update({ profilepic: profilePic[0].location || null });
     }
 
     if (dlFile && dlFile[0]) {
-      await HostAdditional.update(
-        { dl: dlFile[0].location || null },
-        { where: { id: userId } }
-      );
+      await hostAdditional.update({ dl: dlFile[0].location || null });
     }
 
     if (aadharFile && aadharFile[0]) {
-      await HostAdditional.update(
-        { aadhar: aadharFile[0].location || null },
-        { where: { id: userId } }
-      );
+      await hostAdditional.update({ aadhar: aadharFile[0].location || null });
     }
 
     res.status(200).json({ message: 'Profile updated successfully' });
