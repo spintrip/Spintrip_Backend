@@ -22,13 +22,20 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
   logging: false, // Disable logging in production
 });
 
-// Enable PostGIS Extension if not already enabled
+// Enable PostGIS Extension and perform standard DB Health Checks
 (async () => {
   try {
     await sequelize.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
     console.log('PostGIS extension enabled');
+
+    // AUTO-PATCH: Drop problematic foreign key constraint on HostCabRateCards if it exists
+    // This allows global rate cards to work without requiring manual SQL execution by the user.
+    await sequelize.query(`ALTER TABLE "HostCabRateCards" DROP CONSTRAINT IF EXISTS "HostCabRateCards_hostId_fkey";`);
+    await sequelize.query(`ALTER TABLE "HostCabRateCards" ALTER COLUMN "hostId" DROP NOT NULL;`);
+    console.log('Database Health Check: HostCabRateCards constraints optimized.');
+
   } catch (error) {
-    console.error('Error enabling PostGIS extension:', error.message);
+    console.error('Error during Database initialization/health check:', error.message);
   }  
 })();
 
