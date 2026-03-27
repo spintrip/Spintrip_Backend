@@ -489,6 +489,7 @@ const getAllDrivers = async (req, res) => {
 
 const verifyDriverProfile = async (req, res) => {
   try {
+    console.log(req.files);
     const hostId = req.user.id;
     console.log('verifyDriverProfile request', { hostId, body: req.body, files: req.files });
     const host = await Host.findByPk(hostId);
@@ -555,7 +556,8 @@ const verifyDriverProfile = async (req, res) => {
 const verifyProfileHandler = upload.fields([
   { name: 'aadharFile', maxCount: 1 },
   { name: 'profilePic', maxCount: 1 },
-  { name: 'dlFile', maxCount: 1 }
+  { name: 'dlFile', maxCount: 1 },
+  { name: 'panFile', maxCount: 1 }
 ]);
 
 const verifyDriverProfileHandler = upload.fields([
@@ -566,7 +568,7 @@ const verifyDriverProfileHandler = upload.fields([
 const verifyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-
+    console.log(req.files);
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

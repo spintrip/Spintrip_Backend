@@ -71,7 +71,7 @@ router.post('/assign-driver', authenticate, assignDriver);
 
 router.get("/my-drivers", authenticate, getAllDrivers);
 
-router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
+// router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
 //chat
 router.post('/chat/send', chatController.sendMessage);
 router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
