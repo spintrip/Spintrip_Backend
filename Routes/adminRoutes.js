@@ -101,7 +101,46 @@ router.put('/reject-driver/:id', authenticate, rejectDriverProfile);
 router.get('/withdrawals', authenticate, restrictToSuperadmin, getAllWithdrawals);
 router.put('/withdrawals/:id/approve', authenticate, restrictToSuperadmin, approveWithdrawal);
 router.put('/withdrawals/:id/reject', authenticate, restrictToSuperadmin, rejectWithdrawal);
+const { HostCabRateCard } = require('../Models');
 
+const copyRatesToCities = async (req, res) => {
+  try {
+    const { sourceId, targetCities } = req.body; // targetCities is an array: ["Mumbai", "Pune"]
+    
+    // 1. Get the source record
+    const sourceRecord = await HostCabRateCard.findByPk(sourceId);
+    if (!sourceRecord) return res.status(404).json({ message: "Source rate card not found" });
+
+    const results = [];
+    const plainRecord = sourceRecord.get({ plain: true });
+    delete plainRecord.id;
+    delete plainRecord.createdAt;
+    delete plainRecord.updatedAt;
+
+    // 2. Clone to each target city
+    for (const cityName of targetCities) {
+      // Skip if it's the same city or empty
+      if (cityName === sourceRecord.city || !cityName) continue;
+
+      // Create or Update (Overwrite existing for that city/cabType combo)
+      const [record, created] = await HostCabRateCard.findOrCreate({
+        where: { city: cityName, cabType: sourceRecord.cabType },
+        defaults: { ...plainRecord, city: cityName }
+      });
+
+      if (!created) {
+        await record.update({ ...plainRecord, city: cityName });
+      }
+      results.push(cityName);
+    }
+
+    res.status(200).json({ success: true, message: `Copied to: ${results.join(', ')}`, cities: results });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+router.post('/cab-rates/copy', authenticate, restrictToSuperadmin, copyRatesToCities);
 // Feedback routes
 router.get('/feedbacks', authenticate, restrictToSuperadmin, getAllFeedbacks);
 router.delete('/feedbacks/:id', authenticate, restrictToSuperadmin, deleteFeedback);
