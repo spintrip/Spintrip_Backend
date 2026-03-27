@@ -755,7 +755,7 @@ const userbookings = async (req, res) => {
             }
           }
         }
-
+        console.log(vehicle.Rcnumber)
         return {
           bookingId: booking.Bookingid,
           vehicleid: checkData(booking.vehicleid),
@@ -937,7 +937,7 @@ const userbookings = async (req, res) => {
             };
           }
         }
-
+        console.log(vehicle?.Rcnumber);
         return {
           bookingId: cab.bookingId,
           vehicleid: cab.vehicleId || "",
