@@ -774,6 +774,7 @@ const userbookings = async (req, res) => {
           vehicleImage3: checkImage(vehicleAdditional.vehicleImage3),
           vehicleImage4: checkImage(vehicleAdditional.vehicleImage4),
           vehicleImage5: checkImage(vehicleAdditional.vehicleImage5),
+          rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided", 
           latitude: checkData(vehicleAdditional.latitude),
           longitude: checkData(vehicleAdditional.longitude),
           cancelDate: checkData(booking.cancelDate),
