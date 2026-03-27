@@ -63,6 +63,7 @@ db.Vehicle = require('./vehicleModel')(sequelize, DataTypes);
 db.UserAdditional = require('./userAdditionalModel')(sequelize, DataTypes);
 db.HostAdditional = require('./hostAdditionalModel')(sequelize, DataTypes);
 db.DriverAdditional = require('./driverAdditionalModel')(sequelize, DataTypes);
+db.City = require('./cityModel')(sequelize, DataTypes);
 db.VehicleAdditional = require('./vehicleAdditional')(sequelize, DataTypes);
 db.Subscriptions = require('./SubscriptionModel')(sequelize, DataTypes);
 db.Booking = require('./bookingModel')(sequelize, DataTypes);

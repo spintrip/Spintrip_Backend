@@ -70,9 +70,24 @@ router.put('/users/:id', authenticate, restrictToSuperadmin, updateUser);
 router.post('/cab/add-cab', authenticate, addCab);
 router.post('/cab/add-driver', authenticate, addDriver);
 router.post('/cab/assign-driver-vehicle', authenticate, assignDriverToVehicle);
+// Add this function (perhaps near your new 'getAllVehicleTypes'):
+const getAllCities = async (req, res) => {
+  try {
+    const { City } = require('../../Models'); // Import City model here to avoid circular dependency
+    const cities = await City.findAll({ where: { isActive: true } });
+    res.status(200).json({ success: true, cities });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DON'T FORGET to add 'getAllCities' to the module.exports at the bottom!
 
 // Missing Frontend Render Routes for Drivers and Cabs Dashboard
 router.get('/cabs', authenticate, getAllCabs);
+// Add this route (around line 67):
+router.get('/cities', getAllCities);
+
 router.get('/cabs/:id', authenticate, getCabById);
 router.put('/approve-cab/:id', authenticate, approveCabProfile);
 router.put('/reject-cab/:id', authenticate, rejectCabProfile);

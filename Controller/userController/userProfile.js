@@ -75,6 +75,23 @@ const checkData = (value) => {
       res.status(500).json({ message: 'Server error' });
     }
   }
+
+  // Add this function near the other "get" methods (like getbrand):
+const getAllVehicleTypes = async (req, res) => {
+  try {
+    const { VehicleType } = require('../../Models');
+    const types = await VehicleType.findAll();
+    const formattedTypes = types.map(t => 
+      `${t.vehicletype} ${t.description || ''}`.trim()
+    );
+    res.status(200).json({ success: true, vehicleTypes: formattedTypes });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// IMPORTANT: Remember to add 'getAllVehicleTypes' to the module.exports at the bottom!
+
   const putprofile = async (req, res) => {
     try {
       const userId = req.user.id;
@@ -305,4 +322,4 @@ const checkData = (value) => {
     }
   };
   
-  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, checkData, checkImage, checkStatus, postaddress, getaddress, verifyAadhar, verifyPan, verifyDl};
+  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, getAllVehicleTypes, checkData, checkImage, checkStatus, postaddress, getaddress, verifyAadhar, verifyPan, verifyDl};

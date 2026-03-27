@@ -9,7 +9,7 @@ const {
 } = require('../Controller/cabController');
 
 const { signup, login, verify, getprofile, putprofile, uploadProfile, deleteuser, getbrand, features, findvehicles, onevehicle, getvehicleadditional,
-  postwishlist, cancelwishlist, getwishlist, getallVehicles, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
+  postwishlist, cancelwishlist, getwishlist, getAllVehicleTypes, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
   chat, chathistory, updateDeviceToken, toprating, verifyAadhar, verifyDl, verifyPan, postaddress, getaddress, findCabs, getWalletDetails, initiateRecharge, walletWebhook, walletWithdraw
 } = require('../Controller/userController/userController');
 const { getAllBlogs } = require('../Controller/blogController');
@@ -40,6 +40,8 @@ const upload = multer({ storage: ImageStorage, limits: { fileSize: 10 * 1024 * 1
 //Signup
 router.post('/signup', signup);
 
+router.get('/vehicle-types', getAllVehicleTypes);
+
 //Login
 router.post('/login', login)
 
@@ -62,7 +64,7 @@ router.get('/get-brand', getbrand);
 router.post('/features', authenticate, features);
 
 //Get All Vehicles
-router.get('/vehicles', getallVehicles);
+router.get('/vehicles', getAllVehicleTypes);
 
 //chat
 router.post('/chat/send', chatController.sendMessage);
