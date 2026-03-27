@@ -250,23 +250,38 @@ const sendCabInvoice = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const booking = await CabBookingRequest.findByPk(id);
-    if (!booking) {
+    const cabBooking = await CabBookingRequest.findByPk(id);
+    if (!cabBooking) {
       return res.status(404).json({ message: 'Cab Booking Request not found' });
     }
 
-    // In a real scenario, integrate an SMTP service or PDF generator here.
-    const invoiceDetails = {
-      invoiceId: `INV-${Date.now()}`,
-      bookingId: booking.bookingId,
-      customer: booking.userId,
-      amount: booking.finalPrice || booking.estimatedPrice,
-      status: booking.paymentStatus,
-      date: new Date(),
-      message: "Invoice successfully transmitted to the customer."
+    const { generateInvoicePDF, sendInvoiceEmail } = require('../emailController');
+    const user = await User.findByPk(cabBooking.userId);
+    
+    const bookingDetails = {
+      bookingId: cabBooking.bookingId,
+      carModel: cabBooking.cabType || 'Cab',
+      startDate: cabBooking.date,
+      startTime: cabBooking.time,
+      endDate: cabBooking.date,
+      endTime: cabBooking.endTripTime
     };
 
-    res.status(200).json({ message: 'Invoice simulated and sent successfully', invoice: invoiceDetails });
+    const pricingDetails = {
+      price: cabBooking.subtotalBasePrice,
+      Taxamount: cabBooking.gstAmount,
+      FinalPrice: cabBooking.finalPrice,
+      tdsAmount: cabBooking.tdsAmount
+    };
+
+    const invoiceData = await generateInvoicePDF(user.email, 'info@spintrip.in', bookingDetails, pricingDetails);
+    await sendInvoiceEmail(user.email, invoiceData, bookingDetails);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Official invoice generated and sent to customer.', 
+      s3Url: invoiceData.s3Url 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error sending invoice', error: error.message });

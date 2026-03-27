@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       date: DataTypes.DATEONLY,
       time: DataTypes.TIME,
       status: { 
-        type: DataTypes.ENUM("pending_payment", "pending", "accepted", "started", "completed", "cancelled"), 
+        type: DataTypes.ENUM("pending_payment", "pending", "accepted", "started", "completed", "cancelled", "rated"), 
         defaultValue: "pending_payment" 
       },
       startTripTime: DataTypes.TIME,
@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
       finalPrice: DataTypes.FLOAT,
       otp: DataTypes.INTEGER, // OTP for trip initiation
       cabType: {
-        type: DataTypes.ENUM("mini cab", "sedan", "suv", "12 seater", "luxury"),
+        type: DataTypes.STRING,
         allowNull: true,
       },
       bookingType: {

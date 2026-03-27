@@ -823,6 +823,7 @@ const userbookings = async (req, res) => {
         if (cab.status === 'started' || cab.status === 'ongoing') intStatus = 2;
         if (cab.status === 'completed') intStatus = 3;
         if (cab.status === 'cancelled' || cab.paymentStatus === 'failed') intStatus = 4;
+        if (cab.status === 'rated' ) intStatus = 6;
 
         let cabDriver = null;
         const did = cab.driverid || cab.driverId;
@@ -876,6 +877,7 @@ const userbookings = async (req, res) => {
           pickup: pickupObj,
           destination: destObj,
           driver: cabDriver,
+          rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided", 
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           createdAt: checkData(cab.createdAt)
         };
@@ -907,6 +909,7 @@ const userbookings = async (req, res) => {
         if (cab.status === 'started' || cab.status === 'ongoing') intStatus = 2;
         if (cab.status === 'completed') intStatus = 3;
         if (cab.status === 'cancelled' || cab.paymentStatus === 'failed') intStatus = 4;
+        if (cab.status === 'rated') intStatus = 6;
 
         let pickupObj = {
           latitude: cab.startLocationLatitude || 0,
@@ -1026,15 +1029,12 @@ const rating = async (req, res) => {
     }
     const userId = req.user.id;
     const user = await UserAdditional.findOne({
-      where: {
-        id: userId,
-      }
+      where: { id: userId }
     });
 
+    // 1. Find the booking in either Rentals or Cab table
     let booking = await Booking.findOne({
-      where: {
-        Bookingid: bookingId,
-      }
+      where: { Bookingid: bookingId }
     });
 
     let isCab = false;
@@ -1047,62 +1047,79 @@ const rating = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
+    // 2. Identify the vehicle
     const vehicleIdVal = isCab ? booking.vehicleId : booking.vehicleid;
-
     const vehicle = await Vehicle.findOne({
-      where: {
-        vehicleid: vehicleIdVal,
-      }
+      where: { vehicleid: vehicleIdVal }
     });
+
     if (!vehicle) {
-      return res.status(404).json({ message: 'vehicle not found' });
+      return res.status(404).json({ message: 'Vehicle not found' });
     }
 
+    // 3. ✅ FIX: Correctly count total bookings to calculate the average
     let bookingCount = 1;
     if (!isCab) {
       bookingCount = await Booking.count({
         where: {
           vehicleid: vehicle.vehicleid,
-          status: 3,
+          status: { [Op.in]: [3, 6] } // Count both 'Completed' and 'Already Rated' trips
         }
       });
-      if (bookingCount === 0) bookingCount = 1;
+    } else {
+      // Correctly count completed live cab bookings
+      bookingCount = await CabBookingRequest.count({
+        where: {
+          vehicleId: vehicle.vehicleid,
+          status: { [Op.in]: ['completed', 'rated'] }
+        }
+      });
     }
+    if (bookingCount === 0) bookingCount = 1;
 
+    // 4. Calculate Moving Average Rating
     let new_rating;
     if (bookingCount == 1) {
       new_rating = parseFloat(rating);
     } else {
+      // new = (new_rating + (old_avg * count-1)) / count
       new_rating = (parseFloat(rating) + parseFloat(vehicle.rating * (bookingCount - 1))) / bookingCount;
     }
 
     await vehicle.update({ rating: new_rating });
 
+    // 5. Save the text Feedback
     if (feedback) {
       await Feedback.create({
         vehicleid: vehicle.vehicleid,
         userId: userId,
         userName: user?.FullName || 'User',
-        hostId: isCab ? booking.driverid : vehicle.hostId, // For Cabs, driver is the host
+        hostId: isCab ? (booking.driverId || booking.driverid) : vehicle.hostId, // Support both driver ID variants
         rating: rating,
         comment: feedback
       });
     }
 
-    // Attempt to tag booking with status 6 (Completed with Review) where supported natively
+    // 6. ✅ FIX: Mark status as Rated to fully close the cycle
     try {
-      if (!isCab) {
+      if (isCab) {
+        await booking.update({ status: 'rated' });
+      } else {
         await booking.update({ status: 6 });
       }
-    } catch (ignoreStatusErr) {}
+    } catch (ignoreStatusErr) {
+       console.log("Status update failed:", ignoreStatusErr.message);
+    }
 
-    // Return successfully regardless of model enum strictness
-    res.status(200).json({ message: feedback ? 'Thank you for your response with feedback' : 'Thank you for your response' });
+    res.status(200).json({ 
+      message: feedback ? 'Thank you for your response with feedback' : 'Thank you for your response' 
+    });
 
   } catch (error) {
-    console.error(error);
+    console.error("Rating error:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 module.exports = { booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating };

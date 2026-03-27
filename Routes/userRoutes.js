@@ -35,7 +35,7 @@ const ImageStorage = multerS3({
 });
 
 
-const upload = multer({ storage: ImageStorage });
+const upload = multer({ storage: ImageStorage, limits: { fileSize: 10 * 1024 * 1024 }  });
 
 //Signup
 router.post('/signup', signup);

@@ -168,7 +168,11 @@ const restrictToSuperadmin = (req, res, next) => {
     }
 
     // Check if this is an explicitly authorized Cab Admin functional route
-    const allowedPaths = ['/cab/assign-driver', '/approve-cab', '/reject-cab', '/cabs', '/drivers', '/approve-driver', '/reject-driver', '/cab/add-cab', '/cab/add-driver', '/cab/assign-driver-vehicle'];
+    const allowedPaths = [
+      '/cab/assign-driver', '/approve-cab', '/reject-cab', '/cabs', '/drivers', 
+      '/approve-driver', '/reject-driver', '/cab/add-cab', '/cab/add-driver', 
+      '/cab/assign-driver-vehicle', '/bookings', '/activate-vehicle'
+    ];
     if (req.path && allowedPaths.some(p => req.path.includes(p))) {
         return next();
     }

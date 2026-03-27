@@ -182,12 +182,12 @@ router.delete('/listings/:id', authenticate, restrictToSuperadmin, deleteListing
 // router.delete('/hostPayments/:id', authenticate, deleteHostPaymentsyId);
 
 // Booking routes
-router.get('/bookings', authenticate, getAllBookings);
-router.get('/bookings/:id', authenticate, getBookingById);
-router.put('/bookings/:id', authenticate, updateBookingById);
-router.delete('/bookings/:id', authenticate, deleteBookingById);
-router.put('/bookings/:id/cancel', authenticate, cancelCabBooking);
-router.post('/bookings/:id/send-invoice', authenticate, sendCabInvoice);
+router.get('/bookings', authenticate, restrictToSuperadmin, getAllBookings);
+router.get('/bookings/:id', authenticate, restrictToSuperadmin, getBookingById);
+router.put('/bookings/:id', authenticate, restrictToSuperadmin, updateBookingById);
+router.delete('/bookings/:id', authenticate, restrictToSuperadmin, deleteBookingById);
+router.put('/bookings/:id/cancel', authenticate, restrictToSuperadmin, cancelCabBooking);
+router.post('/bookings/:id/send-invoice', authenticate, restrictToSuperadmin, sendCabInvoice);
 
 router.post('/Subscriptions', authenticate, restrictToSuperadmin, subscriptions);
 

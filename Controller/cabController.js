@@ -952,7 +952,7 @@ const acceptBooking = async (req, res) => {
     );
 
     // Set Driver to Offline so they don't appear in new ping searches
-    await Driver.update({ isActive: false }, { where: { id: driverId } });
+    await Driver.update({ isActive: true }, { where: { id: driverId } });
 
     // Generate an OTP for the trip
     const tripOtp = generateOTP();

@@ -28,7 +28,7 @@ const ImageStorage = multerS3({
   }
 });
 
-const upload = multer({ storage: ImageStorage });
+const upload = multer({ storage: ImageStorage, limits: { fileSize: 10 * 1024 * 1024 }  });
 const verifyUpload = upload.fields([
   { name: 'aadharFile', maxCount: 1 },
   { name: 'profilePic', maxCount: 1 },

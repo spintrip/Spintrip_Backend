@@ -183,6 +183,7 @@ const driverProfile = async (req, res) => {
       updatedAt: driver.updatedAt,
       upiId: driver.upiId || null,
       bankAccountNumber: driver.bankAccountNumber || null,
+      isActive: driver?.isActive !== undefined ? driver.isActive : false
     };
 
     res.status(200).json({ profile });
