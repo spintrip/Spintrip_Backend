@@ -11,6 +11,30 @@ const { hostProfile , hostLogin , hostSignup, hostVerifyOtp, deleteHost, updateP
 const router = express.Router();
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
+const multerS3 = require('multer-s3');
+const s3 = require('../s3Config');
+const multer = require('multer');
+const path = require('path');
+
+const ImageStorage = multerS3({
+  s3: s3,
+  bucket: 'spintrip-s3bucket',
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  key: function (req, file, cb) {
+    const userId = req.user.id;
+    const fileName = `${file.fieldname}${path.extname(file.originalname)}`;
+    const filePath = `partners/${userId}/${fileName}`;
+    cb(null, filePath);
+  }
+});
+
+const upload = multer({ storage: ImageStorage });
+const verifyUpload = upload.fields([
+  { name: 'aadharFile', maxCount: 1 },
+  { name: 'profilePic', maxCount: 1 },
+  { name: 'dlFile', maxCount: 1 },
+  { name: 'panFile', maxCount: 1 }
+]);
 
 router.get('/get-brand', getBrand);
 
@@ -28,11 +52,11 @@ router.get('/profile', authenticate, hostProfile);
 router.put('/profile', authenticate, updateProfile);
 
 // Put Verify
-router.put('/verify', authenticate, verifyProfileHandler, verifyProfile );
+router.put('/verify', authenticate, verifyUpload, verifyProfile );
 
-router.put('/driververify', authenticate, verifyDriverProfileHandler, verifyDriverProfile );
+router.put('/driververify', authenticate, verifyUpload, verifyDriverProfile );
 
-router.put('/vendorverify', authenticate,verifyProfileHandler, verifyVendorProfile );
+router.put('/vendorverify', authenticate, verifyUpload, verifyVendorProfile );
 
 // Add the required cabRoutes module
 const cabRoutes = require('./cabRoutes');
@@ -57,6 +81,7 @@ router.get('/delete_host', authenticate, deleteHost);
 router.post('/createListing', authenticate, createListing);
 
 router.put('/vehicleAdditional', authenticate, uploadvehicleImages, putVehicleAdditional);
+router.put('/vehicle-images', authenticate, uploadvehicleImages, putVehicleAdditional);
 
 router.get('/allfeatures', authenticate, allFeatures);
 router.post('/features', authenticate, postFeatures);

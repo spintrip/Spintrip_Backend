@@ -6,6 +6,74 @@ const uuid = require('uuid');
 function roundToTwo(num) {
   return Math.round((num + Number.EPSILON) * 100) / 100;
 }
+const initiateCabPayment = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    const { amount, bookingId } = req.body;
+
+    if (!amount || !bookingId) {
+      return res.status(400).json({ message: 'Amount and bookingId are required' });
+    }
+
+    const roundedAmount = roundToTwo(amount);
+    const linkId = `cab_fee_${bookingId.substring(0, 8)}_${uuid.v4().substring(0, 4)}`;
+
+    const createOrderRequest = {
+      link_amount: '1',
+      link_currency: 'INR',
+      link_id: linkId,
+      link_purpose: `Cab Booking Confirmation Fee (#${bookingId.substring(0, 8)})`,
+      customer_details: {
+        customer_name: user.FullName || 'Customer',
+        customer_phone: user.phone || '9999999999',
+        customer_email: user.email || 'customer@spintrip.in',
+      },
+      link_meta: {
+        return_url: `https://spintrip.in/payment-success?order_id=${linkId}`,
+        notify_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
+      },
+      link_notify: {
+        send_sms: true,
+        send_email: true
+      },
+      link_notes: {
+        bookingId: String(bookingId),
+        userId: String(req.user.id),
+        type: 'cab_confirmation_fee'
+      }
+    };
+
+    const options = {
+      method: 'POST',
+      url: 'https://api.cashfree.com/pg/links',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'x-api-version': process.env.CASHFREE_API_VERSION || '2023-08-01',
+        'x-client-id': process.env.CASHFREE_APP_ID,
+        'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+      },
+      data: JSON.stringify(createOrderRequest),
+    };
+
+    const response = await axios.request(options);
+
+    if (response.data && response.status === 200) {
+      // Logic for tracking the transaction can be added here
+      return res.status(200).json({
+        message: 'Cab payment link created',
+        paymentUrl: response.data.link_url,
+        linkId: response.data.link_id,
+      });
+    } else {
+      return res.status(400).json({ message: 'Failed to create payment link', error: response.data });
+    }
+  } catch (error) {
+    console.error('Error in initiateCabPayment:', error.response?.data || error.message || error);
+    return res.status(500).json({ message: 'Server error', error: error.message || error });
+  }
+};
+
 const initiatePayment = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
@@ -206,6 +274,14 @@ const checkPaymentStatus = async (req, res) => {
         }
 
         if (link_status === 'PARTIALLY_PAID' || link_status === 'PAID') {
+          // If this is a cab booking confirmation fee, update the booking status
+          if (transaction.description && transaction.description.includes('cab_confirmation_fee')) {
+             const { CabBookingRequest } = require('../Models');
+             await CabBookingRequest.update(
+               { status: 'pending', paymentStatus: 'paid' },
+               { where: { bookingId: transaction.referenceId } }
+             );
+          }
           await transaction.update({ status: 2 }); 
         } else if (link_status === 'FAILED' || link_status === 'EXPIRED') {
           await transaction.update({ status: 3 }); 
@@ -296,6 +372,15 @@ const webhook = async (req, res) => {
         await transaction.update({ status: 2 });
         console.log(`Payment successful for transaction ${data.merchantTransactionId}`);
 
+        // If this is a cab booking confirmation fee, update the booking status
+        if (transaction.description && transaction.description.includes('cab_confirmation_fee')) {
+           const { CabBookingRequest } = require('../Models');
+           await CabBookingRequest.update(
+             { status: 'pending', paymentStatus: 'paid' },
+             { where: { bookingId: transaction.referenceId } }
+           );
+        }
+
         // Fetch user and booking details
         const booking = await Booking.findOne({ where: { Bookingid: transaction.Bookingid } });
         const user = await User.findByPk(booking.id);
@@ -323,8 +408,46 @@ const webhook = async (req, res) => {
   }
 };
 
+const verifyCabPayment = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { CabBookingRequest, User } = require('../Models');
+    const { sendPushNotification } = require('../Utils/notificationService');
+    
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    
+    const isPaid = booking.paymentStatus === 'paid' || booking.paymentStatus === 'PAID';
+
+    // Send "Booking Confirmed" notification only once payment is verified
+    if (isPaid) {
+      const customer = await User.findByPk(booking.userId);
+      if (customer && customer.fcmToken) {
+        await sendPushNotification(
+          customer.fcmToken,
+          "Booking Confirmed ✅",
+          `Your cab booking is confirmed! Rs. ${booking.estimatedPrice}. A driver will be assigned shortly.`
+        );
+      }
+    }
+    
+    res.status(200).json({ 
+      paid: isPaid,
+      status: booking.status
+    });
+  } catch (error) {
+    console.error('Verify Cab Payment Error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 module.exports = {
   initiatePayment,
+  initiateCabPayment,
+  verifyCabPayment,
   checkPaymentStatus,
   phonePayment,
   webhook

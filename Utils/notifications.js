@@ -41,6 +41,12 @@ const sendPushNotification = async (token, title, body, data = {}) => {
       title,
       body
     },
+    android: {
+      notification: {
+        icon: 'ic_launcher',
+        color: '#FFFFFF'
+      }
+    },
     data: {
       ...data,
       click_action: 'FLUTTER_NOTIFICATION_CLICK' // Standard for Flutter
@@ -66,6 +72,12 @@ const sendMulticastNotification = async (tokens, title, body, data = {}) => {
 
   const message = {
     notification: { title, body },
+    android: {
+      notification: {
+        icon: 'ic_launcher',
+        color: '#FFFFFF'
+      }
+    },
     data: { ...data, click_action: 'FLUTTER_NOTIFICATION_CLICK' },
     tokens
   };

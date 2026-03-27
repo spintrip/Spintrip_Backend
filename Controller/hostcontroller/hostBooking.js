@@ -128,27 +128,6 @@ const tripstart = async (req, res) => {
       }
       const t = await sequelize.transaction();
       try {
-        const estimatedPrice = cabBooking.estimatedPrice || cabBooking.subtotalBasePrice || 0;
-        let wallet = await Wallet.findOne({ where: { userId: cabBooking.userId }, transaction: t });
-
-        if (!wallet || wallet.balance < estimatedPrice) {
-          await t.rollback();
-          return res.status(402).json({ message: `Insufficient Spintrip wallet balance. Required: Rs. ${estimatedPrice}` });
-        }
-
-        // Debiting User Wallet exactly as requested
-        wallet.balance = parseFloat(wallet.balance) - parseFloat(estimatedPrice);
-        await wallet.save({ transaction: t });
-
-        await WalletTransaction.create({
-          id: uuid.v4(),
-          walletId: wallet.id,
-          amount: parseFloat(estimatedPrice),
-          type: 'DEBIT',
-          description: 'Spintrip Cab Prepaid Fare',
-          referenceId: bookingId,
-        }, { transaction: t });
-
         cabBooking.status = 'started';
         await cabBooking.save({ transaction: t });
         await t.commit();
@@ -206,7 +185,7 @@ const bookingcompleted = async (req, res) => {
          return res.status(404).json({ message: 'Trip not started or already completed' });
       }
 
-      // Process Driver Wallet Payout
+      // Process Completion
       const t = await sequelize.transaction();
       try {
         const amt = cabBooking.estimatedPrice || cabBooking.finalPrice || 0;
@@ -222,7 +201,6 @@ const bookingcompleted = async (req, res) => {
         const calculatedEarnings = netBaseAmount - commOut - tdsOut;
 
         const driverEarnings = cabBooking.driverEarnings > 0 ? cabBooking.driverEarnings : calculatedEarnings;
-        const finalDriverId = cabBooking.driverid || cabBooking.driverId;
         
         // Save the generated breakdown permanently into the row!
         cabBooking.driverEarnings = driverEarnings;
@@ -230,34 +208,8 @@ const bookingcompleted = async (req, res) => {
         cabBooking.commissionAmount = commOut;
         cabBooking.tdsAmount = tdsOut;
 
-        let wallet = await Wallet.findOne({ where: { userId: finalDriverId }, transaction: t });
-        
-        // If driver doesn't have a wallet yet, create one natively
-        if (!wallet && finalDriverId) {
-          wallet = await Wallet.create({
-            id: uuid.v4(),
-            userId: finalDriverId,
-            balance: 0.0,
-          }, { transaction: t });
-        }
-
-        if (wallet && driverEarnings > 0) {
-          // Credit the Driver's Earnings
-          wallet.balance = parseFloat(wallet.balance) + parseFloat(driverEarnings);
-          await wallet.save({ transaction: t });
-
-          await WalletTransaction.create({
-            id: uuid.v4(),
-            walletId: wallet.id,
-            amount: parseFloat(driverEarnings),
-            type: 'CREDIT',
-            description: 'Spintrip Cab Driver Payout',
-            referenceId: bookingId,
-          }, { transaction: t });
-        }
-
         cabBooking.status = 'completed';
-        cabBooking.paymentStatus = 'paid';
+        cabBooking.paymentStatus = 'paid'; // Marked as paid to driver directly
         await cabBooking.save({ transaction: t });
 
         await t.commit();

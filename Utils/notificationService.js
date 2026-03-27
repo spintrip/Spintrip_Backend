@@ -8,6 +8,12 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
       title: title,
       body: body
     },
+    android: {
+      notification: {
+        icon: 'ic_launcher',
+        color: '#FFFFFF'
+      }
+    },
     data: dataPayload,
     token: fcmToken
   };

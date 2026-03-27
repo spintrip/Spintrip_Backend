@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     cabType: {
-      type: DataTypes.ENUM("Mini", "Sedan", "SUV", "12 Seater", "Luxury"),
+      type: DataTypes.STRING,
       allowNull: false,
     },
     airportTransferPrice: {

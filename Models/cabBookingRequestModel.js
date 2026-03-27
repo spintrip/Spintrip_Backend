@@ -13,8 +13,8 @@ module.exports = (sequelize, DataTypes) => {
       date: DataTypes.DATEONLY,
       time: DataTypes.TIME,
       status: { 
-        type: DataTypes.ENUM("pending", "accepted", "started", "completed", "cancelled"), 
-        defaultValue: "pending" 
+        type: DataTypes.ENUM("pending_payment", "pending", "accepted", "started", "completed", "cancelled"), 
+        defaultValue: "pending_payment" 
       },
       startTripTime: DataTypes.TIME,
       endTripTime: DataTypes.TIME,

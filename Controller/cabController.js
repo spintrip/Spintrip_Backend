@@ -296,23 +296,14 @@ const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini c
 
     }
 
-    /// NEW PRICING MATH VIA HOSTCABRATECARD
+    /// NEW DYNAMIC PRICING MATH VIA HOSTCABRATECARD
     let subtotalBasePrice = 0;
     
-    // Attempting to resolve global Rate Card explicitly for the cab type and city.
-    // Ensure we normalize cabType strings.
-    const normalizedCabType = cabType.toLowerCase();
-    
-    let rateCardCabType = "Mini"; // default fallback
-    if (normalizedCabType.includes("sedan")) rateCardCabType = "Sedan";
-    else if (normalizedCabType.includes("suv")) rateCardCabType = "SUV";
-    else if (normalizedCabType.includes("12")) rateCardCabType = "12 Seater";
-    else if (normalizedCabType.includes("lux")) rateCardCabType = "Luxury";
-    else rateCardCabType = "Mini"; // Fallback to Mini
-
-    // Find all rate cards for this Cab Type
+    // Find all rate cards for this Cab Type (Case-Insensitive match)
     const rateCards = await HostCabRateCard.findAll({
-       where: { cabType: rateCardCabType },
+       where: { 
+         cabType: { [Op.iLike]: (cabType.trim() || "Mini") } 
+       },
        order: [['createdAt', 'DESC']]
     });
 
@@ -355,7 +346,7 @@ const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini c
       }
     } else {
         // Stop generating fake generic rates. If the local Admin didn't add it, it shouldn't exist.
-        return { estimatedPrice: null, message: `No rate cards active for ${rateCardCabType} in your city.` };
+        return { estimatedPrice: null, message: `No rate cards active for ${cabType} in your city.` };
     }
 
     /// APPLY CAB RATE CARD MULTIPLIERS, TRAFFIC/SURGE & TOLLS
@@ -368,31 +359,41 @@ const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini c
     // Minimum Subtotal + Dynamic Surge Multipliers + Static Tolls
     subtotalBasePrice = Math.max(Math.round((subtotalBasePrice * trafficMultiplier * hostSurgeMultiplier) + flatTollCharges), 100);
 
-    /// APPLY TAXES AND WITHHOLDINGS
-    const taxRule = await Tax.findOne({ order: [['createdAt', 'DESC']] }) || { GST: 5, TDS: 1 };
-    const gstRate = taxRule.GST / 100.0;
-    const tdsRate = (taxRule.TDS || 1) / 100.0;
-    const commissionRate = 0.20; // Explicit 20%
+    /// NEW FEE CALCULATION ACCORDING TO USER FORMULA
+    // Base Price here is the TOTAL amount shown to the user (including GST)
+    const basePriceTotal = subtotalBasePrice; // Initial subtotal after surge/tolls
     
-    // Calculate final invoice vectors
-    const gstAmount = Math.round(subtotalBasePrice * gstRate * 100) / 100;
-    const finalEstimatedPrice = subtotalBasePrice + gstAmount;
+    // 1. Remove 5% GST to get Net Base
+    const netBase = basePriceTotal / 1.05;
+    
+    // 2. Calculate 20% Commission on Net Base
+    const commissionAmount = netBase * 0.20;
+    
+    // 3. Earnings before TDS = Net Base - Commission
+    const earningsBeforeTDS = netBase - commissionAmount;
 
-    // Calculate Internal Withholdings
-    const tdsAmount = Math.round(subtotalBasePrice * tdsRate * 100) / 100;
-    const commissionAmount = Math.round(subtotalBasePrice * commissionRate * 100) / 100;
+    // 4. Calculate 1% TDS ON EARNINGS (as requested)
+    const tdsAmount = earningsBeforeTDS * 0.01;
     
-    const driverEarnings = subtotalBasePrice - commissionAmount - tdsAmount;
+    // 5. Final Driver Earnings = Earnings Before TDS - TDS
+    const driverEarnings = earningsBeforeTDS - tdsAmount;
+    
+    // 6. Confirmation Fee = Base Price Total - Driver Earnings
+    const confirmationFeeAmount = basePriceTotal - driverEarnings;
+    
+    // Tax Breakdown for display
+    const gstAmount = basePriceTotal - netBase;
 
     return {
       distance: distanceKm,
       duration: durationMin,
-      subtotalBasePrice,
-      gstAmount,
-      estimatedPrice: finalEstimatedPrice,
-      commissionAmount,
-      tdsAmount,
-      driverEarnings,
+      subtotalBasePrice: Math.round(netBase * 100) / 100,
+      gstAmount: Math.round(gstAmount * 100) / 100,
+      estimatedPrice: Math.round(basePriceTotal * 100) / 100,
+      commissionAmount: Math.round(commissionAmount * 100) / 100,
+      tdsAmount: Math.round(tdsAmount * 100) / 100,
+      confirmationFee: Math.round(confirmationFeeAmount * 100) / 100,
+      driverEarnings: Math.round(driverEarnings * 100) / 100,
     };
 
   } catch (err) {
@@ -534,11 +535,17 @@ const bookCab = async (req, res) => {
     }
 
     let estimatedPrice = reqEstimatedPrice;
-    let commissionAmount = 0;
+    let confirmationFeeAmount = 0;
+    let payToDriverAmount = 0;
 
     if (estimatedPrice) {
-      // Trust the Flutter frontend cart price perfectly
-      commissionAmount = Math.round(estimatedPrice * 0.20 * 100) / 100;
+      // Apply user formula strictly to the provided estimatedPrice (Total)
+      const netBase = estimatedPrice / 1.05;
+      const commissionAmount = netBase * 0.20;
+      const earningsBeforeTDS = netBase - commissionAmount;
+      const tdsAmount = earningsBeforeTDS * 0.01;
+      payToDriverAmount = Math.round((earningsBeforeTDS - tdsAmount) * 100) / 100;
+      confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
     } else {
       // Fallback estimate price internally
       const estimate = await estimatePrice({
@@ -546,32 +553,26 @@ const bookCab = async (req, res) => {
         destination: endLocation || startLocation,
         vehicleId,
         cabType,
-        bookingType
+        bookingType,
+        address: startLocation.address || ""
       });
       estimatedPrice = estimate.estimatedPrice;
-      commissionAmount = estimate.commissionAmount;
+      confirmationFeeAmount = estimate.confirmationFee;
+      payToDriverAmount = estimate.driverEarnings;
     }
 
-    if (!estimatedPrice || !commissionAmount) {
-      return res.status(500).json({ message: "Failed to estimate price or calculate commission." });
+    if (!estimatedPrice || !confirmationFeeAmount) {
+      return res.status(500).json({ message: "Failed to estimate price or calculate confirmation fee." });
     }
 
     const bookingId = uuid.v4();
+
     const t = await sequelize.transaction();
 
     try {
-      // Wallet check using exact estimatedPrice (100% Prepaid)
-      // Wallet check for sufficient funds
-      const wallet = await Wallet.findOne({ where: { userId }, transaction: t });
 
-      if (!wallet || wallet.balance < estimatedPrice) {
-        await t.rollback();
-        return res.status(402).json({ 
-          message: `Insufficient Spintrip wallet balance to request trip. The total prepaid fare is Rs. ${estimatedPrice}. Please recharge your wallet before booking.` 
-        });
-      }
-
-      // We only verify balance here. Actual full deduction is deferred to startTrip.
+      // Note: Backend wallet checks and debits are now removed for cab bookings.
+      // Confirmation fee (26%) is handled via payroll/external payment.
 
       let dbCabType = cabType;
       if (dbCabType) {
@@ -602,8 +603,11 @@ const bookCab = async (req, res) => {
         endLocationAddress: endLocation?.address || startLocation.address || "",
         estimatedPrice: estimatedPrice,
         status: "pending",
+        paymentStatus: "pending",
         cabType: dbCabType,
-        otp: rideOtp,
+        confirmationFee: confirmationFeeAmount,
+        payToDriver: payToDriverAmount,
+        rideOtp: rideOtp,
         bookingType: bookingType || "Local"
       }, { transaction: t });
 
@@ -636,7 +640,7 @@ const bookCab = async (req, res) => {
 
     const customer = await User.findByPk(userId);
     if (customer && customer.fcmToken) {
-      await sendPushNotification(customer.fcmToken, "Booking Confirmed", `Your Cab Booking for Rs. ${estimatedPrice} is confirmed! Waiting for Driver Assignment.`);
+      await sendPushNotification(customer.fcmToken, "Complete Your Payment", `Please complete the 26% confirmation fee (Rs. ${confirmationFeeAmount}) to confirm your cab booking.`);
     }
 
     res.status(201).json({ message: "Booking created and drivers notified", bookingId, estimatedPrice });
@@ -1370,19 +1374,55 @@ const getCabAvailability = async (req, res) => {
      }
      
      let services = new Set(['Local']);
+     let cabTypes = new Set();
      for (const card of matchedCards) {
         if (card.airportTransferPrice) services.add('Airport');
         if (card.halfDayPrice || card.fullDayPrice) services.add('Rentals');
         if (card.outstationPerKmPrice) services.add('Outstation');
+        
+        // Collect unique cab types from rate cards
+        if (card.cabType) {
+           cabTypes.add(card.cabType);
+        }
      }
      
      return res.status(200).json({
         available: true,
-        services: Array.from(services)
+        services: Array.from(services),
+        cabTypes: Array.from(cabTypes)
      });
   } catch (error) {
      console.error("Error getting cab availability", error);
      res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * Cancel an unpaid booking (called when user abandons payment)
+ * Only cancels if paymentStatus is still 'pending' — paid bookings are never touched.
+ */
+const cancelUnpaidBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    if (!bookingId) return res.status(400).json({ message: 'bookingId required' });
+
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    // Safety: only cancel if payment was never completed
+    if (booking.paymentStatus === 'paid') {
+      return res.status(400).json({ message: 'Booking is already paid. Cannot cancel via this endpoint.' });
+    }
+
+    await CabBookingRequest.update(
+      { status: 'cancelled' },
+      { where: { bookingId, paymentStatus: 'pending' } }
+    );
+
+    res.status(200).json({ message: 'Unpaid booking cancelled successfully.' });
+  } catch (error) {
+    console.error('Cancel Unpaid Booking Error:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -1409,5 +1449,6 @@ module.exports = {
   superhostAssignDriver,
   confirmBankPayment,
   trackDriverLocation,
-  toggleDriverStatus
+  toggleDriverStatus,
+  cancelUnpaidBooking
 };

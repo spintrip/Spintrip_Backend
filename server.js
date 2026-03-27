@@ -138,7 +138,6 @@ app.get('/uploads/host/CarAdditional/:vehicleid/:imageName', (req, res) => {
 });
 
 // Routes
-app.use('/user', userRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/host', hostRoutes);

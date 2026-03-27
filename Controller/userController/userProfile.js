@@ -1,11 +1,12 @@
 //importing modules
- const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction, UserAddress } = require('../../Models');
- const path = require('path');
- const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`; 
- const uuid = require('uuid');
- 
- const checkData = (value) => {
+const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction, UserAddress, Driver, DriverAdditional } = require('../../Models');
+const path = require('path');
+const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`; 
+const uuid = require('uuid');
+const KycService = require('../../Utils/KycService');
+
+const checkData = (value) => {
     return value !== null && value !== undefined ? value : "Not Provided";
   }
   const checkImage = (value) => {
@@ -34,6 +35,7 @@
       // Construct the URLs for the files stored in S3
       const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
       const dlFile = additionalInfo.dl ? [additionalInfo.dl] : [];
+      const panFile = additionalInfo.pan ? [additionalInfo.pan] : [];
       const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
       
       const { Driver } = require('../../Models');
@@ -45,10 +47,12 @@
         fullName: checkData(additionalInfo.FullName),
         email: checkData(additionalInfo.Email),
         aadharNumber: checkData(additionalInfo.AadharVfid),
+        panNumber: checkData(additionalInfo.PanVfid),
         address: checkData(additionalInfo.Address),
         verificationStatus: checkStatus(additionalInfo.verification_status),
         dl: checkImage(dlFile),
         aadhar: checkImage(aadharFile),
+        pan: checkImage(panFile),
         profilePic: checkImage(profilePic),
         upiId: driverData ? driverData.upiId : null,
         bankAccountNumber: driverData ? driverData.bankAccountNumber : null
@@ -178,20 +182,22 @@
       if (req.files) {
         if (req.files['aadharFile']) files.push(req.files['aadharFile'][0]);
         if (req.files['dlFile']) files.push(req.files['dlFile'][0]);
+        if (req.files['panFile']) files.push(req.files['panFile'][0]);
         if (req.files['profilePic']) files.push(req.files['profilePic'][0]);
       }
   
-      const { dlFile, aadharFile, profilePic } = req.files;
+      const { dlFile, aadharFile, panFile, profilePic } = req.files;
   
       const [userAdditional, created] = await UserAdditional.findOrCreate({
         where: { id: userId },
         defaults: { id: userId }
       });
       
-      if (dlFile || aadharFile) {
+      if (dlFile || aadharFile || panFile) {
         await userAdditional.update({
           dl: dlFile ? dlFile[0].location : undefined,
           aadhar: aadharFile ? aadharFile[0].location : undefined,
+          pan: panFile ? panFile[0].location : undefined,
           verification_status: 1
         });
       }
@@ -224,4 +230,79 @@
     }
   };
 
-  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, checkData, checkImage, checkStatus, postaddress, getaddress};
+  const verifyAadhar = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { aadharNumber } = req.body;
+  
+      if (!aadharNumber) {
+        return res.status(400).json({ success: false, message: 'Aadhaar number is required.' });
+      }
+  
+      const result = await KycService.verifyAadhar(aadharNumber);
+  
+      if (result.success) {
+        // Update verification status to 2 (Govt Verified)
+        await UserAdditional.update({
+          AadharVfid: aadharNumber,
+          verification_status: 2, // 2 = GOVERNMENT VERIFIED
+          // Note: FullName is NOT updated here to avoid overwriting the user's real name
+          //       with a simulated KYC response value.
+        }, { where: { id: userId } });
+  
+        return res.status(200).json({ success: true, message: result.message, name: result.name });
+      } else {
+        return res.status(400).json({ success: false, message: result.message });
+      }
+    } catch (error) {
+      console.error('Aadhaar Verification Error:', error);
+      res.status(500).json({ success: false, message: 'Internal server error during Aadhaar verification.' });
+    }
+  };
+  
+  const verifyPan = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { panNumber } = req.body;
+  
+      if (!panNumber) {
+        return res.status(400).json({ success: false, message: 'PAN number is required.' });
+      }
+  
+      const result = await KycService.verifyPan(panNumber);
+  
+      if (result.success) {
+        // Update UserAdditional for general storage (Drivers are primarily Users)
+        await UserAdditional.update({
+          PanVfid: panNumber,
+        }, { where: { id: userId } });
+
+        // Also update HostAdditional if they are a host
+        const host = await HostAdditional.findOne({ where: { id: userId } });
+        if (host) {
+            await host.update({ PANnumber: panNumber });
+        }
+  
+        return res.status(200).json({ success: true, message: result.message, name: result.name });
+      } else {
+        return res.status(400).json({ success: false, message: result.message });
+      }
+    } catch (error) {
+      console.error('PAN Verification Error:', error);
+      res.status(500).json({ success: false, message: 'Internal server error during PAN verification.' });
+    }
+  };
+
+  const verifyDl = async (req, res) => {
+    try {
+      const { dlNumber } = req.body;
+      if (!dlNumber) return res.status(400).json({ success: false, message: 'DL number is required.' });
+      
+      const result = await KycService.verifyDl(dlNumber);
+      return res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+       res.status(500).json({ success: false, message: 'DL verification failed.' });
+    }
+  };
+  
+  module.exports = {getprofile, putprofile, uploadProfile, deleteuser, checkData, checkImage, checkStatus, postaddress, getaddress, verifyAadhar, verifyPan, verifyDl};

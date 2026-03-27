@@ -93,6 +93,7 @@ db.Wallet = require('./walletModel')(sequelize, DataTypes);
 db.WalletTransaction = require('./walletTransactionModel')(sequelize, DataTypes);
 db.HostCabRateCard = require('./rateCardModel')(sequelize, DataTypes);
 db.DriverWithdrawal = require('./driverWithdrawalModel')(sequelize, DataTypes);
+db.VehicleType = require('./vehicleTypeModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
@@ -100,7 +101,7 @@ const associateModels = () => {
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
-    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType
   } = sequelize.models;
 
   // User and related associations

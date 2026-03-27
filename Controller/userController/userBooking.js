@@ -662,11 +662,20 @@ const cancelbooking = async (req, res) => {
       const cabBooking = await CabBookingRequest.findOne({ where: { bookingId } });
       if (cabBooking) {
         if (cabBooking.status === 'pending' || cabBooking.status === 'accepted') {
-           await CabBookingRequest.update(
-             { status: 'cancelled' },
-             { where: { bookingId } }
-           );
-           res.status(201).json({ message: 'Trip Has been Cancelled' });
+           const t = await sequelize.transaction();
+           try {
+             await CabBookingRequest.update(
+               { status: 'cancelled' },
+               { where: { bookingId }, transaction: t }
+             );
+
+             await t.commit();
+             res.status(201).json({ message: 'Trip Has been Cancelled' });
+           } catch (err) {
+             await t.rollback();
+             console.error("Cancellation error:", err);
+             res.status(500).json({ message: 'Error processing cancellation' });
+           }
         } else {
            res.status(404).json({ message: 'Ride Already Started' });
         }
@@ -960,7 +969,7 @@ const userbookings = async (req, res) => {
       formattedCabBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       res.status(201).json({ message: formattedCabBookings });
     } else {
-      res.status(404).json({ message: 'Booking Not found' });
+      res.status(200).json({ message: [] });
     }
   } catch (err) {
     require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\nUserBookings Crash: ' + (err.stack || err.message) + '\\n\\n');

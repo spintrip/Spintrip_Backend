@@ -1,4 +1,5 @@
-const { Booking, CabBookingRequest, CabBookingAccepted, Driver, Vehicle } = require('../../Models');
+const { Booking, CabBookingRequest, CabBookingAccepted, Driver, Vehicle, User } = require('../../Models');
+const { sendPushNotification } = require('../../Utils/notifications');
 
 // Get all bookings
 const getAllBookings = async (req, res) => {
@@ -161,6 +162,38 @@ const updateBookingById = async (req, res) => {
          if (updatedFields.totalHostAmount !== undefined) cabUpdates.driverEarnings = updatedFields.totalHostAmount;
          
          await cabBooking.update(cabUpdates);
+
+         // --- SEND NOTIFICATIONS ---
+         if (updatedFields.driverid || updatedFields.vehicleid || updatedFields.status === 1) {
+           try {
+             const customer = await User.findByPk(cabBooking.userId);
+             const driver = updatedFields.driverid ? await User.findByPk(updatedFields.driverid) : null;
+
+             // Notify Customer
+             if (customer && customer.fcmToken) {
+               await sendPushNotification(
+                 customer.fcmToken,
+                 "Driver Assigned",
+                 `Your cab for Booking ${cabBooking.bookingId} has been assigned.`,
+                 { bookingId: cabBooking.bookingId, type: 'assignment' }
+               );
+             }
+
+             // Notify Driver
+             if (driver && driver.fcmToken) {
+               await sendPushNotification(
+                 driver.fcmToken,
+                 "New Booking Assigned",
+                 `A new booking (${cabBooking.bookingId}) has been assigned to you.`,
+                 { bookingId: cabBooking.bookingId, type: 'assignment' }
+               );
+             }
+           } catch (notiError) {
+             console.error("Notification Error:", notiError.message);
+             // We don't fail the request if notification fails
+           }
+         }
+
          return res.status(200).json({ message: 'Cab Booking updated successfully', booking: cabBooking });
       }
       return res.status(404).json({ message: 'Booking not found' });

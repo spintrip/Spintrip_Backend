@@ -1,4 +1,4 @@
-const { Host, Car, User, Cab, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
+const { Host, Car, User, Cab, Listing, HostAdditional, UserAdditional, Booking, Pricing, Brand, Feedback, Driver, carFeature, Feature, Blog, carDevices, Device, Transaction, Vehicle, Bike, VehicleAdditional, HostPayment } = require('../../Models');
 const uuid = require('uuid');
 const path = require('path');
 const e = require('express');
