@@ -937,7 +937,6 @@ const userbookings = async (req, res) => {
             };
           }
         }
-        console.log(vehicle?.Rcnumber);
         return {
           bookingId: cab.bookingId,
           vehicleid: cab.vehicleId || "",
@@ -960,6 +959,7 @@ const userbookings = async (req, res) => {
           longitude: cab.startLocationLongitude,
           cancelDate: null,
           cancelReason: null,
+          rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided",
           features: [],
           pickup: pickupObj,
           destination: destObj,
