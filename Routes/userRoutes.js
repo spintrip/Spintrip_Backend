@@ -4,6 +4,7 @@ const {
   searchForCabs,
   bookCab,
   getEstimate,
+  getBulkEstimates,
   getCabAvailability,
   cancelUnpaidBooking,
 } = require('../Controller/cabController');
@@ -69,6 +70,11 @@ router.get('/vehicles', getAllVehicleTypes);
 //chat
 router.post('/chat/send', chatController.sendMessage);
 router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
+// --- Add this line near your other cab routes (around line 95) ---
+
+
+router.post('/get-bulk-estimates', authenticate, getBulkEstimates);
+
 
 //Find Vehicles
 router.post('/findvehicles', authenticate, findvehicles);

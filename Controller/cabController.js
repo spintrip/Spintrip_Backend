@@ -17,6 +17,7 @@ const {
   Wallet,
   WalletTransaction,
   HostCabRateCard,
+   City,
   Tax,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
@@ -215,206 +216,202 @@ const assignDriverToVehicle = async (req, res) => {
  * Search for nearby cabs
  */
 
-const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini cab", bookingType = "Local", address = "" }) => {
+// const estimatePrice = async ({ origin, destination, vehicleId, cabType = "mini cab", bookingType = "Local", address = "" }) => {
 
-  try {
+//   try {
 
-    if (!origin) {
-      throw new Error("Missing parameters");
-    }
+//     if (!origin) {
+//       throw new Error("Missing parameters");
+//     }
 
-    console.log("Estimating price with origin:", origin, "destination:", destination, "vehicleId:", vehicleId, "cabType:", cabType, "bookingType:", bookingType);
+//     console.log("Estimating price with origin:", origin, "destination:", destination, "vehicleId:", vehicleId, "cabType:", cabType, "bookingType:", bookingType);
 
-    let distanceKm = 0;
-    let durationMin = 0;
+//     let distanceKm = 0;
+//     let durationMin = 0;
 
-    try {
-      let originLat, originLng;
-      let destLat, destLng;
+//     try {
+//       let originLat, originLng;
+//       let destLat, destLng;
 
-      if (typeof origin === "string") {
-        const parts = origin.split(",");
-        originLat = parseFloat(parts[0]);
-        originLng = parseFloat(parts[1]);
-      } else {
-        originLat = parseFloat(origin.latitude);
-        originLng = parseFloat(origin.longitude);
-      }
+//       if (typeof origin === "string") {
+//         const parts = origin.split(",");
+//         originLat = parseFloat(parts[0]);
+//         originLng = parseFloat(parts[1]);
+//       } else {
+//         originLat = parseFloat(origin.latitude);
+//         originLng = parseFloat(origin.longitude);
+//       }
 
-      if (typeof destination === "string") {
-        const parts = destination.split(",");
-        destLat = parseFloat(parts[0]);
-        destLng = parseFloat(parts[1]);
-      } else {
-        destLat = parseFloat(destination.latitude);
-        destLng = parseFloat(destination.longitude);
-      }
+//       if (typeof destination === "string") {
+//         const parts = destination.split(",");
+//         destLat = parseFloat(parts[0]);
+//         destLng = parseFloat(parts[1]);
+//       } else {
+//         destLat = parseFloat(destination.latitude);
+//         destLng = parseFloat(destination.longitude);
+//       }
 
-      console.log("Parsed coordinates:", {
-        originLat,
-        originLng,
-        destLat,
-        destLng
-      });
+//       console.log("Parsed coordinates:", {
+//         originLat,
+//         originLng,
+//         destLat,
+//         destLng
+//       });
 
-      const url =
-        `https://maps.googleapis.com/maps/api/distancematrix/json` +
-        `?origins=${originLat},${originLng}` +
-        `&destinations=${destLat},${destLng}` +
-        `&departure_time=now` +
-        `&units=metric` +
-        `&key=${GOOGLE_MAPS_API_KEY}`;
+//       const url =
+//         `https://maps.googleapis.com/maps/api/distancematrix/json` +
+//         `?origins=${originLat},${originLng}` +
+//         `&destinations=${destLat},${destLng}` +
+//         `&departure_time=now` +
+//         `&units=metric` +
+//         `&key=${GOOGLE_MAPS_API_KEY}`;
 
-      console.log("Google Request URL:", url);
+//       console.log("Google Request URL:", url);
 
-      const response = await axios.get(url);
+//       const response = await axios.get(url);
 
-      console.log("Google Response:", response.data);
-      console.log("Google Maps API response:", response.data);
+//       console.log("Google Response:", response.data);
+//       console.log("Google Maps API response:", response.data);
 
-      const element = response.data?.rows?.[0]?.elements?.[0];
-      console.log("Distance Matrix element:", element);
-      // if (!element || element.status !== "OK") {
-      //   throw new Error("Google distance error");
-      // }
+//       const element = response.data?.rows?.[0]?.elements?.[0];
+//       console.log("Distance Matrix element:", element);
+//       // if (!element || element.status !== "OK") {
+//       //   throw new Error("Google distance error");
+//       // }
 
-      distanceKm = element.distance.value / 1000;
-      durationMin = element.duration.value / 60;
+//       distanceKm = element.distance.value / 1000;
+//       durationMin = element.duration.value / 60;
 
-    } catch (googleError) {
+//     } catch (googleError) {
 
-      console.log("Google API failed, using haversine distance");
+//       console.log("Google API failed, using haversine distance");
 
-      distanceKm = haversineDistance(
-        origin.latitude,
-        origin.longitude,
-        destination.latitude,
-        destination.longitude
-      );
+//       distanceKm = haversineDistance(
+//         origin.latitude,
+//         origin.longitude,
+//         destination.latitude,
+//         destination.longitude
+//       );
 
-      durationMin = distanceKm * 2; // assume avg 30km/h
+//       durationMin = distanceKm * 2; // assume avg 30km/h
 
-    }
+//     }
 
-    /// NEW DYNAMIC PRICING MATH VIA HOSTCABRATECARD
-    let subtotalBasePrice = 0;
+//     /// NEW DYNAMIC PRICING MATH VIA HOSTCABRATECARD
+//     let subtotalBasePrice = 0;
     
-    // Find all rate cards for this Cab Type (Case-Insensitive match)
-    const rateCards = await HostCabRateCard.findAll({
-       where: { 
-         cabType: { [Op.iLike]: (cabType.trim() || "Mini") } 
-       },
-       order: [['createdAt', 'DESC']]
-    });
+//     // Find all rate cards for this Cab Type (Case-Insensitive match)
+//     const rateCards = await HostCabRateCard.findAll({
+//        where: { 
+//          cabType: { [Op.iLike]: (cabType.trim() || "Mini") } 
+//        },
+//        order: [['createdAt', 'DESC']]
+//     });
 
-    let rateCard = null;
-    if (address && address.trim() !== "") {
-       let addrLower = address.toLowerCase().trim();
-       addrLower = addrLower.replace(/bengaluru/g, "bangalore");
-       addrLower = addrLower.replace(/bombay/g, "mumbai");
-       addrLower = addrLower.replace(/gurugram/g, "gurgaon");
-       addrLower = addrLower.replace(/mysuru/g, "mysore");
-
-       const matchedCards = rateCards.filter(rc => {
-         if (!rc.city) return false;
-         let dbCity = rc.city.toLowerCase().trim();
-         dbCity = dbCity.replace(/bengaluru/g, "bangalore");
-         dbCity = dbCity.replace(/bombay/g, "mumbai");
-         return addrLower.includes(dbCity) || dbCity.includes(addrLower);
-       });
-       if (matchedCards.length > 0) rateCard = matchedCards[0];
-    } else {
-       // Old fallback logic if no address is provided (global search)
-       if (rateCards.length > 0) rateCard = rateCards[0];
-    }
-
-    if (rateCard) {
-      if (bookingType === 'Airport') {
-         subtotalBasePrice = rateCard.airportTransferPrice || 1200;
-         distanceKm = 30; durationMin = 60; // display defaults
-      } else if (bookingType === 'Rentals') {
-         subtotalBasePrice = rateCard.fullDayPrice || 2500;
-         distanceKm = 80; durationMin = 480; 
-      } else if (bookingType === 'Outstation') {
-         const driverAllowance = rateCard.driverAllowancePerDay || 300;
-         subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + driverAllowance;
-         distanceKm = 300; durationMin = 1440;
-      } else {
-         // Daily (Generic Point to point mapping)
-         // Assuming halfDayPrice mapped roughly to base
-         subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
-      }
-    } else {
-        // Stop generating fake generic rates. If the local Admin didn't add it, it shouldn't exist.
-        return { estimatedPrice: null, message: `No rate cards active for ${cabType} in your city.` };
-    }
-
-    /// APPLY CAB RATE CARD MULTIPLIERS, TRAFFIC/SURGE & TOLLS
-    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-    let trafficMultiplier = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+//     let rateCard = null;
+//         // Use the Smart City Matcher instead of the old address check
+//     const matchedCity = await getMatchedOperationalCity(address, req?.body?.city);
     
-    let hostSurgeMultiplier = rateCard ? (rateCard.surgeMultiplier || 1.0) : 1.0;
-    let flatTollCharges = rateCard ? (rateCard.tollCharges || 0.0) : 0.0;
-    
-    // Minimum Subtotal + Dynamic Surge Multipliers + Static Tolls
-    subtotalBasePrice = Math.max(Math.round((subtotalBasePrice * trafficMultiplier * hostSurgeMultiplier) + flatTollCharges), 100);
+//     if (matchedCity) {
+//        const matchedCards = rateCards.filter(rc => {
+//          if (!rc.city) return false;
+//          // Match the rate card ONLY to the city found in your 'City' table
+//          return rc.city.toLowerCase() === matchedCity.toLowerCase();
+//        });
+//        if (matchedCards.length > 0) rateCard = matchedCards[0];
+//     }
+//  else {
+//        // Old fallback logic if no address is provided (global search)
+//        if (rateCards.length > 0) rateCard = rateCards[0];
+//     }
 
-    /// NEW FEE CALCULATION ACCORDING TO USER FORMULA
-    // Base Price here is the TOTAL amount shown to the user (including GST)
-    const basePriceTotal = subtotalBasePrice; // Initial subtotal after surge/tolls
-    
-    // 1. Remove 5% GST to get Net Base
-    const netBase = basePriceTotal / 1.05;
-    
-    // 2. Calculate 20% Commission on Net Base
-    const commissionAmount = netBase * 0.20;
-    
-    // 3. Earnings before TDS = Net Base - Commission
-    const earningsBeforeTDS = netBase - commissionAmount;
+//     if (rateCard) {
+//       if (bookingType === 'Airport') {
+//          subtotalBasePrice = rateCard.airportTransferPrice || 1200;
+//          distanceKm = 30; durationMin = 60; // display defaults
+//       } else if (bookingType === 'Rentals') {
+//          subtotalBasePrice = rateCard.fullDayPrice || 2500;
+//          distanceKm = 80; durationMin = 480; 
+//       } else if (bookingType === 'Outstation') {
+//          const driverAllowance = rateCard.driverAllowancePerDay || 300;
+//          subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + driverAllowance;
+//          distanceKm = 300; durationMin = 1440;
+//       } else {
+//          // Daily (Generic Point to point mapping)
+//          // Assuming halfDayPrice mapped roughly to base
+//          subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
+//       }
+//     } else {
+//         // Stop generating fake generic rates. If the local Admin didn't add it, it shouldn't exist.
+//         return { estimatedPrice: null, message: `No rate cards active for ${cabType} in your city.` };
+//     }
 
-    // 4. Calculate 1% TDS ON EARNINGS (as requested)
-    const tdsAmount = earningsBeforeTDS * 0.01;
+//     /// APPLY CAB RATE CARD MULTIPLIERS, TRAFFIC/SURGE & TOLLS
+//     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+//     let trafficMultiplier = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
     
-    // 5. Final Driver Earnings = Earnings Before TDS - TDS
-    const driverEarnings = earningsBeforeTDS - tdsAmount;
+//     let hostSurgeMultiplier = rateCard ? (rateCard.surgeMultiplier || 1.0) : 1.0;
+//     let flatTollCharges = rateCard ? (rateCard.tollCharges || 0.0) : 0.0;
     
-    // 6. Confirmation Fee = Base Price Total - Driver Earnings
-    const confirmationFeeAmount = basePriceTotal - driverEarnings;
+//     // Minimum Subtotal + Dynamic Surge Multipliers + Static Tolls
+//     subtotalBasePrice = Math.max(Math.round((subtotalBasePrice * trafficMultiplier * hostSurgeMultiplier) + flatTollCharges), 100);
+
+//     /// NEW FEE CALCULATION ACCORDING TO USER FORMULA
+//     // Base Price here is the TOTAL amount shown to the user (including GST)
+//     const basePriceTotal = subtotalBasePrice; // Initial subtotal after surge/tolls
     
-    // Tax Breakdown for display
-    const gstAmount = basePriceTotal - netBase;
+//     // 1. Remove 5% GST to get Net Base
+//     const netBase = basePriceTotal / 1.05;
+    
+//     // 2. Calculate 20% Commission on Net Base
+//     const commissionAmount = netBase * 0.20;
+    
+//     // 3. Earnings before TDS = Net Base - Commission
+//     const earningsBeforeTDS = netBase - commissionAmount;
 
-    return {
-      distance: distanceKm,
-      duration: durationMin,
-      subtotalBasePrice: Math.round(netBase * 100) / 100,
-      gstAmount: Math.round(gstAmount * 100) / 100,
-      estimatedPrice: Math.round(basePriceTotal * 100) / 100,
-      commissionAmount: Math.round(commissionAmount * 100) / 100,
-      tdsAmount: Math.round(tdsAmount * 100) / 100,
-      confirmationFee: Math.round(confirmationFeeAmount * 100) / 100,
-      driverEarnings: Math.round(driverEarnings * 100) / 100,
-    };
+//     // 4. Calculate 1% TDS ON EARNINGS (as requested)
+//     const tdsAmount = earningsBeforeTDS * 0.01;
+    
+//     // 5. Final Driver Earnings = Earnings Before TDS - TDS
+//     const driverEarnings = earningsBeforeTDS - tdsAmount;
+    
+//     // 6. Confirmation Fee = Base Price Total - Driver Earnings
+//     const confirmationFeeAmount = basePriceTotal - driverEarnings;
+    
+//     // Tax Breakdown for display
+//     const gstAmount = basePriceTotal - netBase;
 
-  } catch (err) {
-    console.error("Error estimating price:", err.message);
+//     return {
+//       distance: distanceKm,
+//       duration: durationMin,
+//       subtotalBasePrice: Math.round(netBase * 100) / 100,
+//       gstAmount: Math.round(gstAmount * 100) / 100,
+//       estimatedPrice: Math.round(basePriceTotal * 100) / 100,
+//       commissionAmount: Math.round(commissionAmount * 100) / 100,
+//       tdsAmount: Math.round(tdsAmount * 100) / 100,
+//       confirmationFee: Math.round(confirmationFeeAmount * 100) / 100,
+//       driverEarnings: Math.round(driverEarnings * 100) / 100,
+//     };
 
-    // Default 100 Rs logic
-    const fallbackBase = 100;
-    const gstFallback = 5;
-    return {
-      distance: 0,
-      duration: 0,
-      subtotalBasePrice: fallbackBase,
-      gstAmount: gstFallback,
-      estimatedPrice: fallbackBase + gstFallback,
-      commissionAmount: 20,
-      tdsAmount: 1,
-      driverEarnings: 79 // 100 - 20 - 1
-    };
-  }
+//   } catch (err) {
+//     console.error("Error estimating price:", err.message);
 
-};
+//     // Default 100 Rs logic
+//     const fallbackBase = 100;
+//     const gstFallback = 5;
+//     return {
+//       distance: 0,
+//       duration: 0,
+//       subtotalBasePrice: fallbackBase,
+//       gstAmount: gstFallback,
+//       estimatedPrice: fallbackBase + gstFallback,
+//       commissionAmount: 20,
+//       tdsAmount: 1,
+//       driverEarnings: 79 // 100 - 20 - 1
+//     };
+//   }
+
+// };
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
 
   const R = 6371;
@@ -763,28 +760,83 @@ const login = async (req, res) => {
 /**
  * Estimate price using Google Maps API for distance and traffic conditions
  */
+/**
+ * Bulk Estimation: Calculates distance/duration ONCE and estimates 
+ * prices for AN ARRAY of cab types. Crucial for scaling.
+ */
+// const getBulkEstimates = async (req, res) => {
+//     const { origin, destination, cabTypes, bookingType = "Local", address = "" } = req.body;
+    
+//     try {
+//         if (!origin || !destination || !cabTypes || !Array.isArray(cabTypes)) {
+//             return res.status(400).json({ message: "Missing required parameters" });
+//         }
+
+//         // 1. Calculate Distance Matrix ONCE for all types
+//         let distanceKm = 0, durationMin = 0;
+//         try {
+//             const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+//             const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+//             const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
+//             const googleRes = await axios.get(url);
+//             const element = googleRes.data?.rows?.[0]?.elements?.[0];
+//             if (element?.status === "OK") {
+//                 distanceKm = element.distance.value / 1000;
+//                 durationMin = element.duration.value / 60;
+//             }
+//         } catch (e) { distanceKm = 30; durationMin = 60; } // Failsafe
+
+//         // 2. Normalize address
+//         let addr = (address || "").toLowerCase().trim().replace(/bengaluru/g, "bangalore");
+
+//         // 3. Loop through types in memory
+//         const results = {};
+//         for (const type of cabTypes) {
+//             const rateCards = await HostCabRateCard.findAll({
+//                 where: { cabType: { [Op.iLike]: type.trim() } },
+//                 order: [['createdAt', 'DESC']]
+//             });
+
+//             const card = rateCards.find(rc => addr.includes(rc.city?.toLowerCase())) || rateCards[0];
+            
+//             if (card) {
+//                 let base = distanceKm * (card.outstationPerKmPrice || 15);
+//                 if (bookingType === 'Airport') base = card.airportTransferPrice || 1200;
+                
+//                 results[type] = {
+//                     estimatedPrice: Math.round(base * 1.05), // + 5% GST
+//                     distance: distanceKm,
+//                     duration: durationMin
+//                 };
+//             }
+//         }
+//         res.status(200).json({ estimates: results });
+//     } catch (error) { res.status(500).json({ message: "Server error" }); }
+// };
+
+// --- Add getBulkEstimates to your module.exports at the bottom ---
 
 
-const getEstimate = async (req, res) => {
-  try {
-    // Extract data from the request body
-    const { origin, destination, vehicleId, trafficConditions, cabType, bookingType, address } = req.body;
+// const getEstimate = async (req, res) => {
+//   try {
+//     // Extract data from the request body
+//     const { origin, destination, vehicleId, trafficConditions, cabType, bookingType, address } = req.body;
 
-    // Validate the input (vehicleId is optional now for generic quotes)
-    if (!origin) {
-      return res.status(400).json({ message: "Missing required parameters: origin." });
-    }
+//     // Validate the input (vehicleId is optional now for generic quotes)
+//     if (!origin) {
+//       return res.status(400).json({ message: "Missing required parameters: origin." });
+//     }
 
-    // Call the estimatePrice function with the required parameters
-    const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, trafficConditions, cabType, bookingType, address });
+//     // Call the estimatePrice function with the required parameters
+//     const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, trafficConditions, cabType, bookingType, address });
 
-    // Return the result to the client
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Error in /get-estimate route:", error.message);
-    res.status(500).json({ message: "Failed to estimate price.", error: error.message });
-  }
-};
+//     // Return the result to the client
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("Error in /get-estimate route:", error.message);
+//     res.status(500).json({ message: "Failed to estimate price.", error: error.message });
+//   }
+// };
 
 const updateDriverDeviceToken = async (req, res) => {
   try {
@@ -1017,6 +1069,41 @@ const checkBookingStatus = async (req, res) => {
 /**
  * Superhost Assign Driver to Booking
  */
+
+// const getMatchedOperationalCity = async (address, inputCity = "") => {
+//   try {
+//      const cities = await City.findAll({ where: { isActive: true } });
+//      let addrLower = (address || "").toLowerCase().trim();
+//      let cityLower = (inputCity || "").toLowerCase().trim();
+     
+//      // 1. If App sent a clean city name, use it first
+//      if (cityLower) {
+//         const match = cities.find(c => c.name.toLowerCase() === cityLower || cityLower.includes(c.name.toLowerCase()));
+//         if (match) return match.name;
+//      }
+
+//      // 2. Normalization & Airport Aliases
+//      addrLower = addrLower.replace(/bengaluru/g, "bangalore");
+//      if (addrLower.includes("560300") || addrLower.includes("devanahalli")) {
+//         addrLower += " bangalore"; // Map Bangalore Airport ZIP to Bangalore
+//      }
+
+//      // 3. Match against the operational City table
+//      for (const cityObj of cities) {
+//         let cityName = cityObj.name.toLowerCase().trim();
+//         cityName = cityName.replace(/bengaluru/g, "bangalore");
+        
+//         if (addrLower.includes(cityName)) {
+//            return cityObj.name; // Return the exact name from your DB
+//         }
+//      }
+//      return null;
+//   } catch (err) {
+//      console.error("City Matcher Error:", err.message);
+//      return null;
+//   }
+// };
+
 const superhostAssignDriver = async (req, res) => {
   const { bookingId, driverId, vehicleId } = req.body;
   const superhostId = req.user.id; 
@@ -1345,69 +1432,214 @@ const endTrip = async (req, res) => {
   }
 };
 
-const getCabAvailability = async (req, res) => {
-  const { address } = req.body;
+// const getCabAvailability = async (req, res) => {
+//   const { address, city } = req.body; // App now sends 'city' too
   
-  try {
-     const rateCards = await HostCabRateCard.findAll();
+//   try {
+//      const matchedCity = await getMatchedOperationalCity(address, city);
      
-     if (!address || address.trim() === "") {
-        return res.status(200).json({ available: false, services: [], message: "No address provided" });
-     }
-     
-     // 1. Normalize the incoming address (Handle Bengaluru vs Bangalore, etc.)
-     let addrLower = address.toLowerCase().trim();
-     addrLower = addrLower.replace(/bengaluru/g, "bangalore");
-     addrLower = addrLower.replace(/bombay/g, "mumbai");
-     addrLower = addrLower.replace(/gurugram/g, "gurgaon");
-     addrLower = addrLower.replace(/mysuru/g, "mysore");
-     addrLower = addrLower.replace(/chennai/g, "madras");
-     addrLower = addrLower.replace(/international airport/g, "airport");
+//      if (!matchedCity) {
+//         return res.status(200).json({ 
+//            available: false, 
+//            services: [], 
+//            message: "We're not operational in this area yet." 
+//         });
+//      }
 
-     // 2. Flexible City Matching Logic
-     const matchedCards = rateCards.filter(rc => {
-       if (!rc.city) return false;
-       let dbCity = rc.city.toLowerCase().trim();
-       dbCity = dbCity.replace(/bengaluru/g, "bangalore");
-       dbCity = dbCity.replace(/bombay/g, "mumbai");
-       
-       // Standard match: Address contains the city name
-       if (addrLower.includes(dbCity)) return true;
-       
-       // Token-based match: Handle cases like hyphenated addresses or sub-localities
-       const addrParts = addrLower.split(/[,\s]+/);
-       return addrParts.some(part => part === dbCity || dbCity.includes(part));
-     });
+//      // Find rate cards FOR THIS CITY ONLY
+//      const rateCards = await HostCabRateCard.findAll({
+//         where: { city: { [Op.iLike]: matchedCity } }
+//      });
      
-     if (matchedCards.length === 0) {
-        return res.status(200).json({ 
-           available: false, 
-           services: [], 
-           message: "No rate cards found for this city/airport location." 
-        });
+//      if (rateCards.length === 0) {
+//         return res.status(200).json({ available: false, services: [], message: `No services in ${matchedCity}` });
+//      }
+     
+//      let services = new Set(['Local']);
+//      let cabTypes = new Set();
+//      for (const card of rateCards) {
+//         if (card.airportTransferPrice) services.add('Airport');
+//         if (card.outstationPerKmPrice) services.add('Outstation');
+//         if (card.cabType) cabTypes.add(card.cabType);
+//      }
+     
+//      return res.status(200).json({
+//         available: true,
+//         services: Array.from(services),
+//         cabTypes: Array.from(cabTypes),
+//         city: matchedCity
+//      });
+//   } catch (error) {
+//      res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
+const getMatchedOperationalCity = async (address, inputCity = "") => {
+  try {
+     const cities = await City.findAll({ where: { isActive: true } });
+     let addrLower = (address || "").toLowerCase().trim();
+     let cityLower = (inputCity || "").toLowerCase().trim();
+     
+     if (cityLower) {
+        const match = cities.find(c => c.name.toLowerCase() === cityLower || cityLower.includes(c.name.toLowerCase()));
+        if (match) return match.name;
      }
+     addrLower = addrLower.replace(/bengaluru/g, "bangalore");
+     if (addrLower.includes("560300") || addrLower.includes("devanahalli")) {
+        addrLower += " bangalore"; 
+     }
+     for (const cityObj of cities) {
+        let cityName = cityObj.name.toLowerCase().trim().replace(/bengaluru/g, "bangalore");
+        if (addrLower.includes(cityName)) return cityObj.name;
+     }
+     return null;
+  } catch (err) {
+     return null;
+  }
+};
+/**
+ * Price Estimator Logic
+ */
+const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookingType = "Local", address = "", city = "" }) => {
+  try {
+    if (!origin) throw new Error("Missing parameters");
+    let distanceKm = 0, durationMin = 0;
+    try {
+      const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+      const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
+      const response = await axios.get(url);
+      const element = response.data?.rows?.[0]?.elements?.[0];
+      if (element?.status === "OK") {
+        distanceKm = element.distance.value / 1000;
+        durationMin = element.duration.value / 60;
+      }
+    } catch (googleError) {
+      distanceKm = 30; durationMin = 60; // Failsafe
+    }
+    const rateCards = await HostCabRateCard.findAll({
+       where: { cabType: { [Op.iLike]: (cabType.trim() || "Mini") } },
+       order: [['createdAt', 'DESC']]
+    });
+    let rateCard = null;
+    const matchedCity = await getMatchedOperationalCity(address, city);
+    
+    if (matchedCity) {
+       rateCard = rateCards.find(rc => rc.city && rc.city.toLowerCase() === matchedCity.toLowerCase());
+    }
+    if (!rateCard && rateCards.length > 0) rateCard = rateCards[0];
+    if (!rateCard) return { estimatedPrice: null, message: `No services in this area.` };
+    let subtotalBasePrice = 0;
+    if (bookingType === 'Airport') {
+       subtotalBasePrice = rateCard.airportTransferPrice || 1200;
+       distanceKm = 30; durationMin = 60;
+    } else if (bookingType === 'Rentals') {
+       subtotalBasePrice = rateCard.fullDayPrice || 2500;
+    } else if (bookingType === 'Outstation') {
+       subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + (rateCard.driverAllowancePerDay || 300);
+    } else {
+       subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
+    }
+    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+    const total = Math.max(Math.round((subtotalBasePrice * trafficMult * (rateCard.surgeMultiplier || 1.0)) + (rateCard.tollCharges || 0)), 100);
+    const netBase = total / 1.05;
+    const commission = netBase * 0.20;
+    const driverEarnings = (netBase - commission) * 0.99; // After 1% TDS
+    return {
+      distance: distanceKm,
+      duration: durationMin,
+      subtotalBasePrice: Math.round(netBase),
+      gstAmount: Math.round(total - netBase),
+      estimatedPrice: total,
+      commissionAmount: Math.round(commission),
+      confirmationFee: Math.round(total - driverEarnings),
+      driverEarnings: Math.round(driverEarnings)
+    };
+  } catch (err) {
+    return { estimatedPrice: 105, message: "Fallback price" };
+  }
+};
+/**
+ * High-Performance Bulk Estimation (For Scaling)
+ */
+const getBulkEstimates = async (req, res) => {
+    const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
+    try {
+        if (!origin || !destination || !cabTypes || !Array.isArray(cabTypes)) {
+            return res.status(400).json({ message: "Missing required parameters" });
+        }
+        let distanceKm = 30, durationMin = 60;
+        try {
+            const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+            const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+            const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
+            const googleRes = await axios.get(url);
+            const element = googleRes.data?.rows?.[0]?.elements?.[0];
+            if (element?.status === "OK") {
+                distanceKm = element.distance.value / 1000;
+                durationMin = element.duration.value / 60;
+            }
+        } catch (e) {}
+        const matchedCity = await getMatchedOperationalCity(address, city);
+        const results = {};
+        
+        for (const type of cabTypes) {
+            const rateCards = await HostCabRateCard.findAll({
+                where: { cabType: { [Op.iLike]: type.trim() } },
+                order: [['createdAt', 'DESC']]
+            });
+            
+            const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
+            
+            if (card) {
+                let base = distanceKm * (card.outstationPerKmPrice || 15);
+                if (bookingType === 'Airport') base = card.airportTransferPrice || 1200;
+                results[type] = {
+                    estimatedPrice: Math.round(base * 1.05),
+                    distance: distanceKm,
+                    duration: durationMin
+                };
+            }
+        }
+        res.status(200).json({ estimates: results });
+    } catch (error) { res.status(500).json({ message: "Server error" }); }
+};
+/**
+ * Service Availability Discovery
+ */
+const getCabAvailability = async (req, res) => {
+  const { address, city } = req.body;
+  try {
+     const matchedCity = await getMatchedOperationalCity(address, city);
+     if (!matchedCity) return res.status(200).json({ available: false, services: [], message: "Not operational here." });
+     const rateCards = await HostCabRateCard.findAll({ where: { city: { [Op.iLike]: matchedCity } } });
+     if (rateCards.length === 0) return res.status(200).json({ available: false, services: [], message: "No active rate cards." });
      
      let services = new Set(['Local']);
      let cabTypes = new Set();
-     for (const card of matchedCards) {
+     for (const card of rateCards) {
         if (card.airportTransferPrice) services.add('Airport');
-        if (card.halfDayPrice || card.fullDayPrice) services.add('Rentals');
         if (card.outstationPerKmPrice) services.add('Outstation');
-        
-        if (card.cabType) {
-           cabTypes.add(card.cabType);
-        }
+        if (card.cabType) cabTypes.add(card.cabType);
      }
      
      return res.status(200).json({
         available: true,
         services: Array.from(services),
-        cabTypes: Array.from(cabTypes)
+        cabTypes: Array.from(cabTypes),
+        city: matchedCity
      });
   } catch (error) {
-     console.error("Error getting cab availability", error);
-     res.status(500).json({ message: "Server error", error: error.message });
+     res.status(500).json({ message: "Server error" });
   }
+};
+// ... Include standard methods like bookCab, addDriver, toggleDriverStatus, etc. ...
+// (I have kept these aligned with your existing database logic)
+const getEstimate = async (req, res) => {
+  const { origin, destination, vehicleId, cabType, bookingType, address, city } = req.body;
+  const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, cabType, bookingType, address, city });
+  res.status(200).json(result);
 };
 
 
@@ -1453,6 +1685,7 @@ module.exports = {
   assignDriverToVehicle,
   updateDriverDeviceToken,
   login,
+  getBulkEstimates ,
   getDriver,
   checkBookingStatus,
   acceptBooking,
