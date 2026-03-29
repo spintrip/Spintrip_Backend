@@ -1352,25 +1352,39 @@ const getCabAvailability = async (req, res) => {
      const rateCards = await HostCabRateCard.findAll();
      
      if (!address || address.trim() === "") {
-        return res.status(200).json({ available: false, services: [] });
+        return res.status(200).json({ available: false, services: [], message: "No address provided" });
      }
      
+     // 1. Normalize the incoming address (Handle Bengaluru vs Bangalore, etc.)
      let addrLower = address.toLowerCase().trim();
      addrLower = addrLower.replace(/bengaluru/g, "bangalore");
      addrLower = addrLower.replace(/bombay/g, "mumbai");
      addrLower = addrLower.replace(/gurugram/g, "gurgaon");
      addrLower = addrLower.replace(/mysuru/g, "mysore");
+     addrLower = addrLower.replace(/chennai/g, "madras");
+     addrLower = addrLower.replace(/international airport/g, "airport");
 
+     // 2. Flexible City Matching Logic
      const matchedCards = rateCards.filter(rc => {
        if (!rc.city) return false;
        let dbCity = rc.city.toLowerCase().trim();
        dbCity = dbCity.replace(/bengaluru/g, "bangalore");
        dbCity = dbCity.replace(/bombay/g, "mumbai");
-       return addrLower.includes(dbCity) || dbCity.includes(addrLower);
+       
+       // Standard match: Address contains the city name
+       if (addrLower.includes(dbCity)) return true;
+       
+       // Token-based match: Handle cases like hyphenated addresses or sub-localities
+       const addrParts = addrLower.split(/[,\s]+/);
+       return addrParts.some(part => part === dbCity || dbCity.includes(part));
      });
      
      if (matchedCards.length === 0) {
-        return res.status(200).json({ available: false, services: [] });
+        return res.status(200).json({ 
+           available: false, 
+           services: [], 
+           message: "No rate cards found for this city/airport location." 
+        });
      }
      
      let services = new Set(['Local']);
@@ -1380,7 +1394,6 @@ const getCabAvailability = async (req, res) => {
         if (card.halfDayPrice || card.fullDayPrice) services.add('Rentals');
         if (card.outstationPerKmPrice) services.add('Outstation');
         
-        // Collect unique cab types from rate cards
         if (card.cabType) {
            cabTypes.add(card.cabType);
         }
@@ -1396,6 +1409,7 @@ const getCabAvailability = async (req, res) => {
      res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 /**
  * Cancel an unpaid booking (called when user abandons payment)
