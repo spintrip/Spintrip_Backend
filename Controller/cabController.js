@@ -1563,12 +1563,17 @@ const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookin
 /**
  * High-Performance Bulk Estimation (For Scaling)
  */
+/**
+ * Bulk Estimation: Fixed version with Auto-Airport Detection and Minimum Fare Guards.
+ */
 const getBulkEstimates = async (req, res) => {
     const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
     try {
         if (!origin || !destination || !cabTypes || !Array.isArray(cabTypes)) {
             return res.status(400).json({ message: "Missing required parameters" });
         }
+
+        // 1. Calculate Distance (Failsafe to 30km if API fails)
         let distanceKm = 30, durationMin = 60;
         try {
             const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
@@ -1580,10 +1585,16 @@ const getBulkEstimates = async (req, res) => {
                 distanceKm = element.distance.value / 1000;
                 durationMin = element.duration.value / 60;
             }
-        } catch (e) {}
+        } catch (e) { }
+
+        // 2. Identify City & Smart Airport Detection
         const matchedCity = await getMatchedOperationalCity(address, city);
-        const results = {};
+        const destAddress = (destination?.address || "").toLowerCase();
         
+        // 🚀 Detect "Airport" trips even if user is in "Local" tab
+        const isActuallyAirport = bookingType === "Airport" || destAddress.includes("airport");
+
+        const results = {};
         for (const type of cabTypes) {
             const rateCards = await HostCabRateCard.findAll({
                 where: { cabType: { [Op.iLike]: type.trim() } },
@@ -1592,47 +1603,38 @@ const getBulkEstimates = async (req, res) => {
             
             const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
             
-            // --- Updated Logic for Airport Pricing ---
+            if (card) {
+                let base = distanceKm * (card.outstationPerKmPrice || 15);
+                if (isActuallyAirport) base = card.airportTransferPrice || 1200;
+                if (bookingType === 'Rentals') base = card.fullDayPrice || 2500;
+                
+                const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+                const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+                const hostSurge = card.surgeMultiplier || 1.0;
+                
+                let total = Math.round((base * trafficMult * hostSurge) + (card.tollCharges || 0));
 
-if (card) {
-    let base = distanceKm * (card.outstationPerKmPrice || 15);
-    
-    // 1. Use Rate Card Price if available, otherwise fallback to 1200
-    if (bookingType === 'Airport') {
-        base = card.airportTransferPrice || 1200;
-    }
-    
-    if (bookingType === 'Rentals') {
-        base = card.fullDayPrice || 2500;
-    }
+                // 🛡️ THE PRODUCTION FLOOR (Ensures ₹105 is the absolute minimum)
+                if (isActuallyAirport || bookingType === 'Rentals') {
+                    total = Math.max(total, 500); 
+                } else {
+                    total = Math.max(total, 100); 
+                }
 
-    // 2. Add traffic/surge multipliers
-    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
-    const hostSurge = card.surgeMultiplier || 1.0;
-    
-    let total = Math.round((base * trafficMult * hostSurge) + (card.tollCharges || 0));
-
-    // 3. 🛡️ THE SAFETY FLOOR: 
-    // We only force it to be at least ₹100 (Local) or ₹500 (Rentals/Airport) 
-    // to prevent the "₹0" bug, but we don't block lower deals if you set them.
-    if (bookingType === 'Airport' || bookingType === 'Rentals') {
-        total = Math.max(total, 500); // 👈 Changed from 1200 to 500 for flexibility
-    } else {
-        total = Math.max(total, 100); 
-    }
-
-    results[type] = {
-        estimatedPrice: Math.round(total * 1.05), // GST
-        distance: distanceKm,
-        duration: durationMin
-    };
-}
-
+                results[type] = {
+                    estimatedPrice: Math.round(total * 1.05), // GST
+                    distance: distanceKm,
+                    duration: durationMin,
+                    commissionAmount: Math.round((total / 1.05) * 0.20)
+                };
+            }
         }
         res.status(200).json({ estimates: results });
-    } catch (error) { res.status(500).json({ message: "Server error" }); }
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
 };
+
 /**
  * Service Availability Discovery
  */
