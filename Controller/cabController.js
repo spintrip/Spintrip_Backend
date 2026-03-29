@@ -1500,10 +1500,15 @@ const getMatchedOperationalCity = async (address, inputCity = "") => {
 /**
  * Price Estimator Logic
  */
+/**
+ * Price Estimator Logic: Single Trip version (Matches Bulk Home Screen Pricing)
+ */
 const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookingType = "Local", address = "", city = "" }) => {
   try {
     if (!origin) throw new Error("Missing parameters");
-    let distanceKm = 0, durationMin = 0;
+    
+    // 1. Calculate Distance & Duration (Failsafe to 30km if API fails)
+    let distanceKm = 30, durationMin = 60;
     try {
       const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
       const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
@@ -1515,24 +1520,38 @@ const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookin
         durationMin = element.duration.value / 60;
       }
     } catch (googleError) {
-      distanceKm = 30; durationMin = 60; // Failsafe
+      console.error("estimatePrice Dist Error:", googleError.message);
     }
+
+    // 2. Load Rate Cards for this Cab Category
     const rateCards = await HostCabRateCard.findAll({
        where: { cabType: { [Op.iLike]: (cabType.trim() || "Mini") } },
        order: [['createdAt', 'DESC']]
     });
-    let rateCard = null;
-    const matchedCity = await getMatchedOperationalCity(address, city);
     
+    // 3. Match City & Detect Airport Address
+    const matchedCity = await getMatchedOperationalCity(address, city);
+    const destAddress = (typeof destination === 'string' ? destination : (destination?.address || "")).toLowerCase();
+    
+    // 🚀 Smart Detection: Force airport rates if "airport" is in the destination address
+    const isActuallyAirport = 
+    bookingType !== 'Outstation' && 
+    (bookingType === 'Airport' || destAddress.includes("airport")) && 
+    distanceKm < 50;
+
+    let rateCard = null;
     if (matchedCity) {
        rateCard = rateCards.find(rc => rc.city && rc.city.toLowerCase() === matchedCity.toLowerCase());
     }
     if (!rateCard && rateCards.length > 0) rateCard = rateCards[0];
+    
     if (!rateCard) return { estimatedPrice: null, message: `No services in this area.` };
+
+    // 4. Base Price Calculation
     let subtotalBasePrice = 0;
-    if (bookingType === 'Airport') {
+    if (isActuallyAirport) {
        subtotalBasePrice = rateCard.airportTransferPrice || 1200;
-       distanceKm = 30; durationMin = 60;
+       distanceKm = 30; durationMin = 60; // Standard display fallbacks
     } else if (bookingType === 'Rentals') {
        subtotalBasePrice = rateCard.fullDayPrice || 2500;
     } else if (bookingType === 'Outstation') {
@@ -1540,12 +1559,26 @@ const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookin
     } else {
        subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
     }
+
+    // 5. Multipliers (Traffic & Surge)
     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
     const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
-    const total = Math.max(Math.round((subtotalBasePrice * trafficMult * (rateCard.surgeMultiplier || 1.0)) + (rateCard.tollCharges || 0)), 100);
+    const hostSurge = rateCard.surgeMultiplier || 1.0;
+    const toll = rateCard.tollCharges || 0;
+
+    // 🛡️ THE SAFETY FLOOR: 500 for Airport/Rentals, 100 for Local
+    const total = Math.max(
+        Math.round((subtotalBasePrice * trafficMult * hostSurge) + toll), 
+        isActuallyAirport ? 500 : 100
+    );
+
+    // 6. Fee Breakdowns (GST, Commission, TDS)
     const netBase = total / 1.05;
     const commission = netBase * 0.20;
-    const driverEarnings = (netBase - commission) * 0.99; // After 1% TDS
+    const driverEarningsBeforeTDS = netBase - commission;
+    const tdsAmount = driverEarningsBeforeTDS * 0.01;
+    const finalDriverEarnings = driverEarningsBeforeTDS - tdsAmount;
+
     return {
       distance: distanceKm,
       duration: durationMin,
@@ -1553,13 +1586,16 @@ const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookin
       gstAmount: Math.round(total - netBase),
       estimatedPrice: total,
       commissionAmount: Math.round(commission),
-      confirmationFee: Math.round(total - driverEarnings),
-      driverEarnings: Math.round(driverEarnings)
+      tdsAmount: Math.round(tdsAmount),
+      confirmationFee: Math.round(total - finalDriverEarnings),
+      driverEarnings: Math.round(finalDriverEarnings)
     };
   } catch (err) {
+    console.error("Critical estimatePrice Error:", err.message);
     return { estimatedPrice: 105, message: "Fallback price" };
   }
 };
+
 /**
  * High-Performance Bulk Estimation (For Scaling)
  */
