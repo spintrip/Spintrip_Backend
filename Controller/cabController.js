@@ -571,16 +571,17 @@ const bookCab = async (req, res) => {
       // Note: Backend wallet checks and debits are now removed for cab bookings.
       // Confirmation fee (26%) is handled via payroll/external payment.
 
-      let dbCabType = cabType;
-      if (dbCabType) {
-        let lower = dbCabType.toLowerCase();
-        if (lower.includes('mini')) dbCabType = 'mini cab';
-        else if (lower.includes('sedan')) dbCabType = 'sedan';
-        else if (lower.includes('suv')) dbCabType = 'suv';
-        else if (lower.includes('12')) dbCabType = '12 seater';
-        else if (lower.includes('lux')) dbCabType = 'luxury';
-        else dbCabType = 'mini cab'; // Fallback
-      }
+      // let dbCabType = cabType;
+      // if (dbCabType) {
+      //   let lower = dbCabType.toLowerCase();
+      //   if (lower.includes('mini')) dbCabType = 'mini cab';
+      //   else if (lower.includes('sedan')) dbCabType = 'sedan';
+      //   else if (lower.includes('suv')) dbCabType = 'suv';
+      //   else if (lower.includes('12')) dbCabType = '12 seater';
+      //   else if (lower.includes('lux')) dbCabType = 'luxury';
+      //   else dbCabType = 'mini cab'; // Fallback
+      // }
+      let dbCabType = cabType ? cabType.trim() : 'mini eco';
 
       // Generate a secure 4-digit Ride OTP for this booking
       const rideOtp = Math.floor(1000 + Math.random() * 9000);
@@ -1503,98 +1504,98 @@ const getMatchedOperationalCity = async (address, inputCity = "") => {
 /**
  * Price Estimator Logic: Single Trip version (Matches Bulk Home Screen Pricing)
  */
-const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookingType = "Local", address = "", city = "" }) => {
-  try {
-    if (!origin) throw new Error("Missing parameters");
+// const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookingType = "Local", address = "", city = "" }) => {
+//   try {
+//     if (!origin) throw new Error("Missing parameters");
 
-    // 1. Calculate Distance & Duration (Failsafe to 30km if API fails)
-    let distanceKm = 30, durationMin = 60;
-    try {
-      const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
-      const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
-      const response = await axios.get(url);
-      const element = response.data?.rows?.[0]?.elements?.[0];
-      if (element?.status === "OK") {
-        distanceKm = element.distance.value / 1000;
-        durationMin = element.duration.value / 60;
-      }
-    } catch (googleError) {
-      console.error("estimatePrice Dist Error:", googleError.message);
-    }
+//     // 1. Calculate Distance & Duration (Failsafe to 30km if API fails)
+//     let distanceKm = 30, durationMin = 60;
+//     try {
+//       const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+//       const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+//       const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
+//       const response = await axios.get(url);
+//       const element = response.data?.rows?.[0]?.elements?.[0];
+//       if (element?.status === "OK") {
+//         distanceKm = element.distance.value / 1000;
+//         durationMin = element.duration.value / 60;
+//       }
+//     } catch (googleError) {
+//       console.error("estimatePrice Dist Error:", googleError.message);
+//     }
 
-    // 2. Load Rate Cards for this Cab Category
-    const rateCards = await HostCabRateCard.findAll({
-      where: { cabType: { [Op.iLike]: (cabType.trim() || "Mini") } },
-      order: [['createdAt', 'DESC']]
-    });
+//     // 2. Load Rate Cards for this Cab Category
+//     const rateCards = await HostCabRateCard.findAll({
+//       where: { cabType: { [Op.iLike]: (cabType.trim() || "Mini") } },
+//       order: [['createdAt', 'DESC']]
+//     });
 
-    // 3. Match City & Detect Airport Address
-    const matchedCity = await getMatchedOperationalCity(address, city);
-    const destAddress = (typeof destination === 'string' ? destination : (destination?.address || "")).toLowerCase();
+//     // 3. Match City & Detect Airport Address
+//     const matchedCity = await getMatchedOperationalCity(address, city);
+//     const destAddress = (typeof destination === 'string' ? destination : (destination?.address || "")).toLowerCase();
 
-    // 🚀 Smart Detection: Force airport rates if "airport" is in the destination address
-    const isActuallyAirport =
-      bookingType !== 'Outstation' &&
-      (bookingType === 'Airport' || destAddress.includes("airport")) &&
-      distanceKm < 50;
+//     // 🚀 Smart Detection: Force airport rates if "airport" is in the destination address
+//     const isActuallyAirport =
+//       bookingType !== 'Outstation' &&
+//       (bookingType === 'Airport' || destAddress.includes("airport")) &&
+//       distanceKm < 50;
 
-    let rateCard = null;
-    if (matchedCity) {
-      rateCard = rateCards.find(rc => rc.city && rc.city.toLowerCase() === matchedCity.toLowerCase());
-    }
-    if (!rateCard && rateCards.length > 0) rateCard = rateCards[0];
+//     let rateCard = null;
+//     if (matchedCity) {
+//       rateCard = rateCards.find(rc => rc.city && rc.city.toLowerCase() === matchedCity.toLowerCase());
+//     }
+//     if (!rateCard && rateCards.length > 0) rateCard = rateCards[0];
 
-    if (!rateCard) return { estimatedPrice: null, message: `No services in this area.` };
+//     if (!rateCard) return { estimatedPrice: null, message: `No services in this area.` };
 
-    // 4. Base Price Calculation
-    let subtotalBasePrice = 0;
-    if (isActuallyAirport) {
-      subtotalBasePrice = rateCard.airportTransferPrice || 1200;
-      distanceKm = 30; durationMin = 60; // Standard display fallbacks
-    } else if (bookingType === 'Rentals') {
-      subtotalBasePrice = rateCard.fullDayPrice || 2500;
-    } else if (bookingType === 'Outstation') {
-      subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + (rateCard.driverAllowancePerDay || 300);
-    } else {
-      subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
-    }
+//     // 4. Base Price Calculation
+//     let subtotalBasePrice = 0;
+//     if (isActuallyAirport) {
+//       subtotalBasePrice = rateCard.airportTransferPrice || 1200;
+//       distanceKm = 30; durationMin = 60; // Standard display fallbacks
+//     } else if (bookingType === 'Rentals') {
+//       subtotalBasePrice = rateCard.fullDayPrice || 2500;
+//     } else if (bookingType === 'Outstation') {
+//       subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 20)) + (rateCard.driverAllowancePerDay || 300);
+//     } else {
+//       subtotalBasePrice = distanceKm * (rateCard.outstationPerKmPrice || 15);
+//     }
 
-    // 5. Multipliers (Traffic & Surge)
-    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
-    const hostSurge = rateCard.surgeMultiplier || 1.0;
-    const toll = rateCard.tollCharges || 0;
+//     // 5. Multipliers (Traffic & Surge)
+//     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+//     const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+//     const hostSurge = rateCard.surgeMultiplier || 1.0;
+//     const toll = rateCard.tollCharges || 0;
 
-    // 🛡️ THE SAFETY FLOOR: 500 for Airport/Rentals, 100 for Local
-    const total = Math.max(
-      Math.round((subtotalBasePrice * trafficMult * hostSurge) + toll),
-      isActuallyAirport ? 500 : 100
-    );
+//     // 🛡️ THE SAFETY FLOOR: 500 for Airport/Rentals, 100 for Local
+//     const total = Math.max(
+//       Math.round((subtotalBasePrice * trafficMult * hostSurge) + toll),
+//       isActuallyAirport ? 500 : 100
+//     );
 
-    // 6. Fee Breakdowns (GST, Commission, TDS)
-    const netBase = total / 1.05;
-    const commission = netBase * 0.20;
-    const driverEarningsBeforeTDS = netBase - commission;
-    const tdsAmount = driverEarningsBeforeTDS * 0.01;
-    const finalDriverEarnings = driverEarningsBeforeTDS - tdsAmount;
+//     // 6. Fee Breakdowns (GST, Commission, TDS)
+//     const netBase = total / 1.05;
+//     const commission = netBase * 0.20;
+//     const driverEarningsBeforeTDS = netBase - commission;
+//     const tdsAmount = driverEarningsBeforeTDS * 0.01;
+//     const finalDriverEarnings = driverEarningsBeforeTDS - tdsAmount;
 
-    return {
-      distance: distanceKm,
-      duration: durationMin,
-      subtotalBasePrice: Math.round(netBase),
-      gstAmount: Math.round(total - netBase),
-      estimatedPrice: total,
-      commissionAmount: Math.round(commission),
-      tdsAmount: Math.round(tdsAmount),
-      confirmationFee: Math.round(total - finalDriverEarnings),
-      driverEarnings: Math.round(finalDriverEarnings)
-    };
-  } catch (err) {
-    console.error("Critical estimatePrice Error:", err.message);
-    return { estimatedPrice: 105, message: "Fallback price" };
-  }
-};
+//     return {
+//       distance: distanceKm,
+//       duration: durationMin,
+//       subtotalBasePrice: Math.round(netBase),
+//       gstAmount: Math.round(total - netBase),
+//       estimatedPrice: total,
+//       commissionAmount: Math.round(commission),
+//       tdsAmount: Math.round(tdsAmount),
+//       confirmationFee: Math.round(total - finalDriverEarnings),
+//       driverEarnings: Math.round(finalDriverEarnings)
+//     };
+//   } catch (err) {
+//     console.error("Critical estimatePrice Error:", err.message);
+//     return { estimatedPrice: 105, message: "Fallback price" };
+//   }
+// };
 
 /**
  * High-Performance Bulk Estimation (For Scaling)
@@ -1602,77 +1603,77 @@ const estimatePrice = async ({ origin, destination, cabType = "mini cab", bookin
 /**
  * Bulk Estimation: Fixed version with Auto-Airport Detection and Minimum Fare Guards.
  */
-const getBulkEstimates = async (req, res) => {
-  const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
-  try {
-    if (!origin || !destination || !cabTypes || !Array.isArray(cabTypes)) {
-      return res.status(400).json({ message: "Missing required parameters" });
-    }
+// const getBulkEstimates = async (req, res) => {
+//   const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
+//   try {
+//     if (!origin || !destination || !cabTypes || !Array.isArray(cabTypes)) {
+//       return res.status(400).json({ message: "Missing required parameters" });
+//     }
 
-    // 1. Calculate Distance (Failsafe to 30km if API fails)
-    let distanceKm = 30, durationMin = 60;
-    try {
-      const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
-      const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
-      const googleRes = await axios.get(url);
-      const element = googleRes.data?.rows?.[0]?.elements?.[0];
-      if (element?.status === "OK") {
-        distanceKm = element.distance.value / 1000;
-        durationMin = element.duration.value / 60;
-      }
-    } catch (e) { }
+//     // 1. Calculate Distance (Failsafe to 30km if API fails)
+//     let distanceKm = 30, durationMin = 60;
+//     try {
+//       const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+//       const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+//       const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`;
+//       const googleRes = await axios.get(url);
+//       const element = googleRes.data?.rows?.[0]?.elements?.[0];
+//       if (element?.status === "OK") {
+//         distanceKm = element.distance.value / 1000;
+//         durationMin = element.duration.value / 60;
+//       }
+//     } catch (e) { }
 
-    // 2. Identify City & Smart Airport Detection
-    const matchedCity = await getMatchedOperationalCity(address, city);
-    const destAddress = (destination?.address || "").toLowerCase();
+//     // 2. Identify City & Smart Airport Detection
+//     const matchedCity = await getMatchedOperationalCity(address, city);
+//     const destAddress = (destination?.address || "").toLowerCase();
 
-    // 🚀 Detect "Airport" trips even if user is in "Local" tab
-    const isActuallyAirport =
-      bookingType !== 'Outstation' &&
-      (bookingType === 'Airport' || destAddress.includes("airport")) &&
-      distanceKm < 50;
+//     // 🚀 Detect "Airport" trips even if user is in "Local" tab
+//     const isActuallyAirport =
+//       bookingType !== 'Outstation' &&
+//       (bookingType === 'Airport' || destAddress.includes("airport")) &&
+//       distanceKm < 50;
 
-    const results = {};
-    for (const type of cabTypes) {
-      const rateCards = await HostCabRateCard.findAll({
-        where: { cabType: { [Op.iLike]: type.trim() } },
-        order: [['createdAt', 'DESC']]
-      });
+//     const results = {};
+//     for (const type of cabTypes) {
+//       const rateCards = await HostCabRateCard.findAll({
+//         where: { cabType: { [Op.iLike]: type.trim() } },
+//         order: [['createdAt', 'DESC']]
+//       });
 
-      const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
+//       const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
 
-      if (card) {
-        let base = distanceKm * (card.outstationPerKmPrice || 15);
-        if (isActuallyAirport) base = card.airportTransferPrice || 1200;
-        if (bookingType === 'Rentals') base = card.fullDayPrice || 2500;
+//       if (card) {
+//         let base = distanceKm * (card.outstationPerKmPrice || 15);
+//         if (isActuallyAirport) base = card.airportTransferPrice || 1200;
+//         if (bookingType === 'Rentals') base = card.fullDayPrice || 2500;
 
-        const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-        const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
-        const hostSurge = card.surgeMultiplier || 1.0;
+//         const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+//         const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+//         const hostSurge = card.surgeMultiplier || 1.0;
 
-        let total = Math.round((base * trafficMult * hostSurge) + (card.tollCharges || 0));
+//         let total = Math.round((base * trafficMult * hostSurge) + (card.tollCharges || 0));
 
-        // 🛡️ THE PRODUCTION FLOOR (Ensures ₹105 is the absolute minimum)
-        if (isActuallyAirport || bookingType === 'Rentals') {
-          total = Math.max(total, 500);
-        } else {
-          total = Math.max(total, 100);
-        }
+//         // 🛡️ THE PRODUCTION FLOOR (Ensures ₹105 is the absolute minimum)
+//         if (isActuallyAirport || bookingType === 'Rentals') {
+//           total = Math.max(total, 500);
+//         } else {
+//           total = Math.max(total, 100);
+//         }
 
-        results[type] = {
-          estimatedPrice: Math.round(total * 1.05), // GST
-          distance: distanceKm,
-          duration: durationMin,
-          commissionAmount: Math.round((total / 1.05) * 0.20)
-        };
-      }
-    }
-    res.status(200).json({ estimates: results });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
+//         results[type] = {
+//           estimatedPrice: Math.round(total * 1.05), // GST
+//           distance: distanceKm,
+//           duration: durationMin,
+//           commissionAmount: Math.round((total / 1.05) * 0.20)
+//         };
+//       }
+//     }
+//     res.status(200).json({ estimates: results });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 
 /**
  * Service Availability Discovery
@@ -1710,6 +1711,166 @@ const getEstimate = async (req, res) => {
   const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, cabType, bookingType, address, city });
   res.status(200).json(result);
 };
+
+/**
+ * Core Dynamic Price Estimation Engine
+ */
+const estimatePrice = async ({ origin, destination, cabType, bookingType = "Local", address = "", city = "" }) => {
+  try {
+    const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+    const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+    
+    const googleRes = await axios.get(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+
+    const element = googleRes.data?.rows?.[0]?.elements?.[0];
+    let distanceKm = 10, durationMin = 20; 
+    if (element?.status === "OK") {
+      distanceKm = element.distance.value / 1000;
+      durationMin = element.duration.value / 60;
+    }
+
+    const matchedCity = await getMatchedOperationalCity(address, city);
+    
+    // 🔥 UNIVERSAL SMART ROUTING (THE FIX)
+    const originAddr = (origin?.address || "").toLowerCase();
+    const destAddr = (destination?.address || "").toLowerCase();
+    let evaluatedType = bookingType;
+
+    if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
+        evaluatedType = 'Airport'; // Keyword match = Airport
+    } else if (distanceKm >= 50) {
+        evaluatedType = 'Outstation'; // 50km+ = Outstation
+    } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
+        evaluatedType = 'Local'; // Short Non-Airport = Local
+    }
+
+    const rateCards = await HostCabRateCard.findAll({
+      where: { cabType: { [Op.iLike]: cabType.trim() } },
+      order: [['createdAt', 'DESC']]
+    });
+
+    const rateCard = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
+
+    if (!rateCard) return { estimatedPrice: null, error: "No rate card" };
+
+    let subtotalBasePrice = 0;
+    
+    if (evaluatedType === 'Airport') {
+      subtotalBasePrice = rateCard.airportTransferPrice || 0;
+    } else if (evaluatedType === 'Rentals') {
+      subtotalBasePrice = rateCard.fullDayPrice || 0;
+    } else if (evaluatedType === 'Outstation') {
+      subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 0)) + (rateCard.driverAllowancePerDay || 0);
+    } else {
+      // ✅ YOUR NEW LOCAL FORMULA
+      const baseFare = 150;
+      const extraRate = rateCard.extraKmRate || 0;
+      subtotalBasePrice = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
+    }
+
+    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+    const hostSurge = rateCard.surgeMultiplier || 1.0;
+
+    const total = (evaluatedType === 'Airport' || evaluatedType === 'Rentals')
+      ? Math.max(Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0)), 500)
+      : Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0));
+
+    const netBase = total / 1.05;
+    return {
+      distance: distanceKm,
+      duration: durationMin,
+      subtotalBasePrice: Math.round(netBase),
+      gstAmount: Math.round(total - netBase),
+      estimatedPrice: total > 0 ? total : null,
+      commissionAmount: Math.round(netBase * 0.20),
+      extraHourRate: rateCard.extraHourRate || 0,
+      extraKmRate: rateCard.extraKmRate || 0
+    };
+  } catch (err) {
+    return { estimatedPrice: null, error: "Calculation failed" };
+  }
+};
+
+
+/**
+ * High-Performance Bulk Estimation (Optimized for Dynamic Formats)
+ */
+const getBulkEstimates = async (req, res) => {
+  const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
+  try {
+    const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
+    const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+    const googleRes = await axios.get(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+
+    const element = googleRes.data?.rows?.[0]?.elements?.[0];
+    let distanceKm = (element?.status === "OK") ? (element.distance.value / 1000) : 10;
+    let durationMin = (element?.status === "OK") ? (element.duration.value / 60) : 20;
+
+    const matchedCity = await getMatchedOperationalCity(address, city);
+    
+    // 🔥 UNIVERSAL SMART ROUTING
+    const originAddr = (origin?.address || "").toLowerCase();
+    const destAddr = (destination?.address || "").toLowerCase();
+    let evaluatedType = bookingType;
+
+    if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
+      evaluatedType = 'Airport';
+    } else if (distanceKm >= 50) {
+      evaluatedType = 'Outstation';
+    } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
+      evaluatedType = 'Local';
+    }
+
+    const results = {};
+    for (const type of cabTypes) {
+      const rateCards = await HostCabRateCard.findAll({
+        where: { cabType: { [Op.iLike]: type.trim() } },
+        order: [['createdAt', 'DESC']]
+      });
+
+      const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
+
+      if (card) {
+        let base = 0;
+        if (evaluatedType === 'Airport') {
+            base = card.airportTransferPrice || 0;
+        } else if (evaluatedType === 'Rentals') {
+            base = card.fullDayPrice || 0;
+        } else if (evaluatedType === 'Outstation') {
+            base = (300 * (card.outstationPerKmPrice || 0)) + (card.driverAllowancePerDay || 0);
+        } else {
+            // ✅ LOCAL BASE FARE Logic
+            const baseFare = 150;
+            const extraRate = card.extraKmRate || 0;
+            base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
+        }
+
+        const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+        const total = Math.round((base * (ratio > 2.5 ? 1.3 : 1) * (card.surgeMultiplier || 1.0)) + (card.tollCharges || 0));
+
+        if (total > 0) {
+          results[type] = {
+            estimatedPrice: Math.round(total * 1.05),
+            distance: distanceKm,
+            duration: durationMin,
+            extraHourRate: card.extraHourRate || 0,
+            extraKmRate: card.extraKmRate || 0
+          };
+        }
+      }
+    }
+    res.status(200).json({ estimates: results });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 
 
 /**
