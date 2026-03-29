@@ -73,7 +73,7 @@ router.post('/cab/assign-driver-vehicle', authenticate, assignDriverToVehicle);
 // Add this function (perhaps near your new 'getAllVehicleTypes'):
 const getAllCities = async (req, res) => {
   try {
-    const { City } = require('../../Models'); // Import City model here to avoid circular dependency
+    const { City } = require('../Models'); // Import City model here to avoid circular dependency
     const cities = await City.findAll({ where: { isActive: true } });
     res.status(200).json({ success: true, cities });
   } catch (error) {
