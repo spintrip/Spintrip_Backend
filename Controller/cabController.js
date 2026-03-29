@@ -1592,15 +1592,43 @@ const getBulkEstimates = async (req, res) => {
             
             const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
             
-            if (card) {
-                let base = distanceKm * (card.outstationPerKmPrice || 15);
-                if (bookingType === 'Airport') base = card.airportTransferPrice || 1200;
-                results[type] = {
-                    estimatedPrice: Math.round(base * 1.05),
-                    distance: distanceKm,
-                    duration: durationMin
-                };
-            }
+            // --- Updated Logic for Airport Pricing ---
+
+if (card) {
+    let base = distanceKm * (card.outstationPerKmPrice || 15);
+    
+    // 1. Use Rate Card Price if available, otherwise fallback to 1200
+    if (bookingType === 'Airport') {
+        base = card.airportTransferPrice || 1200;
+    }
+    
+    if (bookingType === 'Rentals') {
+        base = card.fullDayPrice || 2500;
+    }
+
+    // 2. Add traffic/surge multipliers
+    const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
+    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+    const hostSurge = card.surgeMultiplier || 1.0;
+    
+    let total = Math.round((base * trafficMult * hostSurge) + (card.tollCharges || 0));
+
+    // 3. 🛡️ THE SAFETY FLOOR: 
+    // We only force it to be at least ₹100 (Local) or ₹500 (Rentals/Airport) 
+    // to prevent the "₹0" bug, but we don't block lower deals if you set them.
+    if (bookingType === 'Airport' || bookingType === 'Rentals') {
+        total = Math.max(total, 500); // 👈 Changed from 1200 to 500 for flexibility
+    } else {
+        total = Math.max(total, 100); 
+    }
+
+    results[type] = {
+        estimatedPrice: Math.round(total * 1.05), // GST
+        distance: distanceKm,
+        duration: durationMin
+    };
+}
+
         }
         res.status(200).json({ estimates: results });
     } catch (error) { res.status(500).json({ message: "Server error" }); }
