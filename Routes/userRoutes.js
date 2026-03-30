@@ -13,7 +13,7 @@ const { signup, login, verify, getprofile, putprofile, uploadProfile, deleteuser
   postwishlist, cancelwishlist, getwishlist, getAllVehicleTypes, booking, extend, breakup, cancelbooking, userbookings, getfeedback, transactions, rating,
   chat, chathistory, updateDeviceToken, toprating, verifyAadhar, verifyDl, verifyPan, postaddress, getaddress, findCabs, getWalletDetails, initiateRecharge, walletWebhook, walletWithdraw
 } = require('../Controller/userController/userController');
-const { getAllBlogs } = require('../Controller/blogController');
+const { getAllBlogs, getBlogById } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { initiatePayment, initiateCabPayment, verifyCabPayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
@@ -144,6 +144,10 @@ router.post('/update-device-token', authenticate, updateDeviceToken);
 // Balance & Transaction Endpoints
 router.get('/wallet', authenticate, getWalletDetails);
 router.get('/transactions', authenticate, transactions);
+
+// Blogs
+router.get('/blogs', getAllBlogs);
+router.get('/blogs/:id', getBlogById);
 
 const { updateFcmToken } = require('../Controller/notificationController');
 const { uploadvehicleImages, putVehicleAdditional } = require('../Controller/hostcontroller/hostController');
