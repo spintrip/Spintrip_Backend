@@ -32,6 +32,7 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     // This allows global rate cards to work without requiring manual SQL execution by the user.
     await sequelize.query(`ALTER TABLE "HostCabRateCards" DROP CONSTRAINT IF EXISTS "HostCabRateCards_hostId_fkey";`);
     await sequelize.query(`ALTER TABLE "HostCabRateCards" ALTER COLUMN "hostId" DROP NOT NULL;`);
+     await db.sequelize.sync({ alter: true });
     console.log('Database Health Check: HostCabRateCards constraints optimized.');
 
   } catch (error) {
@@ -121,6 +122,7 @@ const associateModels = () => {
   Host.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
   Driver.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
   // Admin associations
+  CabBookingRequest.belongsTo(User, { foreignKey: 'userId', as: 'Customer' });
   Admin.hasMany(SupportChat, { foreignKey: 'adminId', onDelete: 'CASCADE' });
   Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 

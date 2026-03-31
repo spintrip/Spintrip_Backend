@@ -1,11 +1,25 @@
-const { Booking, CabBookingRequest, CabBookingAccepted, Driver, Vehicle, User } = require('../../Models');
+const { Booking, CabBookingRequest, CabBookingAccepted, Driver, Vehicle, User, UserAdditional } = require('../../Models');
 const { sendPushNotification } = require('../../Utils/notifications');
 
 // Get all bookings
 const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll();
-    const cabBookingsRaw = await CabBookingRequest.findAll();
+        // Replace line 8 with:
+    const cabBookingsRaw = await CabBookingRequest.findAll({
+      include: [
+        {
+          model: User,
+          as: 'Customer',
+          attributes: ['phone'],
+          include: [{ 
+            model: UserAdditional, 
+            attributes: ['FullName'] 
+          }]
+        }
+      ]
+    });
+
     
     const mappedCabBookings = cabBookingsRaw.map(cab => {
       let statusInt = 5; 
@@ -18,6 +32,8 @@ const getAllBookings = async (req, res) => {
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
+        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A', // New field
+        customerPhone: cab.Customer?.phone || 'N/A',
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
         date: cab.date,

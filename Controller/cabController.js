@@ -1683,7 +1683,7 @@ const getCabAvailability = async (req, res) => {
   try {
     const matchedCity = await getMatchedOperationalCity(address, city);
     if (!matchedCity) return res.status(200).json({ available: false, services: [], message: "Not operational here." });
-    const rateCards = await HostCabRateCard.findAll({ where: { city: { [Op.iLike]: matchedCity } } });
+    const rateCards = await HostCabRateCard.findAll({ where: { city: { [Op.iLike]: matchedCity }, isActive: true } });
     if (rateCards.length === 0) return res.status(200).json({ available: false, services: [], message: "No active rate cards." });
 
     let services = new Set(['Local']);
@@ -1719,35 +1719,38 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
   try {
     const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
     const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
-    
+
     const googleRes = await axios.get(
       `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
     );
 
     const element = googleRes.data?.rows?.[0]?.elements?.[0];
-    let distanceKm = 10, durationMin = 20; 
+    let distanceKm = 10, durationMin = 20;
     if (element?.status === "OK") {
       distanceKm = element.distance.value / 1000;
       durationMin = element.duration.value / 60;
     }
 
     const matchedCity = await getMatchedOperationalCity(address, city);
-    
+
     // 🔥 UNIVERSAL SMART ROUTING (THE FIX)
     const originAddr = (origin?.address || "").toLowerCase();
     const destAddr = (destination?.address || "").toLowerCase();
     let evaluatedType = bookingType;
 
     if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
-        evaluatedType = 'Airport'; // Keyword match = Airport
+      evaluatedType = 'Airport'; // Keyword match = Airport
     } else if (distanceKm >= 50) {
-        evaluatedType = 'Outstation'; // 50km+ = Outstation
+      evaluatedType = 'Outstation'; // 50km+ = Outstation
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
-        evaluatedType = 'Local'; // Short Non-Airport = Local
+      evaluatedType = 'Local'; // Short Non-Airport = Local
     }
 
     const rateCards = await HostCabRateCard.findAll({
-      where: { cabType: { [Op.iLike]: cabType.trim() } },
+      where: {
+        cabType: { [Op.iLike]: cabType.trim() },
+        isActive: true
+      },
       order: [['createdAt', 'DESC']]
     });
 
@@ -1756,7 +1759,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     if (!rateCard) return { estimatedPrice: null, error: "No rate card" };
 
     let subtotalBasePrice = 0;
-    
+
     if (evaluatedType === 'Airport') {
       subtotalBasePrice = rateCard.airportTransferPrice || 0;
     } else if (evaluatedType === 'Rentals') {
@@ -1812,7 +1815,7 @@ const getBulkEstimates = async (req, res) => {
     let durationMin = (element?.status === "OK") ? (element.duration.value / 60) : 20;
 
     const matchedCity = await getMatchedOperationalCity(address, city);
-    
+
     // 🔥 UNIVERSAL SMART ROUTING
     const originAddr = (origin?.address || "").toLowerCase();
     const destAddr = (destination?.address || "").toLowerCase();
@@ -1829,25 +1832,27 @@ const getBulkEstimates = async (req, res) => {
     const results = {};
     for (const type of cabTypes) {
       const rateCards = await HostCabRateCard.findAll({
-        where: { cabType: { [Op.iLike]: type.trim() } },
+        where: {
+          cabType: { [Op.iLike]: type.trim() },
+          isActive: true
+        },
         order: [['createdAt', 'DESC']]
       });
-
       const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
 
       if (card) {
         let base = 0;
         if (evaluatedType === 'Airport') {
-            base = card.airportTransferPrice || 0;
+          base = card.airportTransferPrice || 0;
         } else if (evaluatedType === 'Rentals') {
-            base = card.fullDayPrice || 0;
+          base = card.fullDayPrice || 0;
         } else if (evaluatedType === 'Outstation') {
-            base = (300 * (card.outstationPerKmPrice || 0)) + (card.driverAllowancePerDay || 0);
+          base = (300 * (card.outstationPerKmPrice || 0)) + (card.driverAllowancePerDay || 0);
         } else {
-            // ✅ LOCAL BASE FARE Logic
-            const baseFare = 150;
-            const extraRate = card.extraKmRate || 0;
-            base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
+          // ✅ LOCAL BASE FARE Logic
+          const baseFare = 150;
+          const extraRate = card.extraKmRate || 0;
+          base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
         }
 
         const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
