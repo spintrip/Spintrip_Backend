@@ -1,3 +1,4 @@
+const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, sequelize } = require('../../Models');
 const { sendPushNotification } = require('../../Utils/notifications');
 const { refundBookingCoins } = require('../cabController');
 
@@ -77,7 +78,7 @@ const createAdminBooking = async (req, res) => {
 const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll();
-    // Replace line 8 with:
+    // Fetch both Rentals and Cab Bookings
     const cabBookingsRaw = await CabBookingRequest.findAll({
       include: [
         {
