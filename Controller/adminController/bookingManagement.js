@@ -1,34 +1,106 @@
-const { Booking, CabBookingRequest, CabBookingAccepted, Driver, Vehicle, User, UserAdditional } = require('../../Models');
 const { sendPushNotification } = require('../../Utils/notifications');
+const { refundBookingCoins } = require('../cabController');
+
+const createAdminBooking = async (req, res) => {
+  const {
+    customerPhone,
+    customerName,
+    cabType,
+    bookingType,
+    date,
+    time,
+    startLocation, // Changed from pickupLocation
+    endLocation,   // Changed from dropLocation
+    amount
+  } = req.body;
+
+  const t = await sequelize.transaction();
+
+  try {
+    let user = await User.findOne({ where: { phone: customerPhone }, transaction: t });
+    let userId;
+
+    if (!user) {
+      userId = require('uuid').v4();
+      user = await User.create({ id: userId, phone: customerPhone, role: 'user', password: '123' }, { transaction: t });
+      await UserAdditional.create({ id: userId, FullName: customerName || 'Admin Created User' }, { transaction: t });
+    } else {
+      userId = user.id;
+    }
+
+    const estimatedPrice = parseFloat(amount) || 0;
+    const netBase = estimatedPrice / 1.05;
+    const commissionAmount = netBase * 0.20;
+    const tdsAmount = netBase * 0.01; // 1% of Gross (excluding GST)
+    const payToDriverAmount = Math.round((netBase - commissionAmount - tdsAmount) * 100) / 100;
+    const confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
+
+    const bookingId = `CB-${Date.now()}`;
+    const rideOtp = Math.floor(1000 + Math.random() * 9000);
+    const getAddr = (loc) => (loc && typeof loc === 'object' ? loc.address : loc) || "";
+    const getLat = (loc) => (loc && typeof loc === 'object' ? loc.latitude : null);
+    const getLng = (loc) => (loc && typeof loc === 'object' ? loc.longitude : null);
+
+    // This now matches your mobile app's schema exactly
+    const booking = await CabBookingRequest.create({
+      bookingId,
+      userId,
+      date: date || null,
+      time: time || null,
+      startLocationAddress: getAddr(startLocation),
+      startLocationLatitude: getLat(startLocation),
+      startLocationLongitude: getLng(startLocation),
+      endLocationAddress: getAddr(endLocation),
+      endLocationLatitude: getLat(endLocation),
+      endLocationLongitude: getLng(endLocation),
+      estimatedPrice: estimatedPrice,
+      status: "pending",
+      paymentStatus: "pending",
+      cabType: cabType || 'mini eco',
+      confirmationFee: confirmationFeeAmount,
+      payToDriver: payToDriverAmount,
+      rideOtp: rideOtp,
+      bookingType: bookingType || "Local"
+    }, { transaction: t });
+
+    await t.commit();
+    res.status(201).json({ message: "Booking created successfully", bookingId, booking });
+  } catch (error) {
+    if (t) await t.rollback();
+    console.error("Admin Booking Error:", error);
+    res.status(500).json({ message: "Error creating booking", error: error.message });
+  }
+};
+
 
 // Get all bookings
 const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.findAll();
-        // Replace line 8 with:
+    // Replace line 8 with:
     const cabBookingsRaw = await CabBookingRequest.findAll({
       include: [
         {
           model: User,
           as: 'Customer',
           attributes: ['phone'],
-          include: [{ 
-            model: UserAdditional, 
-            attributes: ['FullName'] 
+          include: [{
+            model: UserAdditional,
+            attributes: ['FullName']
           }]
         }
       ]
     });
 
-    
+
     const mappedCabBookings = cabBookingsRaw.map(cab => {
-      let statusInt = 5; 
+      let statusInt = 5;
       if (cab.status === 'pending') statusInt = 5;
       else if (cab.status === 'accepted') statusInt = 1;
       else if (cab.status === 'started') statusInt = 2;
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
-      
+
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
@@ -39,11 +111,13 @@ const getAllBookings = async (req, res) => {
         date: cab.date,
         time: cab.time,
         status: statusInt,
-        amount: cab.estimatedPrice || cab.subtotalBasePrice || 0,
-        GSTAmount: cab.gstAmount || 0,
-        totalUserAmount: cab.finalPrice || cab.estimatedPrice || 0,
-        TDSAmount: cab.tdsAmount || 0,
-        totalHostAmount: cab.driverEarnings || 0,
+        amount: cab.estimatedPrice || 0,
+        GSTAmount: cab.gstAmount || Math.round((cab.estimatedPrice - (cab.estimatedPrice / 1.05)) * 100) / 100,
+        totalUserAmount: cab.estimatedPrice || 0,
+        TDSAmount: cab.tdsAmount || Math.round(((cab.estimatedPrice / 1.05) * 0.01) * 100) / 100,
+        totalHostAmount: cab.payToDriver || 0,
+        confirmationFee: cab.confirmationFee || 0,
+        payToDriver: cab.payToDriver || 0,
         startTripDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
         startTripTime: cab.startTripTime,
         endTripTime: cab.endTripTime,
@@ -90,13 +164,13 @@ const getBookingById = async (req, res) => {
 
     if (!booking) {
       if (cabBooking) {
-        let statusInt = 5; 
+        let statusInt = 5;
         if (cabBooking.status === 'pending') statusInt = 5;
         else if (cabBooking.status === 'accepted') statusInt = 1;
         else if (cabBooking.status === 'started') statusInt = 2;
         else if (cabBooking.status === 'completed') statusInt = 3;
         else if (cabBooking.status === 'cancelled') statusInt = 4;
-        
+
         booking = {
           Bookingid: cabBooking.bookingId,
           id: cabBooking.userId,
@@ -158,59 +232,64 @@ const updateBookingById = async (req, res) => {
     }
 
     if (!booking) {
-      if(cabBooking) {
-         const cabUpdates = {};
-         if (updatedFields.status !== undefined) {
-             let enumStatus = 'pending';
-             if (updatedFields.status === 5) enumStatus = 'pending';
-             if (updatedFields.status === 1) enumStatus = 'accepted';
-             if (updatedFields.status === 2) enumStatus = 'started';
-             if (updatedFields.status === 3) enumStatus = 'completed';
-             if (updatedFields.status === 4) enumStatus = 'cancelled';
-             cabUpdates.status = enumStatus;
-         }
-         if (updatedFields.vehicleid !== undefined) cabUpdates.vehicleId = updatedFields.vehicleid;
-         if (updatedFields.driverid !== undefined) cabUpdates.driverid = updatedFields.driverid;
-         if (updatedFields.amount !== undefined) cabUpdates.estimatedPrice = updatedFields.amount;
-         if (updatedFields.GSTAmount !== undefined) cabUpdates.gstAmount = updatedFields.GSTAmount;
-         if (updatedFields.totalUserAmount !== undefined) cabUpdates.finalPrice = updatedFields.totalUserAmount;
-         if (updatedFields.TDSAmount !== undefined) cabUpdates.tdsAmount = updatedFields.TDSAmount;
-         if (updatedFields.totalHostAmount !== undefined) cabUpdates.driverEarnings = updatedFields.totalHostAmount;
-         
-         await cabBooking.update(cabUpdates);
+      if (cabBooking) {
+        const cabUpdates = {};
+        if (updatedFields.status !== undefined) {
+          let enumStatus = 'pending';
+          if (updatedFields.status === 5) enumStatus = 'pending';
+          if (updatedFields.status === 1) enumStatus = 'accepted';
+          if (updatedFields.status === 2) enumStatus = 'started';
+          if (updatedFields.status === 3) enumStatus = 'completed';
+          if (updatedFields.status === 4) enumStatus = 'cancelled';
+          cabUpdates.status = enumStatus;
+        }
+        if (updatedFields.vehicleid !== undefined) cabUpdates.vehicleId = updatedFields.vehicleid;
+        if (updatedFields.driverid !== undefined) cabUpdates.driverid = updatedFields.driverid;
+        if (updatedFields.amount !== undefined) cabUpdates.estimatedPrice = updatedFields.amount;
+        if (updatedFields.GSTAmount !== undefined) cabUpdates.gstAmount = updatedFields.GSTAmount;
+        if (updatedFields.totalUserAmount !== undefined) cabUpdates.finalPrice = updatedFields.totalUserAmount;
+        if (updatedFields.TDSAmount !== undefined) cabUpdates.tdsAmount = updatedFields.TDSAmount;
+        if (updatedFields.totalHostAmount !== undefined) cabUpdates.driverEarnings = updatedFields.totalHostAmount;
 
-         // --- SEND NOTIFICATIONS ---
-         if (updatedFields.driverid || updatedFields.vehicleid || updatedFields.status === 1) {
-           try {
-             const customer = await User.findByPk(cabBooking.userId);
-             const driver = updatedFields.driverid ? await User.findByPk(updatedFields.driverid) : null;
+        await cabBooking.update(cabUpdates);
 
-             // Notify Customer
-             if (customer && customer.fcmToken) {
-               await sendPushNotification(
-                 customer.fcmToken,
-                 "Driver Assigned",
-                 `Your cab for Booking ${cabBooking.bookingId} has been assigned.`,
-                 { bookingId: cabBooking.bookingId, type: 'assignment' }
-               );
-             }
+        // --- SEND NOTIFICATIONS ---
+        if (updatedFields.driverid || updatedFields.vehicleid || updatedFields.status === 1) {
+          try {
+            const customer = await User.findByPk(cabBooking.userId);
+            const driver = updatedFields.driverid ? await User.findByPk(updatedFields.driverid) : null;
 
-             // Notify Driver
-             if (driver && driver.fcmToken) {
-               await sendPushNotification(
-                 driver.fcmToken,
-                 "New Booking Assigned",
-                 `A new booking (${cabBooking.bookingId}) has been assigned to you.`,
-                 { bookingId: cabBooking.bookingId, type: 'assignment' }
-               );
-             }
-           } catch (notiError) {
-             console.error("Notification Error:", notiError.message);
-             // We don't fail the request if notification fails
-           }
-         }
+            // 🔎 DIAGNOSTIC LOG: Confirm token was found in the User table
+            if (driver) {
+              console.log(`Assigning Driver: ${driver.id} - Token Found: ${!!driver.fcmToken}`);
+            }
 
-         return res.status(200).json({ message: 'Cab Booking updated successfully', booking: cabBooking });
+            // Notify Customer
+            if (customer && customer.fcmToken) {
+              await sendPushNotification(
+                customer.fcmToken,
+                "Driver Assigned",
+                `Your cab for Booking ${cabBooking.bookingId} has been assigned.`,
+                { bookingId: cabBooking.bookingId, type: 'assignment' }
+              );
+            }
+
+            // Notify Driver
+            if (driver && driver.fcmToken) {
+              await sendPushNotification(
+                driver.fcmToken,
+                "New Booking Assigned",
+                `A new booking (${cabBooking.bookingId}) has been assigned to you.`,
+                { bookingId: cabBooking.bookingId, type: 'assignment' }
+              );
+            }
+          } catch (notiError) {
+            console.error("Notification Error:", notiError.message);
+            // We don't fail the request if notification fails
+          }
+        }
+
+        return res.status(200).json({ message: 'Cab Booking updated successfully', booking: cabBooking });
       }
       return res.status(404).json({ message: 'Booking not found' });
     }
@@ -246,15 +325,25 @@ const deleteBookingById = async (req, res) => {
 const cancelCabBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const booking = await CabBookingRequest.findByPk(id);
     if (!booking) {
       return res.status(404).json({ message: 'Cab Booking Request not found' });
     }
 
-    await booking.update({ status: 'cancelled' });
+    const t = await sequelize.transaction();
+    try {
+      await booking.update({ status: 'cancelled' }, { transaction: t });
 
-    res.status(200).json({ message: 'Cab Booking Cancelled successfully', booking });
+      // --- 🪙 REFUND COINS ---
+      await refundBookingCoins(id, t);
+
+      await t.commit();
+      res.status(200).json({ message: 'Cab Booking Cancelled successfully and coins refunded (if any)', booking });
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error cancelling booking', error: error.message });
@@ -265,7 +354,7 @@ const cancelCabBooking = async (req, res) => {
 const sendCabInvoice = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const cabBooking = await CabBookingRequest.findByPk(id);
     if (!cabBooking) {
       return res.status(404).json({ message: 'Cab Booking Request not found' });
@@ -273,7 +362,7 @@ const sendCabInvoice = async (req, res) => {
 
     const { generateInvoicePDF, sendInvoiceEmail } = require('../emailController');
     const user = await User.findByPk(cabBooking.userId);
-    
+
     const bookingDetails = {
       bookingId: cabBooking.bookingId,
       carModel: cabBooking.cabType || 'Cab',
@@ -293,10 +382,10 @@ const sendCabInvoice = async (req, res) => {
     const invoiceData = await generateInvoicePDF(user.email, 'info@spintrip.in', bookingDetails, pricingDetails);
     await sendInvoiceEmail(user.email, invoiceData, bookingDetails);
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Official invoice generated and sent to customer.', 
-      s3Url: invoiceData.s3Url 
+    res.status(200).json({
+      success: true,
+      message: 'Official invoice generated and sent to customer.',
+      s3Url: invoiceData.s3Url
     });
   } catch (error) {
     console.error(error);
@@ -304,7 +393,7 @@ const sendCabInvoice = async (req, res) => {
   }
 };
 
-module.exports = { 
+module.exports = {
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
-  cancelCabBooking, sendCabInvoice
+  cancelCabBooking, sendCabInvoice, createAdminBooking
 };

@@ -1,52 +1,50 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const fs = require('fs');
-const path = require('path');
+/* fix_schema.js */
+const db = require('./Models');
+const { DataTypes } = require('sequelize');
 
-// Manually load .env
-const envPath = path.join(__dirname, '.env');
-const envConfig = fs.readFileSync(envPath, 'utf8');
-envConfig.split('\n').forEach(line => {
-  const [key, value] = line.split('=');
-  if (key && value) {
-    process.env[key.trim()] = value.trim().replace(/^['"]|['"]$/g, '');
-  }
-});
-
-const sequelize = new Sequelize(`postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`, {
-  dialect: 'postgres',
-  logging: false,
-});
-
-async function fixSchema() {
+async function runFix() {
+  const sequelize = db.sequelize;
+  const queryInterface = sequelize.getQueryInterface();
+  
   try {
+    console.log('--- STARTING DATABASE SCHEMA FIX ---');
     await sequelize.authenticate();
     console.log('Database connected.');
 
-    const queryInterface = sequelize.getQueryInterface();
-    const tableInfo = await queryInterface.describeTable('UserAdditionals');
-
-    if (!tableInfo.PanVfid) {
-      console.log('Adding column PanVfid...');
-      await queryInterface.addColumn('UserAdditionals', 'PanVfid', {
-        type: DataTypes.STRING(10),
-        allowNull: true
-      });
+    // 1. Patch Users Table (Referral Logic)
+    const usersTable = await queryInterface.describeTable('Users');
+    if (!usersTable.referralCode) {
+      console.log('➜ Adding referral columns to "Users"...');
+      await queryInterface.addColumn('Users', 'referralCode', { type: DataTypes.STRING(8), unique: true });
+      await queryInterface.addColumn('Users', 'referredBy', { type: DataTypes.STRING(36) });
+      await queryInterface.addColumn('Users', 'referralCount', { type: DataTypes.INTEGER, defaultValue: 0 });
     }
 
-    if (!tableInfo.pan) {
-      console.log('Adding column pan...');
-      await queryInterface.addColumn('UserAdditionals', 'pan', {
-        type: DataTypes.STRING,
-        allowNull: true
-      });
-    }
+    // 2. Patch CabBookingRequests (Payment Segregation for App)
+    console.log('➜ Adding financial columns to "CabBookingRequests"...');
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "confirmationFee" FLOAT DEFAULT 0.0;`);
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "payToDriver" FLOAT DEFAULT 0.0;`);
 
-    console.log('Schema update completed successfully.');
+    // 3. Patch HostCabRateCards (Local & Airport Rates for Payout Formulas)
+    console.log('➜ Adding extra rates to "HostCabRateCards"...');
+    await sequelize.query(`ALTER TABLE "HostCabRateCards" ADD COLUMN IF NOT EXISTS "localExtraKmRate" FLOAT DEFAULT 0.0;`);
+    await sequelize.query(`ALTER TABLE "HostCabRateCards" ADD COLUMN IF NOT EXISTS "airportExtraKmRate" FLOAT DEFAULT 0.0;`);
+
+    // 4. Create/Sync ReferralReward Table
+    console.log('➜ Syncing "ReferralReward" table hierarchy...');
+    await db.ReferralReward.sync({ alter: true });
+
+    console.log('\n✅ DATABASE UPGRADE SUCCESSFUL');
+    console.log('Summary of changes:');
+    console.log('- Users: Referral codes and tracking added.');
+    console.log('- CabBookingRequests: Finance segregation (confirmationFee, payToDriver) enabled.');
+    console.log('- HostCabRateCards: Detailed extra KM rates unlocked.');
+    
     process.exit(0);
   } catch (error) {
-    console.error('Error updating schema:', error);
+    console.error('\n❌ SCHEMA FIX FAILED:', error.message);
     process.exit(1);
   }
 }
 
-fixSchema();
+runFix();

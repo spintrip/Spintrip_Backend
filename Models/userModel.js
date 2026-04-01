@@ -11,6 +11,9 @@ module.exports = (sequelize, DataTypes) => {
     rating: DataTypes.FLOAT,
     deviceToken: DataTypes.STRING,
     fcmToken: DataTypes.STRING, 
+    referralCode: { type: DataTypes.STRING(8), unique: true },
+    referredBy: { type: DataTypes.STRING(36) },
+    referralCount: { type: DataTypes.INTEGER, defaultValue: 0 },
   });
 
   return User;

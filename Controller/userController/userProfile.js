@@ -1,6 +1,6 @@
 //importing modules
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, BookingExtension, Transaction, UserAddress, Driver, DriverAdditional } = require('../../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, Wallet, VehicleAdditional, BookingExtension, Transaction, UserAddress, Driver, DriverAdditional } = require('../../Models');
 const path = require('path');
 const noImgPath = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_profile.png`; 
 const uuid = require('uuid');
@@ -41,6 +41,12 @@ const checkData = (value) => {
       const { Driver } = require('../../Models');
       const driverData = await Driver.findOne({ where: { id: userId } });
 
+      if (!user.referralCode) {
+        const newCode = Math.random().toString(36).substring(2, 6).toUpperCase() + user.phone.slice(-4);
+        await user.update({ referralCode: newCode });
+        console.log(`Generated referral code for ${user.phone}: ${newCode}`);
+      }
+      const wallet = await Wallet.findOne({ where: { userId: req.user.id } });
       let profile = {
         id: checkData(additionalInfo.id),
         dlNumber: checkData(additionalInfo.Dlverification),
@@ -62,6 +68,9 @@ const checkData = (value) => {
         user: {
           id: user.id,
           phone: user.phone,
+          referralCode: user.referralCode, // 🎫 Now sends your real code
+          referralCount: user.referralCount || 0, // 🔢 And the count of successful referrals
+          walletBalance: wallet ? wallet.balance : 0, 
           role: user.role,
           rating: checkData(user.rating),
           createdAt: user.createdAt,

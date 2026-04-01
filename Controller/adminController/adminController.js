@@ -2,7 +2,7 @@ const { adminLogin, verifyOTP, adminSignup, adminProfile } = require('./authenti
 const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost } = require('./userHostManagement');
 const { deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars, getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById, postActiveVehicle  } = require('./carListManagement');
 const { createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById } = require('./payoutManagement');
-const { getAllBookings, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice } = require('./bookingManagement');
+const { getAllBookings, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice, createAdminBooking } = require('./bookingManagement');
 const { createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById } = require('./brandPricingManagement');
 const { createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById } = require('./taxFeatureManagement');
 const { viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats } = require('./supportChatManagement');
@@ -36,5 +36,5 @@ module.exports = {
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
   getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile,
-  getAllWithdrawals, approveWithdrawal, rejectWithdrawal
+  getAllWithdrawals, approveWithdrawal, rejectWithdrawal, createAdminBooking
 };

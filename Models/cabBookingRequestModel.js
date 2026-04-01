@@ -48,6 +48,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.FLOAT,
         defaultValue: 0.0,
       },
+      confirmationFee: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+      },
+      payToDriver: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0,
+      },
     });
   
     CabBookingRequest.associate = (models) => {

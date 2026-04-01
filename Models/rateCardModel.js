@@ -37,6 +37,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.FLOAT,
       allowNull: true,
     },
+    localExtraKmRate: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    airportExtraKmRate: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
     outstationPerKmPrice: {
       type: DataTypes.FLOAT,
       allowNull: true,

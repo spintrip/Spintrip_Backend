@@ -5,7 +5,7 @@ const {
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
   getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
-  getAllBookings, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
+  getAllBookings, createAdminBooking, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
@@ -173,6 +173,7 @@ router.put('/bike/:vehicleid', authenticate, restrictToSuperadmin, updateBike);
 
 router.delete('/bike/:id', authenticate, restrictToSuperadmin, deleteBike);
 
+router.post('/bookings/create', authenticate, restrictToSuperadmin, createAdminBooking);
 
 
 router.get('/transaction', authenticate, restrictToSuperadmin, allTransactions);

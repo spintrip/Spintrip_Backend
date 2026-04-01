@@ -14,6 +14,7 @@ const {
   sendBookingCompletionEmail
 } = require('../../Controller/emailController');
 const { checkData, checkStatus } = require('./userProfile');
+const { refundBookingCoins } = require('../cabController');
 
 const noVehicleImg = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 
@@ -669,6 +670,9 @@ const cancelbooking = async (req, res) => {
                { where: { bookingId }, transaction: t }
              );
 
+             // --- 🪙 REFUND COINS ---
+             await refundBookingCoins(bookingId, t);
+
              await t.commit();
              res.status(201).json({ message: 'Trip Has been Cancelled' });
            } catch (err) {
@@ -842,11 +846,11 @@ const userbookings = async (req, res) => {
         }
 
         const amt = cab.estimatedPrice || cab.finalPrice || 0;
-        const gstOut = amt - (amt * (100 / (100 + GST_RATE)));
-        const netBaseAmount = amt - gstOut;
-        const commOut = (netBaseAmount * COMMISSION_RATE) / 100;
-        const tdsOut = (netBaseAmount * TDS_RATE) / 100;
-        const dEarn = netBaseAmount - commOut - tdsOut;
+        const netBaseAmount = amt / 1.05;
+        const gstOut = amt - netBaseAmount;
+        const commOut = netBaseAmount * 0.20;
+        const tdsOut = netBaseAmount * 0.01; // 1% Gross
+        const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
         return {
           bookingId: cab.bookingId,
@@ -854,10 +858,12 @@ const userbookings = async (req, res) => {
           id: cab.userId,
           status: intStatus,
           amount: amt,
-          gstAmount: gstOut,
-          commissionAmount: commOut,
-          tdsAmount: tdsOut,
+          gstAmount: Math.round(gstOut * 100) / 100,
+          commissionAmount: Math.round(commOut * 100) / 100,
+          tdsAmount: Math.round(tdsOut * 100) / 100,
           driverEarnings: dEarn,
+          confirmationFee: cab.confirmationFee || Math.round((amt - dEarn) * 100) / 100,
+          payToDriver: cab.payToDriver || dEarn,
           startTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
           endTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
           startTripTime: checkData(cab.time || cab.createdAt.toISOString().split('T')[1].slice(0, 5)),
@@ -937,12 +943,25 @@ const userbookings = async (req, res) => {
             };
           }
         }
+        const amt = cab.estimatedPrice || cab.finalPrice || 0;
+        const netBaseAmount = amt / 1.05;
+        const gstOut = amt - netBaseAmount;
+        const commOut = netBaseAmount * 0.20;
+        const tdsOut = netBaseAmount * 0.01; // 1% Gross
+        const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
+
         return {
           bookingId: cab.bookingId,
           vehicleid: cab.vehicleId || "",
           id: cab.userId,
           status: intStatus,
-          amount: cab.estimatedPrice || cab.finalPrice || 0,
+          amount: amt,
+          gstAmount: Math.round(gstOut * 100) / 100,
+          commissionAmount: Math.round(commOut * 100) / 100,
+          tdsAmount: Math.round(tdsOut * 100) / 100,
+          driverEarnings: dEarn,
+          confirmationFee: cab.confirmationFee || Math.round((amt - dEarn) * 100) / 100,
+          payToDriver: cab.payToDriver || dEarn,
           startTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
           endTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
           startTripTime: checkData(cab.time || cab.createdAt.toISOString().split('T')[1].slice(0, 5)),

@@ -96,6 +96,7 @@ db.WalletTransaction = require('./walletTransactionModel')(sequelize, DataTypes)
 db.HostCabRateCard = require('./rateCardModel')(sequelize, DataTypes);
 db.DriverWithdrawal = require('./driverWithdrawalModel')(sequelize, DataTypes);
 db.VehicleType = require('./vehicleTypeModel')(sequelize, DataTypes);
+db.ReferralReward = require('./referralRewardModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
@@ -103,7 +104,7 @@ const associateModels = () => {
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
-    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward
   } = sequelize.models;
 
   // User and related associations
@@ -116,6 +117,7 @@ const associateModels = () => {
   User.hasMany(Booking, { foreignKey: 'id', onDelete: 'SET NULL' });
   User.hasMany(UserAddress, { foreignKey: 'userid', onDelete: 'SET NULL' });
   User.hasMany(SupportChat, { foreignKey: 'userId', onDelete: 'CASCADE' });
+  User.hasMany(ReferralReward, { foreignKey: 'userId', sourceKey: 'id', onDelete: 'CASCADE' });
   Host.hasOne(HostAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
   Driver.hasOne(DriverAdditional, { foreignKey: 'id', onDelete: 'CASCADE' });
   UserAdditional.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
@@ -210,6 +212,9 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   // Driver Withdrawal associations
   DriverWithdrawal.belongsTo(Driver, { foreignKey: 'driverId', targetKey: 'id' });
   Driver.hasMany(DriverWithdrawal, { foreignKey: 'driverId', sourceKey: 'id', onDelete: 'CASCADE' });
+  
+  // Referral associations
+  ReferralReward.belongsTo(User, { foreignKey: 'userId', targetKey: 'id' });
 
 };
 

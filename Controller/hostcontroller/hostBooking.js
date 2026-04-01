@@ -189,27 +189,24 @@ const bookingcompleted = async (req, res) => {
       const t = await sequelize.transaction();
       try {
         const amt = cabBooking.estimatedPrice || cabBooking.finalPrice || 0;
-        const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
-        const GST_RATE = taxRow ? taxRow.GST : 5.0;
-        const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
-        const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
+        const netBaseAmount = amt / 1.05;
+        const commOut = netBaseAmount * 0.20;
+        const tdsOut = netBaseAmount * 0.01; // Strictly 1% of Gross as per Section 194-O
+        const calculatedEarnings = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
-        const gstOut = amt - (amt * (100 / (100 + GST_RATE)));
-        const netBaseAmount = amt - gstOut;
-        const commOut = (netBaseAmount * COMMISSION_RATE) / 100;
-        const tdsOut = (netBaseAmount * TDS_RATE) / 100;
-        const calculatedEarnings = netBaseAmount - commOut - tdsOut;
-
-        const driverEarnings = cabBooking.driverEarnings > 0 ? cabBooking.driverEarnings : calculatedEarnings;
+        // Use pre-fixed amounts if they exist (protection for Referral Discounts)
+        const driverEarnings = (cabBooking.payToDriver && cabBooking.payToDriver > 0) ? cabBooking.payToDriver : calculatedEarnings;
         
         // Save the generated breakdown permanently into the row!
         cabBooking.driverEarnings = driverEarnings;
-        cabBooking.gstAmount = gstOut;
+        cabBooking.gstAmount = amt - netBaseAmount;
         cabBooking.commissionAmount = commOut;
         cabBooking.tdsAmount = tdsOut;
+        cabBooking.payToDriver = driverEarnings; 
+        cabBooking.confirmationFee = Math.round((amt - driverEarnings) * 100) / 100;
 
         cabBooking.status = 'completed';
-        cabBooking.paymentStatus = 'paid'; // Marked as paid to driver directly
+        cabBooking.paymentStatus = 'paid'; 
         await cabBooking.save({ transaction: t });
 
         await t.commit();
@@ -605,11 +602,11 @@ const DriverBookings = async (req, res) => {
       };
 
       const amt = cab.estimatedPrice || cab.finalPrice || 0;
-      const gstOut = amt - (amt * (100 / (100 + GST_RATE)));
-      const netBaseAmount = amt - gstOut;
-      const commOut = (netBaseAmount * COMMISSION_RATE) / 100;
-      const tdsOut = (netBaseAmount * TDS_RATE) / 100;
-      const dEarn = netBaseAmount - commOut - tdsOut;
+      const netBaseAmount = amt / 1.05;
+      const gstOut = amt - netBaseAmount;
+      const commOut = netBaseAmount * 0.20;
+      const tdsOut = netBaseAmount * 0.01; // 1% Gross
+      const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
       return {
         bookingId: cab.bookingId,
@@ -624,6 +621,8 @@ const DriverBookings = async (req, res) => {
         commissionAmount: commOut,
         tdsAmount: tdsOut,
         driverEarnings: dEarn,
+        confirmationFee: cab.confirmationFee || Math.round((amt - dEarn) * 100) / 100,
+        payToDriver: cab.payToDriver || dEarn,
         startTripDate: (cab.date || cab.createdAt.toISOString().split('T')[0]),
         endTripDate: (cab.date || cab.createdAt.toISOString().split('T')[0]),
         startTripTime: (cab.time || cab.createdAt.toISOString().split('T')[1].slice(0, 5)),

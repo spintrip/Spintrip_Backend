@@ -10,14 +10,14 @@ const updateFcmToken = async (req, res) => {
       return res.status(400).json({ message: "FCM token is required" });
     }
 
-    if (role === 'user') {
-      await User.update({ fcmToken }, { where: { id: userId } });
-    } else if (role === 'host') {
-      await Host.update({ fcmToken }, { where: { id: userId } });
+    // Centralize all tokens in the User table for a single source of truth
+    await User.update({ fcmToken }, { where: { id: userId } });
+    
+    // Optional: Also update specialized tables for extra safety, though User is the primary source
+    if (role === 'host') {
+      await Host.update({ fcmToken }, { where: { id: userId } }).catch(e => console.log("Host token update skipped:", e.message));
     } else if (role === 'driver') {
-      await Driver.update({ fcmToken }, { where: { id: userId } });
-    } else {
-      return res.status(400).json({ message: "Invalid role specified" });
+      await Driver.update({ fcmToken }, { where: { id: userId } }).catch(e => console.log("Driver token update skipped:", e.message));
     }
 
     // Fire Welcome Back Notification seamlessly!

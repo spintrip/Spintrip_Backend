@@ -19,6 +19,7 @@ const {
   HostCabRateCard,
   City,
   Tax,
+  ReferralReward,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
@@ -532,17 +533,25 @@ const bookCab = async (req, res) => {
     }
 
     let estimatedPrice = reqEstimatedPrice;
+    let originalEstimatedPrice = estimatedPrice;
     let confirmationFeeAmount = 0;
     let payToDriverAmount = 0;
 
-    if (estimatedPrice) {
-      // Apply user formula strictly to the provided estimatedPrice (Total)
-      const netBase = estimatedPrice / 1.05;
+    // Helper to calculate segregated amounts based on a price
+    const calculateSegregation = (totalPrice) => {
+      const netBase = totalPrice / 1.05;
       const commissionAmount = netBase * 0.20;
-      const earningsBeforeTDS = netBase - commissionAmount;
-      const tdsAmount = earningsBeforeTDS * 0.01;
-      payToDriverAmount = Math.round((earningsBeforeTDS - tdsAmount) * 100) / 100;
-      confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
+      const tdsAmount = netBase * 0.01; // 1% of Gross Amount (excluding GST) as per Section 194-O
+      const driverPay = Math.round((netBase - commissionAmount - tdsAmount) * 100) / 100;
+      const platformFee = Math.round((totalPrice - driverPay) * 100) / 100;
+      return { driverPay, platformFee };
+    };
+
+    if (estimatedPrice) {
+      // 1. Always calculate the DRIVER'S SHARE based on the Original Price for protection
+      const originalBreakdown = calculateSegregation(estimatedPrice);
+      payToDriverAmount = originalBreakdown.driverPay;
+      confirmationFeeAmount = originalBreakdown.platformFee;
     } else {
       // Fallback estimate price internally
       const estimate = await estimatePrice({
@@ -554,8 +563,9 @@ const bookCab = async (req, res) => {
         address: startLocation.address || ""
       });
       estimatedPrice = estimate.estimatedPrice;
-      confirmationFeeAmount = estimate.confirmationFee;
+      originalEstimatedPrice = estimatedPrice;
       payToDriverAmount = estimate.driverEarnings;
+      confirmationFeeAmount = estimate.confirmationFee;
     }
 
     if (!estimatedPrice || !confirmationFeeAmount) {
@@ -567,6 +577,53 @@ const bookCab = async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
+      // --- GOLD COIN (REFERRAL) USAGE ---
+      // Platform Subsidy Mode: User gets ₹100 off, Driver gets full share, Platform absorbs the difference.
+      if (req.body.useReferralCoins) {
+          const userWallet = await Wallet.findOne({ 
+            where: { userId }, 
+            transaction: t,
+            lock: t.LOCK.UPDATE // Lock for atomic balance check
+          });
+
+          // Usage Cap: Strictly limit to 100 coins per booking
+          if (userWallet && userWallet.balance >= 100) {
+              const maxDiscountPossible = 100.0;
+              
+              // 🛡️ SAFETY FLOOR: User must pay at least (DriverPay + GST + TDS)
+              // Taxes on collected amount X = X * (0.05 + 0.01) / 1.05 = X * 0.06 / 1.05
+              // Remaining for platform = X - Taxes. We want X - Taxes >= payToDriverAmount
+              // X * (1 - 0.06/1.05) >= payToDriverAmount => X * (0.99/1.05) >= payToDriverAmount
+              // X >= payToDriverAmount * (1.05 / 0.99)
+              const minUserPayment = Math.round((payToDriverAmount * (1.05 / 0.99)) * 100) / 100;
+              const allowedDiscount = Math.floor(Math.min(maxDiscountPossible, originalEstimatedPrice - minUserPayment));
+
+              if (allowedDiscount > 0) {
+                  // 1. Reduce the price shown to the user
+                  estimatedPrice = Math.max(0, originalEstimatedPrice - allowedDiscount);
+                  
+                  // 2. Reduce the platform's confirmation fee (subsidy)
+                  // Note: payToDriverAmount remains unchanged (Calculated on original fare above)
+                  confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
+
+                  // 3. Deduct from Wallet
+                  await userWallet.decrement('balance', { by: allowedDiscount, transaction: t });
+
+                  // 4. Log Transaction
+                  await WalletTransaction.create({
+                      id: uuid.v4(),
+                      walletId: userWallet.id,
+                      amount: allowedDiscount,
+                      type: 'DEBIT',
+                      description: 'Ride Discount: Gold Coins Used',
+                      referenceId: bookingId
+                  }, { transaction: t });
+
+                  console.log(`User ${userId} applied ${allowedDiscount} Gold Coins for booking ${bookingId} (Safety Cap Active)`);
+              }
+          }
+      }
+      // --------------------------
 
       // Note: Backend wallet checks and debits are now removed for cab bookings.
       // Confirmation fee (26%) is handled via payroll/external payment.
@@ -1060,7 +1117,25 @@ const checkBookingStatus = async (req, res) => {
       return res.status(404).json({ message: "Booking not found." });
     }
 
-    res.status(200).json({ status: booking.status, tripOtp: booking.CabBookingAccepted?.tripOtp });
+    res.status(200).json({ 
+      status: booking.status, 
+      tripOtp: booking.CabBookingAccepted?.tripOtp,
+      booking: {
+        bookingId: booking.bookingId,
+        estimatedPrice: booking.estimatedPrice,
+        confirmationFee: booking.confirmationFee,
+        payToDriver: booking.payToDriver,
+        gstAmount: booking.gstAmount,
+        tdsAmount: booking.tdsAmount,
+        driverEarnings: booking.driverEarnings,
+        cabType: booking.cabType,
+        bookingType: booking.bookingType,
+        startLocationAddress: booking.startLocationAddress,
+        endLocationAddress: booking.endLocationAddress,
+        date: booking.date,
+        time: booking.time
+      }
+    });
   } catch (error) {
     console.error("Error checking booking status:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -1414,6 +1489,41 @@ const endTrip = async (req, res) => {
     // Remove the soft booking entry
     await CabBookingRequest.destroy({ where: { bookingId }, transaction });
 
+    // --- REFERRAL SYSTEM LOGIC ---
+    // Check if this is the user's first successful booking to trigger rewards
+    const bookingUser = await User.findByPk(booking.id, { transaction });
+    if (bookingUser && bookingUser.referredBy) {
+        const completedRidesCount = await Booking.count({
+            where: { id: booking.id, status: 3 },
+            transaction
+        });
+
+        if (completedRidesCount === 1) {
+            const referrer = await User.findByPk(bookingUser.referredBy, { transaction });
+            if (referrer && referrer.referralCount < 50) {
+                // 1. Credit Referrer
+                await ReferralReward.create({
+                    userId: referrer.id,
+                    amount: 100.0,
+                    status: 'earned',
+                    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }, { transaction });
+
+                // 2. Increment Referrer's count
+                await referrer.increment('referralCount', { by: 1, transaction });
+
+                // 3. Credit Referee
+                await ReferralReward.create({
+                    userId: bookingUser.id,
+                    amount: 100.0,
+                    status: 'earned',
+                    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                }, { transaction });
+            }
+        }
+    }
+    // ----------------------------
+
     await transaction.commit(); // Commit the transaction
 
     // Notify User
@@ -1761,16 +1871,20 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     let subtotalBasePrice = 0;
 
     if (evaluatedType === 'Airport') {
-      subtotalBasePrice = rateCard.airportTransferPrice || 0;
+      const airportBase = rateCard.airportTransferPrice || 0;
+      const airportExtra = rateCard.airportExtraKmRate || 0;
+      subtotalBasePrice = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
     } else if (evaluatedType === 'Rentals') {
       subtotalBasePrice = rateCard.fullDayPrice || 0;
     } else if (evaluatedType === 'Outstation') {
-      subtotalBasePrice = (300 * (rateCard.outstationPerKmPrice || 0)) + (rateCard.driverAllowancePerDay || 0);
+      const perKm = rateCard.outstationPerKmPrice || 0;
+      const allowance = rateCard.driverAllowancePerDay || 0;
+      subtotalBasePrice = (Math.max(distanceKm, 50) * perKm) + allowance;
     } else {
-      // ✅ YOUR NEW LOCAL FORMULA
+      // ✅ LOCAL BASE FARE Logic
       const baseFare = 150;
-      const extraRate = rateCard.extraKmRate || 0;
-      subtotalBasePrice = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
+      const localExtra = rateCard.localExtraKmRate || 0;
+      subtotalBasePrice = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * localExtra);
     }
 
     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
@@ -1789,8 +1903,14 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       gstAmount: Math.round(total - netBase),
       estimatedPrice: total > 0 ? total : null,
       commissionAmount: Math.round(netBase * 0.20),
+      tdsAmount: Math.round(netBase * 0.01), // Section 194-O (1% of Gross)
+      driverEarnings: Math.round(netBase - (netBase * 0.20) - (netBase * 0.01)),
+      payToDriver: Math.round(netBase - (netBase * 0.20) - (netBase * 0.01)),
+      confirmationFee: Math.round(total - (netBase - (netBase * 0.20) - (netBase * 0.01))),
       extraHourRate: rateCard.extraHourRate || 0,
-      extraKmRate: rateCard.extraKmRate || 0
+      extraKmRate: rateCard.extraKmRate || 0,
+      localExtraKmRate: rateCard.localExtraKmRate || 0,
+      airportExtraKmRate: rateCard.airportExtraKmRate || 0
     };
   } catch (err) {
     return { estimatedPrice: null, error: "Calculation failed" };
@@ -1843,28 +1963,42 @@ const getBulkEstimates = async (req, res) => {
       if (card) {
         let base = 0;
         if (evaluatedType === 'Airport') {
-          base = card.airportTransferPrice || 0;
+          const airportBase = card.airportTransferPrice || 0;
+          const airportExtra = card.airportExtraKmRate || 0;
+          base = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
         } else if (evaluatedType === 'Rentals') {
           base = card.fullDayPrice || 0;
         } else if (evaluatedType === 'Outstation') {
-          base = (300 * (card.outstationPerKmPrice || 0)) + (card.driverAllowancePerDay || 0);
+          const perKm = card.outstationPerKmPrice || 0;
+          const allowance = card.driverAllowancePerDay || 0;
+          base = (Math.max(distanceKm, 50) * perKm) + allowance;
         } else {
           // ✅ LOCAL BASE FARE Logic
           const baseFare = 150;
-          const extraRate = card.extraKmRate || 0;
-          base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * extraRate);
+          const localExtra = card.localExtraKmRate || 0;
+          base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * localExtra);
         }
 
         const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
         const total = Math.round((base * (ratio > 2.5 ? 1.3 : 1) * (card.surgeMultiplier || 1.0)) + (card.tollCharges || 0));
 
         if (total > 0) {
+          const netBase = total / 1.05;
+          const comm = netBase * 0.20;
+          const tds = netBase * 0.01;
+          const driverPay = Math.round((netBase - comm - tds) * 100) / 100;
+
           results[type] = {
-            estimatedPrice: Math.round(total * 1.05),
+            estimatedPrice: total,
             distance: distanceKm,
             duration: durationMin,
             extraHourRate: card.extraHourRate || 0,
-            extraKmRate: card.extraKmRate || 0
+            extraKmRate: card.extraKmRate || 0,
+            localExtraKmRate: card.localExtraKmRate || 0,
+            airportExtraKmRate: card.airportExtraKmRate || 0,
+            tdsAmount: Math.round(tds * 100) / 100,
+            payToDriver: driverPay,
+            confirmationFee: Math.round((total - driverPay) * 100) / 100
           };
         }
       }
@@ -1877,6 +2011,59 @@ const getBulkEstimates = async (req, res) => {
 
 
 
+
+/**
+ * Shared Helper: Refund Gold Coins if a booking is cancelled
+ */
+const refundBookingCoins = async (bookingId, transaction) => {
+  try {
+    // 1. Find the DEBIT transaction for this booking
+    const debitTx = await WalletTransaction.findOne({
+      where: {
+        referenceId: bookingId,
+        type: 'DEBIT',
+        description: { [Op.like]: '%Gold Coins Used%' }
+      },
+      transaction
+    });
+
+    if (!debitTx) return; // No coins used, nothing to refund
+
+    // 2. Check if already refunded to prevent double-credits
+    const alreadyRefunded = await WalletTransaction.findOne({
+      where: {
+        referenceId: bookingId,
+        type: 'CREDIT',
+        description: { [Op.like]: '%Refund%' }
+      },
+      transaction
+    });
+
+    if (alreadyRefunded) return;
+
+    // 3. Find the wallet
+    const wallet = await Wallet.findByPk(debitTx.walletId, { transaction });
+    if (!wallet) return;
+
+    // 4. Perform Refund
+    const refundAmount = debitTx.amount;
+    await wallet.increment('balance', { by: refundAmount, transaction });
+
+    await WalletTransaction.create({
+      id: uuid.v4(),
+      walletId: wallet.id,
+      amount: refundAmount,
+      type: 'CREDIT',
+      description: `Refund: Gold Coins (Booking Cancelled) - ${bookingId}`,
+      referenceId: bookingId
+    }, { transaction });
+
+    console.log(`Refunded ${refundAmount} Gold Coins for booking ${bookingId}`);
+  } catch (error) {
+    console.error(`Refund Error for ${bookingId}:`, error.message);
+    // We don't throw here to avoid failing the main cancellation flow, just log it.
+  }
+};
 
 /**
  * Cancel an unpaid booking (called when user abandons payment)
@@ -1895,12 +2082,22 @@ const cancelUnpaidBooking = async (req, res) => {
       return res.status(400).json({ message: 'Booking is already paid. Cannot cancel via this endpoint.' });
     }
 
-    await CabBookingRequest.update(
-      { status: 'cancelled' },
-      { where: { bookingId, paymentStatus: 'pending' } }
-    );
+    const t = await sequelize.transaction();
+    try {
+      await CabBookingRequest.update(
+        { status: 'cancelled' },
+        { where: { bookingId, paymentStatus: 'pending' }, transaction: t }
+      );
 
-    res.status(200).json({ message: 'Unpaid booking cancelled successfully.' });
+      // --- 🪙 REFUND COINS ---
+      await refundBookingCoins(bookingId, t);
+
+      await t.commit();
+      res.status(200).json({ message: 'Unpaid booking cancelled and coins refunded (if any).' });
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   } catch (error) {
     console.error('Cancel Unpaid Booking Error:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -1932,5 +2129,6 @@ module.exports = {
   confirmBankPayment,
   trackDriverLocation,
   toggleDriverStatus,
-  cancelUnpaidBooking
+  cancelUnpaidBooking,
+  refundBookingCoins
 };
