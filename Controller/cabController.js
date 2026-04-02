@@ -662,7 +662,7 @@ const bookCab = async (req, res) => {
         cabType: dbCabType,
         confirmationFee: confirmationFeeAmount,
         payToDriver: payToDriverAmount,
-        rideOtp: rideOtp,
+        otp: rideOtp,
         bookingType: bookingType || "Local"
       }, { transaction: t });
 
@@ -1811,7 +1811,8 @@ const getCabAvailability = async (req, res) => {
       city: matchedCity
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("getCabAvailability Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 // ... Include standard methods like bookCab, addDriver, toggleDriverStatus, etc. ...
@@ -1827,18 +1828,25 @@ const getEstimate = async (req, res) => {
  */
 const estimatePrice = async ({ origin, destination, cabType, bookingType = "Local", address = "", city = "" }) => {
   try {
-    const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
-    const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
+    const originStr = typeof origin === "string" ? origin : `${origin?.latitude || 0},${origin?.longitude || 0}`;
+    const destinationValid = (destination && (typeof destination === 'string' || (destination?.latitude && destination?.longitude)));
+    const destStr = destinationValid ? (typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`) : originStr;
 
-    const googleRes = await axios.get(
-      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
-    );
-
-    const element = googleRes.data?.rows?.[0]?.elements?.[0];
     let distanceKm = 10, durationMin = 20;
-    if (element?.status === "OK") {
-      distanceKm = element.distance.value / 1000;
-      durationMin = element.duration.value / 60;
+
+    if (destinationValid) {
+      try {
+        const googleRes = await axios.get(
+          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const element = googleRes.data?.rows?.[0]?.elements?.[0];
+        if (element?.status === "OK") {
+          distanceKm = element.distance.value / 1000;
+          durationMin = element.duration.value / 60;
+        }
+      } catch (axiosErr) {
+        console.error("Google Maps API Error in estimatePrice:", axiosErr.message);
+      }
     }
 
     const matchedCity = await getMatchedOperationalCity(address, city);
@@ -1924,15 +1932,26 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
 const getBulkEstimates = async (req, res) => {
   const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
   try {
-    const originStr = typeof origin === "string" ? origin : `${origin.latitude},${origin.longitude}`;
-    const destStr = typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`;
-    const googleRes = await axios.get(
-      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
-    );
+    const originStr = typeof origin === "string" ? origin : `${origin?.latitude || 0},${origin?.longitude || 0}`;
+    const destinationValid = (destination && (typeof destination === 'string' || (destination?.latitude && destination?.longitude)));
+    const destStr = destinationValid ? (typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`) : originStr;
 
-    const element = googleRes.data?.rows?.[0]?.elements?.[0];
-    let distanceKm = (element?.status === "OK") ? (element.distance.value / 1000) : 10;
-    let durationMin = (element?.status === "OK") ? (element.duration.value / 60) : 20;
+    let distanceKm = 10, durationMin = 20;
+
+    if (destinationValid) {
+      try {
+        const googleRes = await axios.get(
+          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const element = googleRes.data?.rows?.[0]?.elements?.[0];
+        if (element?.status === "OK") {
+           distanceKm = element.distance.value / 1000;
+           durationMin = element.duration.value / 60;
+        }
+      } catch (axiosErr) {
+        console.error("Google Maps API Error in getBulkEstimates:", axiosErr.message);
+      }
+    }
 
     const matchedCity = await getMatchedOperationalCity(address, city);
 
@@ -2005,7 +2024,8 @@ const getBulkEstimates = async (req, res) => {
     }
     res.status(200).json({ estimates: results });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("getBulkEstimates Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

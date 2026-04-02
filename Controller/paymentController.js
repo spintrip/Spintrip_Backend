@@ -29,7 +29,7 @@ const initiateCabPayment = async (req, res) => {
         customer_email: user.email || 'customer@spintrip.in',
       },
       link_meta: {
-        return_url: `https://spintrip.in/payment-success?order_id=${linkId}`,
+        return_url: `https://spintrip.in/user/user-dashboard`,
         notify_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
       },
       link_notify: {
@@ -57,9 +57,18 @@ const initiateCabPayment = async (req, res) => {
     };
 
     const response = await axios.request(options);
-
     if (response.data && response.status === 200) {
-      // Logic for tracking the transaction can be added here
+      // Save transaction/order details for cab payment
+      // await Transaction.create({
+      //   Transactionid: linkId,
+      //   referenceId: String(bookingId),
+      //   id: req.user.id,
+      //   status: 1, // 1 = created/pending
+      //   amount: roundedAmount,
+      //   description: 'cab_confirmation_fee'
+      // });
+      // console.log('Cab payment transaction created in DB:', linkId);
+
       return res.status(200).json({
         message: 'Cab payment link created',
         paymentUrl: response.data.link_url,

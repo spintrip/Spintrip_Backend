@@ -73,7 +73,7 @@ router.get('/chat/:bookingId', chatController.getMessagesByBookingId);
 // --- Add this line near your other cab routes (around line 95) ---
 
 
-router.post('/get-bulk-estimates', authenticate, getBulkEstimates);
+router.post('/get-bulk-estimates', getBulkEstimates);
 
 
 //Find Vehicles
@@ -96,9 +96,9 @@ router.post('/extend-booking', authenticate, extend);
 router.post('/view-breakup', authenticate, breakup);
 
 //cab booking
-router.post('/cab-availability', authenticate, getCabAvailability);
+router.post('/cab-availability', getCabAvailability);
 router.post('/search-cabs', authenticate, searchForCabs);
-router.post('/get-estimate', authenticate, getEstimate);
+router.post('/get-estimate', getEstimate);
 router.post('/book-cab', authenticate, bookCab);
 router.post('/initiate-cab-payment', authenticate, initiateCabPayment);
 router.get('/verify-cab-payment/:bookingId', authenticate, verifyCabPayment);

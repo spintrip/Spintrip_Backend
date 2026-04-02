@@ -984,6 +984,7 @@ const userbookings = async (req, res) => {
           destination: destObj,
           driver: cabDriver,
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
+          otp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           createdAt: checkData(cab.createdAt)
         };
       });
