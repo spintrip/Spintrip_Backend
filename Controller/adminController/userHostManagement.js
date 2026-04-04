@@ -112,8 +112,8 @@ const deleteUser = async (req, res) => {
     if (SupportChat) await SupportChat.destroy({ where: { userId }, transaction });
     if (Support) await Support.destroy({ where: { userId }, transaction });
     
-    if (Wishlist) await Wishlist.destroy({ where: { userId }, transaction });
-    if (Transaction) await Transaction.destroy({ where: { userId }, transaction });
+    if (Wishlist) await Wishlist.destroy({ where: { userid: userId }, transaction });
+    if (Transaction) await Transaction.destroy({ where: { id: userId }, transaction }); // Transaction model uses 'id' for userId
     
     if (Wallet) await Wallet.destroy({ where: { userId }, transaction });
     if (ReferralReward) await ReferralReward.destroy({ where: { userId }, transaction });
