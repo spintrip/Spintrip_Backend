@@ -95,8 +95,26 @@ const deleteUser = async (req, res) => {
     await HostAdditional.destroy({ where: { id: userId }, transaction });
     await Host.destroy({ where: { id: userId }, transaction });
 
-    // 5. Delete other related records that might block re-registration
-    const { Wallet, ReferralReward, UserAddress } = require('../../Models');
+    // 5. Delete other related records that might block re-registration or cause foreign key errors
+    const { Wallet, ReferralReward, UserAddress, CabBookingRequest, CabBookingAccepted, Booking, Support, SupportChat, Wishlist, Transaction } = require('../../Models');
+    
+    // Cleanup active requests and confirmations first
+    if (CabBookingAccepted) await CabBookingAccepted.destroy({ where: { driverId: userId }, transaction });
+    if (CabBookingRequest) {
+        await CabBookingRequest.destroy({ where: { userId }, transaction });
+        await CabBookingRequest.destroy({ where: { driverId: userId }, transaction });
+    }
+
+    // Cleanup other user-specific entities
+    if (Booking) await Booking.destroy({ where: { id: userId }, transaction }); // Some models use 'id' as User extension
+    if (Booking) await Booking.destroy({ where: { userId }, transaction });
+    
+    if (SupportChat) await SupportChat.destroy({ where: { userId }, transaction });
+    if (Support) await Support.destroy({ where: { userId }, transaction });
+    
+    if (Wishlist) await Wishlist.destroy({ where: { userId }, transaction });
+    if (Transaction) await Transaction.destroy({ where: { userId }, transaction });
+    
     if (Wallet) await Wallet.destroy({ where: { userId }, transaction });
     if (ReferralReward) await ReferralReward.destroy({ where: { userId }, transaction });
     if (UserAddress) await UserAddress.destroy({ where: { userid: userId }, transaction });
