@@ -99,10 +99,10 @@ const deleteUser = async (req, res) => {
     const { Wallet, ReferralReward, UserAddress, CabBookingRequest, CabBookingAccepted, Booking, Support, SupportChat, Wishlist, Transaction } = require('../../Models');
     
     // Cleanup active requests and confirmations first
-    if (CabBookingAccepted) await CabBookingAccepted.destroy({ where: { driverId: userId }, transaction });
+    if (CabBookingAccepted) await CabBookingAccepted.destroy({ where: { driverid: userId }, transaction });
     if (CabBookingRequest) {
         await CabBookingRequest.destroy({ where: { userId }, transaction });
-        await CabBookingRequest.destroy({ where: { driverId: userId }, transaction });
+        await CabBookingRequest.destroy({ where: { driverid: userId }, transaction });
     }
 
     // Cleanup other user-specific entities
