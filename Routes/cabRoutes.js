@@ -20,6 +20,7 @@ const {
   startTrip,
   endTrip,
   addCab,
+  getBulkEstimates,
 } = require("../Controller/cabController");
 const { updateFcmToken } = require('../Controller/notificationController');
 
@@ -44,6 +45,7 @@ router.post("/add-cab", authenticate, addCab);
 router.get("/host/drivers", authenticate, getDriver);
 
 // Cab Booking Routes
+router.post("/getBulkEstimates", getBulkEstimates); // Open route for search estimates
 router.post("/search-cabs", authenticate, searchForCabs); // Search for nearby cabs
 router.post("/book-cab", authenticate, bookCab); // Direct booking with immediate confirmation
 router.post("/soft-book", authenticate, createSoftBooking); // Create a soft booking

@@ -122,7 +122,23 @@ const rejectDriverProfile = async (req, res) => {
     }
 };
 
+const deleteDriver = async (req, res) => {
+    try {
+        const driverId = req.params.id; // This is the 'id' from the Driver model (which maps to User id)
+        const driver = await Driver.findByPk(driverId);
+        if (!driver) return res.status(404).json({ message: 'Driver not found' });
+
+        // Drivers in Spintrip are Users. Use the userHostManagement logic for a hard delete.
+        const { deleteUser } = require('./userHostManagement');
+        return deleteUser(req, res);
+    } catch (error) {
+        console.error("Delete Driver Error:", error);
+        res.status(500).json({ message: 'Error deleting driver', error: error.message });
+    }
+};
+
 module.exports = {
     getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
-    getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile
+    getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile,
+    deleteDriver
 };

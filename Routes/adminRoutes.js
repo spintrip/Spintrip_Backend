@@ -17,7 +17,7 @@ const {
   createVehicleType, getAllVehicleTypes, deleteVehicleType,
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
-  getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile,
+  getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver,
   getAllWithdrawals, approveWithdrawal, rejectWithdrawal
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
@@ -96,6 +96,7 @@ router.get('/drivers', authenticate, getAllDrivers);
 router.get('/drivers/:id', authenticate, getDriverById);
 router.put('/approve-driver/:id', authenticate, approveDriverProfile);
 router.put('/reject-driver/:id', authenticate, rejectDriverProfile);
+router.delete('/drivers/:id', authenticate, restrictToSuperadmin, deleteDriver);
 
 // Driver Withdrawal routes
 router.get('/withdrawals', authenticate, restrictToSuperadmin, getAllWithdrawals);

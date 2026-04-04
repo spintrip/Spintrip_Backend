@@ -64,20 +64,52 @@ const getUserById = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
+  const transaction = await User.sequelize.transaction();
   try {
-    const user = await User.findByPk(req.params.id);
+    const userId = req.params.id;
+    const user = await User.findByPk(userId);
+
     if (!user) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'User not found' });
     }
-    await UserAdditional.destroy({
-      where: { id: user.id },
-    });
-    await Admin.destroy({ where: { id: user.id }});
-    await user.destroy();
-    res.status(200).json({ message: 'User deleted successfully' });
+
+    // Comprehensive Cleanup using Transaction
+    // 1. Delete Additional Info
+    await UserAdditional.destroy({ where: { id: userId }, transaction });
+    
+    // 2. Delete Admin record if exists (Safety)
+    await Admin.destroy({ where: { id: userId }, transaction });
+
+    // 3. Delete Driver & DriverAdditional if exists
+    // Also delete any Cab assigned to this driver and keep-alive records
+    const { Cab, DriverKeepAlive, DriverWithdrawal } = require('../../Models');
+    if (Cab) await Cab.destroy({ where: { driverId: userId }, transaction });
+    if (DriverKeepAlive) await DriverKeepAlive.destroy({ where: { driverId: userId }, transaction });
+    if (DriverWithdrawal) await DriverWithdrawal.destroy({ where: { driverId: userId }, transaction });
+    
+    await DriverAdditional.destroy({ where: { id: userId }, transaction });
+    await Driver.destroy({ where: { id: userId }, transaction });
+
+    // 4. Delete Host & HostAdditional
+    await HostAdditional.destroy({ where: { id: userId }, transaction });
+    await Host.destroy({ where: { id: userId }, transaction });
+
+    // 5. Delete other related records that might block re-registration
+    const { Wallet, ReferralReward, UserAddress } = require('../../Models');
+    if (Wallet) await Wallet.destroy({ where: { userId }, transaction });
+    if (ReferralReward) await ReferralReward.destroy({ where: { userId }, transaction });
+    if (UserAddress) await UserAddress.destroy({ where: { userid: userId }, transaction });
+
+    // 6. Finally delete the User
+    await user.destroy({ transaction });
+
+    await transaction.commit();
+    res.status(200).json({ message: 'User and all associated data deleted successfully for a fresh start.' });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting user', error });
+    await transaction.rollback();
+    console.error("Delete User Error:", error);
+    res.status(500).json({ message: 'Error deleting user completely', error: error.message });
   }
 };
 
@@ -159,21 +191,9 @@ const getHostById = async (req, res) => {
 };
 
 const deleteHost = async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: 'Host not found' });
-    }
-    const host = await Host.findByPk(req.params.id);
-    if(!host){
-      return res.status(404).json({ message: 'Host not found' });
-    }
-    await user.destroy();
-    res.status(200).json({ message: 'Host deleted successfully' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error deleting user', error });
-  }
+  // In Spintrip, a Host IS a User. Deleting the User account is the correct way
+  // to ensure they can start over completely.
+  return deleteUser(req, res);
 };
 
 module.exports = { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost };

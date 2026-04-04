@@ -1819,6 +1819,7 @@ const getCabAvailability = async (req, res) => {
 // (I have kept these aligned with your existing database logic)
 const getEstimate = async (req, res) => {
   const { origin, destination, vehicleId, cabType, bookingType, address, city } = req.body;
+  console.log("Estimate Request Received with:", { origin, destination, vehicleId, cabType, bookingType, address, city });
   const result = await estimatePrice({ origin, destination: destination || origin, vehicleId, cabType, bookingType, address, city });
   res.status(200).json(result);
 };
@@ -1931,6 +1932,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
  */
 const getBulkEstimates = async (req, res) => {
   const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
+  console.log(req.body);
   try {
     const originStr = typeof origin === "string" ? origin : `${origin?.latitude || 0},${origin?.longitude || 0}`;
     const destinationValid = (destination && (typeof destination === 'string' || (destination?.latitude && destination?.longitude)));
@@ -1969,14 +1971,32 @@ const getBulkEstimates = async (req, res) => {
     }
 
     const results = {};
+    console.log(`[Estimates] Calculating for ${cabTypes.join(', ')} in ${matchedCity || 'Unknown City'} (Type: ${evaluatedType})`);
+
     for (const type of cabTypes) {
-      const rateCards = await HostCabRateCard.findAll({
+      // 🚀 FUZZY MATCHING: Look for exact match or keyword match (e.g., "Mini" matches "Mini Cab")
+      let rateCards = await HostCabRateCard.findAll({
         where: {
-          cabType: { [Op.iLike]: type.trim() },
+          [Op.or]: [
+            { cabType: { [Op.iLike]: type.trim() } },
+            { cabType: { [Op.iLike]: `%${type.trim()}%` } }
+          ],
           isActive: true
         },
         order: [['createdAt', 'DESC']]
       });
+
+      // 🛡️ SMART FALLBACK: If no match for this specific type, use the most recent active card available in the city
+      if (rateCards.length === 0) {
+        console.log(`[Estimates] No rate cards for ${type}, falling back to general active cards...`);
+        rateCards = await HostCabRateCard.findAll({
+           where: { isActive: true },
+           order: [['createdAt', 'DESC']]
+        });
+      }
+
+      if (rateCards.length === 0) continue;
+
       const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
 
       if (card) {
