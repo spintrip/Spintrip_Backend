@@ -2,16 +2,24 @@ const { Support, SupportChat } = require('../Models');
 const uuid = require('uuid');
 
 const createSupportTicket = async (req, res) => {
-    console.log("reached here")
   try {
     const { subject, message } = req.body;
-    console.log(message)
-    const userId = req.user.id; // Assuming user ID is obtained from JWT or session
-    id = uuid.v4();
-    const supportTicket = await Support.create({ id:id, userId:userId, subject:subject, message:message });
-    await SupportChat.create({ id:id, supportId: supportTicket.id, senderId: userId, message: message });
+    const userId = req.user.id;
+    const ticketId = uuid.v4();
+    const chatId = uuid.v4();
+
+    const supportTicket = await Support.create({ id: ticketId, userId, subject, message });
+    await SupportChat.create({ 
+      id: chatId, 
+      supportId: ticketId, 
+      userId: userId, 
+      senderId: userId, 
+      message 
+    });
+
     res.status(201).json(supportTicket);
   } catch (error) {
+    console.error("createSupportTicket Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -20,10 +28,20 @@ const addSupportMessage = async (req, res) => {
   try {
     const id = uuid.v4();
     const { supportId, message } = req.body;
-    const senderId = req.user.id; // Assuming user ID is obtained from JWT or session
-    const supportMessage = await SupportChat.create({ id:id, supportId, senderId, message });
+    const senderId = req.user.id;
+
+    // Correctly link userId to senderId for message ownership
+    const supportMessage = await SupportChat.create({ 
+      id, 
+      supportId, 
+      userId: senderId, 
+      senderId, 
+      message 
+    });
+
     res.status(201).json(supportMessage);
   } catch (error) {
+    console.error("addSupportMessage Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };

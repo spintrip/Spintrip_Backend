@@ -1807,7 +1807,16 @@ const getCabAvailability = async (req, res) => {
     return res.status(200).json({
       available: true,
       services: Array.from(services),
-      cabTypes: Array.from(cabTypes),
+      cabTypes: Array.from(cabTypes).sort((a, b) => {
+        const getRank = (name) => {
+          const n = name.toLowerCase();
+          if (n.includes("mini")) return 0;
+          if (n.includes("sedan")) return 1;
+          if (n.includes("suv")) return 2;
+          return 3;
+        };
+        return getRank(a) - getRank(b);
+      }),
       city: matchedCity
     });
   } catch (error) {
@@ -1859,7 +1868,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
 
     if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
       evaluatedType = 'Airport'; // Keyword match = Airport
-    } else if (distanceKm >= 50) {
+    } else if (distanceKm >= 300) {
       evaluatedType = 'Outstation'; // 50km+ = Outstation
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
       evaluatedType = 'Local'; // Short Non-Airport = Local
@@ -1964,7 +1973,7 @@ const getBulkEstimates = async (req, res) => {
 
     if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
       evaluatedType = 'Airport';
-    } else if (distanceKm >= 50) {
+    } else if (distanceKm >= 300) {
       evaluatedType = 'Outstation';
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
       evaluatedType = 'Local';
