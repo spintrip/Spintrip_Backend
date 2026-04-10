@@ -188,10 +188,15 @@ const bookingcompleted = async (req, res) => {
       // Process Completion
       const t = await sequelize.transaction();
       try {
+        const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+        const GST_RATE = taxRow ? taxRow.GST : 5.0;
+        const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+        const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
+
         const amt = cabBooking.estimatedPrice || cabBooking.finalPrice || 0;
-        const netBaseAmount = amt / 1.05;
-        const commOut = netBaseAmount * 0.20;
-        const tdsOut = netBaseAmount * 0.01; // Strictly 1% of Gross as per Section 194-O
+        const netBaseAmount = amt / (1 + (GST_RATE / 100)); // Dynamic GST
+        const commOut = netBaseAmount * (COMMISSION_RATE / 100);
+        const tdsOut = netBaseAmount * (TDS_RATE / 100); // Dynamic TDS
         const calculatedEarnings = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
         // Use pre-fixed amounts if they exist (protection for Referral Discounts)
@@ -565,8 +570,8 @@ const DriverBookings = async (req, res) => {
     // Formatting Cab Bookings
     const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
     const GST_RATE = taxRow ? taxRow.GST : 5.0;
-    const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
-    const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
+    const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+    const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
 
     const cabBookingPromises = cabBookings.map(async (cab) => {
       const vehicle = cab.vehicleId ? await Vehicle.findOne({ where: { vehicleid: cab.vehicleId } }) : null;
@@ -602,10 +607,10 @@ const DriverBookings = async (req, res) => {
       };
 
       const amt = cab.estimatedPrice || cab.finalPrice || 0;
-      const netBaseAmount = amt / 1.05;
+      const netBaseAmount = amt / (1 + (GST_RATE / 100));
       const gstOut = amt - netBaseAmount;
-      const commOut = netBaseAmount * 0.20;
-      const tdsOut = netBaseAmount * 0.01; // 1% Gross
+      const commOut = netBaseAmount * (COMMISSION_RATE / 100);
+      const tdsOut = netBaseAmount * (TDS_RATE / 100);
       const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
       return {

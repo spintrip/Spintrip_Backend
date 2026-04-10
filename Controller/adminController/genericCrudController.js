@@ -1,5 +1,6 @@
 const db = require('../../Models/index');
 const { v4: uuidv4 } = require('uuid');
+const { notifyBookingAllocation } = require('../../Utils/notificationService');
 
 // Helper to resolve model name safely
 const getModel = (modelName) => {
@@ -110,6 +111,19 @@ const updateRecord = async (req, res) => {
     }
 
     await record.update(req.body);
+
+    // --- GENERIC NOTIFICATION HOOK ---
+    // If we are updating a booking and a driver is assigned, fire the notification.
+    const isBookingModel = model.name === 'CabBookingRequest' || model.name === 'Booking';
+    if (isBookingModel && req.body.driverid) {
+        // Run in background so as not to block the CRUD response
+        notifyBookingAllocation(
+            record.bookingId || record.id, 
+            req.body.driverid, 
+            record.userId
+        ).catch(e => console.error("Generic Hook Notification Error:", e.message));
+    }
+
     res.status(200).json({ success: true, message: 'Record updated successfully', data: record });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

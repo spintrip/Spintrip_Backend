@@ -69,15 +69,18 @@ const getAllDrivers = async (req, res) => {
         // Frontend often expects basic properties flattened
         const formattedDrivers = drivers.map(d => {
             const json = d.toJSON();
-            // DriverAdditional contains FullName and phone might be in User, but frontend drivers.js uses `row.name`?
-            json.name = json.DriverAdditional?.FullName;
-            json.phone = json.User?.phone;
-            json.verification_status = json.DriverAdditional?.verification_status || json.User?.UserAdditional?.verification_status || 0;
-            json.profilepic = json.DriverAdditional?.profilepic || json.User?.UserAdditional?.profilepic || null;
-            json.aadhar = json.DriverAdditional?.aadhar || json.User?.UserAdditional?.aadhar || null;
-            json.dl = json.DriverAdditional?.dl || json.User?.UserAdditional?.dl || null;
+            const additionalInfo = json.DriverAdditional || json.User?.UserAdditional || {};
+            
+            json.name = additionalInfo.FullName || '--';
+            json.FullName = additionalInfo.FullName || '--';
+            json.phone = json.User?.phone || '--';
+            json.verification_status = additionalInfo.verification_status || 0;
+            json.profilepic = additionalInfo.profilepic || null;
+            json.aadhar = additionalInfo.aadhar || null;
+            json.dl = additionalInfo.dl || null;
             json.latitude = json.Cab?.Vehicle?.VehicleAdditional?.latitude || null;
             json.longitude = json.Cab?.Vehicle?.VehicleAdditional?.longitude || null;
+            json.additionalInfo = additionalInfo; // Crucial for frontend mapping
             return json;
         });
         res.status(200).json({ drivers: formattedDrivers });

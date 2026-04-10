@@ -1,5 +1,5 @@
 const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, sequelize } = require('../../Models');
-const { sendPushNotification } = require('../../Utils/notifications');
+const { notifyBookingAllocation } = require('../../Utils/notificationService');
 const { refundBookingCoins } = require('../cabController');
 
 const createAdminBooking = async (req, res) => {
@@ -29,9 +29,13 @@ const createAdminBooking = async (req, res) => {
       userId = user.id;
     }
 
+    const { Tax } = require('../../Models');
+    const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+    const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+
     const estimatedPrice = parseFloat(amount) || 0;
     const netBase = estimatedPrice / 1.05;
-    const commissionAmount = netBase * 0.20;
+    const commissionAmount = netBase * (COMMISSION_RATE / 100);
     const tdsAmount = netBase * 0.01; // 1% of Gross (excluding GST)
     const payToDriverAmount = Math.round((netBase - commissionAmount - tdsAmount) * 100) / 100;
     const confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
@@ -254,40 +258,13 @@ const updateBookingById = async (req, res) => {
 
         await cabBooking.update(cabUpdates);
 
-        // --- SEND NOTIFICATIONS ---
+        // --- SEND NOTIFICATIONS (GENERIC HELPER) ---
         if (updatedFields.driverid || updatedFields.vehicleid || updatedFields.status === 1) {
-          try {
-            const customer = await User.findByPk(cabBooking.userId);
-            const driver = updatedFields.driverid ? await User.findByPk(updatedFields.driverid) : null;
-
-            // 🔎 DIAGNOSTIC LOG: Confirm token was found in the User table
-            if (driver) {
-              console.log(`Assigning Driver: ${driver.id} - Token Found: ${!!driver.fcmToken}`);
-            }
-
-            // Notify Customer
-            if (customer && customer.fcmToken) {
-              await sendPushNotification(
-                customer.fcmToken,
-                "Driver Assigned",
-                `Your cab for Booking ${cabBooking.bookingId} has been assigned.`,
-                { bookingId: cabBooking.bookingId, type: 'assignment' }
-              );
-            }
-
-            // Notify Driver
-            if (driver && driver.fcmToken) {
-              await sendPushNotification(
-                driver.fcmToken,
-                "New Booking Assigned",
-                `A new booking (${cabBooking.bookingId}) has been assigned to you.`,
-                { bookingId: cabBooking.bookingId, type: 'assignment' }
-              );
-            }
-          } catch (notiError) {
-            console.error("Notification Error:", notiError.message);
-            // We don't fail the request if notification fails
-          }
+          await notifyBookingAllocation(
+            cabBooking.bookingId,
+            updatedFields.driverid || cabBooking.driverid,
+            cabBooking.userId
+          );
         }
 
         return res.status(200).json({ message: 'Cab Booking updated successfully', booking: cabBooking });

@@ -18,7 +18,7 @@ const {
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
   getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver,
-  getAllWithdrawals, approveWithdrawal, rejectWithdrawal
+  getAllWithdrawals, approveWithdrawal, rejectWithdrawal, convertHostToDriver
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
 const { addCab, addDriver, assignDriverToVehicle } = require('../Controller/cabController');
@@ -65,6 +65,7 @@ router.get('/users', authenticate, restrictToSuperadmin, getAllUsers);
 router.get('/users/:id', authenticate, restrictToSuperadmin, getUserById);
 router.delete('/users/:id', authenticate, restrictToSuperadmin, deleteUser);
 router.put('/users/:id', authenticate, restrictToSuperadmin, updateUser);
+router.post('/users/:id/convert-to-driver', authenticate, restrictToSuperadmin, convertHostToDriver);
 
 // Removed broken duplicate Driver & Cab Admin routes
 router.post('/cab/add-cab', authenticate, addCab);
@@ -258,7 +259,7 @@ router.put('/pricing/:id', authenticate, restrictToSuperadmin, updatePricingById
 
 // Tax routes
 router.post('/tax', authenticate, restrictToSuperadmin, createTax);
-router.get('/taxes', authenticate, restrictToSuperadmin, getAllTaxes);
+router.get('/tax', authenticate, restrictToSuperadmin, getAllTaxes);
 router.put('/tax/:id', authenticate, restrictToSuperadmin, updateTaxById);
 router.delete('/tax/:id', authenticate, restrictToSuperadmin, deleteTaxById);
 

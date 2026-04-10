@@ -1,4 +1,5 @@
 const admin = require('../firebaseConfig');
+const { User } = require('../Models/index');
 
 /**
  * Sends a push notification to a specific device.
@@ -15,7 +16,7 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
       title: title,
       body: body
     },
-    // 🍏 iOS (APNs) Configuration (CRITICAL for "Welcome" Alerts)
+    // 🍏 iOS (APNs) Configuration
     apns: {
       payload: {
         aps: {
@@ -24,17 +25,23 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
             body: body,
           },
           sound: 'default',
-          badge: 1, // Shows the red dot on the app icon
+          badge: 1,
         },
+      },
+      headers: {
+        'apns-priority': '10', // High priority for iOS
       },
     },
     // 🤖 Android Configuration
     android: {
+      priority: 'high', // High priority for Android
       notification: {
         icon: 'ic_launcher',
         color: '#FFFFFF',
+        sound: 'default',
         priority: 'high',
-      }
+      },
+      data: dataPayload,
     },
     data: dataPayload,
     token: fcmToken
@@ -50,4 +57,41 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
   }
 };
 
-module.exports = { sendPushNotification };
+/**
+ * Generic helper to notify both Driver and Customer when a booking is allocated.
+ */
+const notifyBookingAllocation = async (bookingId, driverId, userId) => {
+  try {
+    // 1. Notify Driver
+    const driver = await User.findByPk(driverId);
+    if (driver && driver.fcmToken) {
+      await sendPushNotification(
+        driver.fcmToken,
+        "New Ride Assigned",
+        `You have been assigned a new ride (ID: ${bookingId}). Check your upcoming trips!`,
+        { bookingId, type: "assignment", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+      );
+    } else {
+      console.log(`Notification skipped: Driver ${driverId} has no fcmToken.`);
+    }
+
+    // 2. Notify Customer (Include driver name if possible)
+    const customer = await User.findByPk(userId);
+    if (customer && customer.fcmToken) {
+      const driverName = driver ? (driver.name || "A driver") : "A driver";
+      await sendPushNotification(
+        customer.fcmToken,
+        "Driver Assigned",
+        `${driverName} has been assigned to your booking #${bookingId}. Your ride is confirmed!`,
+        { bookingId, type: "status_update", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+      );
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in notifyBookingAllocation:", error.message);
+    return false;
+  }
+};
+
+module.exports = { sendPushNotification, notifyBookingAllocation };

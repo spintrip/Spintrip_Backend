@@ -3,10 +3,10 @@ const uuid = require('uuid');
 // Create a new tax record
 const createTax = async (req, res) => {
   try {
-    const { GST } = req.body;
+    const { GST, TDS, HostGST, Commission, insurance } = req.body;
 
     const newTax = await Tax.create({
-      GST
+      GST, TDS, HostGST, Commission, insurance
     });
 
     res.status(201).json({ message: 'Tax created successfully', newTax });
@@ -21,7 +21,21 @@ const getAllTaxes = async (req, res) => {
   try {
     const taxes = await Tax.findAll();
     if (taxes.length === 0) {
-      return res.status(404).json({ message: 'No tax records found' });
+      // Provide a default template record if none exists
+      return res.status(200).json({ 
+        message: 'Returning default tax values', 
+        taxes: [{
+          id: 0,
+          GST: 5,
+          TDS: 1,
+          HostGST: 5,
+          Commission: 10,
+          insurance: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isDefault: true
+        }] 
+      });
     }
     res.status(200).json({ message: 'Taxes retrieved successfully', taxes });
   } catch (error) {
@@ -34,7 +48,7 @@ const getAllTaxes = async (req, res) => {
 const updateTaxById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { GST } = req.body;
+    const { GST, TDS, HostGST, Commission, insurance } = req.body;
 
     const tax = await Tax.findByPk(id);
     if (!tax) {
@@ -43,6 +57,10 @@ const updateTaxById = async (req, res) => {
 
     await tax.update({
       GST: GST !== undefined ? GST : tax.GST,
+      TDS: TDS !== undefined ? TDS : tax.TDS,
+      HostGST: HostGST !== undefined ? HostGST : tax.HostGST,
+      Commission: Commission !== undefined ? Commission : tax.Commission,
+      insurance: insurance !== undefined ? insurance : tax.insurance,
     });
 
     res.status(200).json({ message: 'Tax updated successfully', tax });

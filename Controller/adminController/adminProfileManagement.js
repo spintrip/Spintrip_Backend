@@ -1,4 +1,4 @@
-const {UserAdditional, Admin, User} = require('../../Models');
+const {UserAdditional, Admin, User, HostAdditional, DriverAdditional} = require('../../Models');
 const fs = require('fs');
 const path = require('path');
 
@@ -25,6 +25,20 @@ const pendingProfile = async (req, res) => {
       const updatedProfiles = await Promise.all(
         pendingProfiles.map(async (profile) => {
           const user = await User.findByPk(profile.id);
+          
+          let fullName = profile.FullName;
+          
+          // If name is missing in UserAdditional, try specialized tables
+          if (!fullName && user) {
+            if (user.role === 'host' || user.role === 'Host') {
+              const hostInfo = await HostAdditional.findOne({ where: { id: user.id } });
+              fullName = hostInfo?.FullName || hostInfo?.businessName;
+            } else if (user.role === 'driver' || user.role === 'Driver') {
+              const driverInfo = await DriverAdditional.findOne({ where: { id: user.id } });
+              fullName = driverInfo?.FullName;
+            }
+          }
+
           let userFolder = path.join('./uploads', profile.id.toString());
           let aadharFile = [];
           let dlFile = [];
@@ -37,6 +51,7 @@ const pendingProfile = async (req, res) => {
           
           return {
             ...profile.toJSON(),
+            FullName: fullName || profile.FullName || '--',
             aadharFile: aadharFile[0] || null,
             dlFile: dlFile[0] || null,
             user: user ? user.toJSON() : null

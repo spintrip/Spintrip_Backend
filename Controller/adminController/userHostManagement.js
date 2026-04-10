@@ -1,4 +1,4 @@
-const { User, Host, Admin, UserAdditional, HostAdditional, Driver, DriverAdditional } = require('../../Models');
+const { User, Host, Admin, UserAdditional, HostAdditional, Driver, DriverAdditional, Car, Bike, Cab } = require('../../Models');
 
 
 const getAllUsers = async (req, res) => {
@@ -13,21 +13,32 @@ const getAllUsers = async (req, res) => {
 
     const users = await User.findAll();
     const userAdditional = await UserAdditional.findAll();
+    const hostAdditional = await HostAdditional.findAll();
     const drivers = await Driver.findAll({ include: [{ model: DriverAdditional }] });
 
     const usersWithAdditionalInfo = users.map(user => {
       let additionalInfo = userAdditional.find(additional => additional.id === user.id);
       
+      // If no name in UserAdditional, try to find in specialized profile tables
       if (user.role === 'driver' || user.role === 'Driver') {
-        const driverProfile = drivers.find(d => d.userId === user.id);
+        const driverProfile = drivers.find(d => d.id === user.id); // Key is 'id', not 'userId'
         if (driverProfile && driverProfile.DriverAdditional) {
            additionalInfo = driverProfile.DriverAdditional;
         }
+      } else if (user.role === 'host' || user.role === 'Host') {
+        const hostProfile = hostAdditional.find(h => h.id === user.id);
+        if (hostProfile) {
+          additionalInfo = hostProfile;
+        }
       }
 
+      const json = user.toJSON();
+      const additionalJson = additionalInfo ? (additionalInfo.toJSON ? additionalInfo.toJSON() : additionalInfo) : null;
+      
       return {
-        ...user.toJSON(),
-        additionalInfo: additionalInfo ? (additionalInfo.toJSON ? additionalInfo.toJSON() : additionalInfo) : null
+        ...json,
+        FullName: additionalJson?.FullName || additionalJson?.businessName || '--',
+        additionalInfo: additionalJson
       };
     });
 
@@ -204,6 +215,123 @@ const getAllHosts = async (req, res) => {
   }
 };
 
+const convertHostToDriver = async (req, res) => {
+  const transaction = await User.sequelize.transaction();
+  try {
+    const userId = req.params.id;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      await transaction.rollback();
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 1. Get Host Data
+    const hostAdditional = await HostAdditional.findOne({ where: { id: userId } });
+    if (!hostAdditional) {
+      await transaction.rollback();
+      return res.status(400).json({ message: 'User must have a Host profile to convert.' });
+    }
+
+    // 2. Update User Role
+    await user.update({ role: 'Driver' }, { transaction });
+
+    // 3. Create/Update Driver Records
+    await Driver.findOrCreate({
+      where: { id: userId },
+      defaults: { userId, status: 1 },
+      transaction
+    });
+
+    const driverFields = {
+      id: userId,
+      FullName: hostAdditional.FullName,
+      Email: hostAdditional.Email,
+      AadharVfid: hostAdditional.AadharVfid,
+      Address: hostAdditional.Address,
+      businessName: hostAdditional.businessName,
+      profilepic: hostAdditional.profilepic,
+      aadhar: hostAdditional.aadhar,
+      verification_status: hostAdditional.verification_status || 1
+    };
+
+    const [driverAdditional, created] = await DriverAdditional.findOrCreate({
+      where: { id: userId },
+      defaults: driverFields,
+      transaction
+    });
+
+    if (!created) {
+      await driverAdditional.update(driverFields, { transaction });
+    }
+
+    // 4. Handle Cabs & Mirror Self-Drive (Owner-Driver logic)
+    // Part A: Assign user as driver for existing Cabs
+    await Cab.update(
+      { driverId: userId },
+      { where: { hostId: userId }, transaction }
+    );
+
+    // Part B: Mirror Self-Drive Cars and Bikes to the Cab system
+    // 1. Find Cars owned by this Host that aren't already in the Cab table
+    const cars = await Car.findAll({ where: { hostId: userId }, transaction });
+    for (const car of cars) {
+      const existingCab = await Cab.findByPk(car.vehicleid, { transaction });
+      if (!existingCab) {
+        await Cab.create({
+          vehicleid: car.vehicleid,
+          driverId: userId,
+          hostId: userId,
+          brand: car.brand,
+          model: car.carmodel,
+          type: car.type,
+          variant: car.variant,
+          color: car.color,
+          bodytype: car.bodytype,
+          FuelType: car.FuelType,
+          city: car.city,
+          timestamp: new Date()
+        }, { transaction });
+      } else if (!existingCab.driverId) {
+        await existingCab.update({ driverId: userId }, { transaction });
+      }
+    }
+
+    // 2. Find Bikes owned by this Host (Less common for 'Drivers' but handled for completeness)
+    const bikes = await Bike.findAll({ where: { hostId: userId }, transaction });
+    for (const bike of bikes) {
+      const existingCab = await Cab.findByPk(bike.vehicleid, { transaction });
+      if (!existingCab) {
+        await Cab.create({
+          vehicleid: bike.vehicleid,
+          driverId: userId,
+          hostId: userId,
+          brand: bike.brand,
+          model: bike.bikemodel,
+          type: bike.type,
+          variant: bike.variant,
+          color: bike.color,
+          city: bike.city,
+          timestamp: new Date()
+        }, { transaction });
+      } else if (!existingCab.driverId) {
+        await existingCab.update({ driverId: userId }, { transaction });
+      }
+    }
+
+    await transaction.commit();
+    res.status(200).json({ 
+      message: 'Host converted to Driver successfully. Profile migrated and Self-Drive vehicles mirrored to Cab system.',
+      user: { ...user.toJSON(), role: 'Driver' }
+    });
+
+  } catch (error) {
+    if (transaction) await transaction.rollback();
+    console.error("Conversion Error:", error);
+    res.status(500).json({ message: 'Error during role conversion', error: error.message });
+  }
+};
+
 const getHostById = async (req, res) => {
   // Functionality here
 };
@@ -214,4 +342,4 @@ const deleteHost = async (req, res) => {
   return deleteUser(req, res);
 };
 
-module.exports = { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost };
+module.exports = { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost, convertHostToDriver };

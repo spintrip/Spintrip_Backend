@@ -1,5 +1,5 @@
 const { adminLogin, verifyOTP, adminSignup, adminProfile } = require('./authentication');
-const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost } = require('./userHostManagement');
+const { getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost, convertHostToDriver } = require('./userHostManagement');
 const { deleteBike, updateBike, bikeById, bikes, cars, carsById, updateCars, deleteCars, getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById, postActiveVehicle  } = require('./carListManagement');
 const { createPayout, getAllPayouts, getPayoutById, updatePayoutById, deletePayoutById } = require('./payoutManagement');
 const { getAllBookings, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice, createAdminBooking } = require('./bookingManagement');
@@ -36,5 +36,5 @@ module.exports = {
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
   getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver,
-  getAllWithdrawals, approveWithdrawal, rejectWithdrawal, createAdminBooking
+  getAllWithdrawals, approveWithdrawal, rejectWithdrawal, createAdminBooking, convertHostToDriver
 };

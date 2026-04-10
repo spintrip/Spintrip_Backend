@@ -25,7 +25,7 @@ const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
 const { sendOTP, generateOTP } = require('./hostcontroller/hostBooking');
-const { sendPushNotification } = require('../Utils/notificationService');
+const { sendPushNotification, notifyBookingAllocation } = require('../Utils/notificationService');
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -538,9 +538,12 @@ const bookCab = async (req, res) => {
     let payToDriverAmount = 0;
 
     // Helper to calculate segregated amounts based on a price
-    const calculateSegregation = (totalPrice) => {
+    const calculateSegregation = async (totalPrice) => {
+      const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+      const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+      
       const netBase = totalPrice / 1.05;
-      const commissionAmount = netBase * 0.20;
+      const commissionAmount = netBase * (COMMISSION_RATE / 100);
       const tdsAmount = netBase * 0.01; // 1% of Gross Amount (excluding GST) as per Section 194-O
       const driverPay = Math.round((netBase - commissionAmount - tdsAmount) * 100) / 100;
       const platformFee = Math.round((totalPrice - driverPay) * 100) / 100;
@@ -549,7 +552,7 @@ const bookCab = async (req, res) => {
 
     if (estimatedPrice) {
       // 1. Always calculate the DRIVER'S SHARE based on the Original Price for protection
-      const originalBreakdown = calculateSegregation(estimatedPrice);
+      const originalBreakdown = await calculateSegregation(estimatedPrice);
       payToDriverAmount = originalBreakdown.driverPay;
       confirmationFeeAmount = originalBreakdown.platformFee;
     } else {
@@ -1204,17 +1207,8 @@ const superhostAssignDriver = async (req, res) => {
     booking.status = 1; // 1 = Upcoming / Confirmed
     await booking.save();
 
-    // Notify Driver
-    const device = await Driver.findOne({ where: { id: driverId } });
-    if (device && device.fcmToken) {
-      await sendPushNotification(device.fcmToken, "New Ride Assigned", "You have been assigned a new ride by your Fleet Admin.");
-    }
-
-    // Notify User
-    const userDevice = await User.findOne({ where: { id: booking.userId } });
-    if (userDevice && userDevice.fcmToken) {
-      await sendPushNotification(userDevice.fcmToken, "Driver Assigned", "Your cab is on the way!");
-    }
+    // --- SEND NOTIFICATIONS (GENERIC HELPER) ---
+    await notifyBookingAllocation(booking.bookingId, driverId, booking.userId);
 
     res.status(200).json({ message: "Driver and vehicle assigned successfully.", booking });
   } catch (error) {
@@ -1913,18 +1907,23 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       ? Math.max(Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0)), 500)
       : Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0));
 
-    const netBase = total / 1.05;
+    const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+    const GST_RATE = taxRow ? taxRow.GST : 5.0;
+    const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+    const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
+
+    const netBase = total / (1 + (GST_RATE / 100)); // Dynamic GST
     return {
       distance: distanceKm,
       duration: durationMin,
       subtotalBasePrice: Math.round(netBase),
       gstAmount: Math.round(total - netBase),
       estimatedPrice: total > 0 ? total : null,
-      commissionAmount: Math.round(netBase * 0.20),
-      tdsAmount: Math.round(netBase * 0.01), // Section 194-O (1% of Gross)
-      driverEarnings: Math.round(netBase - (netBase * 0.20) - (netBase * 0.01)),
-      payToDriver: Math.round(netBase - (netBase * 0.20) - (netBase * 0.01)),
-      confirmationFee: Math.round(total - (netBase - (netBase * 0.20) - (netBase * 0.01))),
+      commissionAmount: Math.round(netBase * (COMMISSION_RATE / 100)),
+      tdsAmount: Math.round(netBase * (TDS_RATE / 100)),
+      driverEarnings: Math.round(netBase - (netBase * (COMMISSION_RATE / 100)) - (netBase * (TDS_RATE / 100))),
+      payToDriver: Math.round(netBase - (netBase * (COMMISSION_RATE / 100)) - (netBase * (TDS_RATE / 100))),
+      confirmationFee: Math.round(total - (netBase - (netBase * (COMMISSION_RATE / 100)) - (netBase * (TDS_RATE / 100)))),
       extraHourRate: rateCard.extraHourRate || 0,
       extraKmRate: rateCard.extraKmRate || 0,
       localExtraKmRate: rateCard.localExtraKmRate || 0,
@@ -2031,9 +2030,13 @@ const getBulkEstimates = async (req, res) => {
         const total = Math.round((base * (ratio > 2.5 ? 1.3 : 1) * (card.surgeMultiplier || 1.0)) + (card.tollCharges || 0));
 
         if (total > 0) {
+          const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+          const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+          const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
+
           const netBase = total / 1.05;
-          const comm = netBase * 0.20;
-          const tds = netBase * 0.01;
+          const comm = netBase * (COMMISSION_RATE / 100);
+          const tds = netBase * (TDS_RATE / 100);
           const driverPay = Math.round((netBase - comm - tds) * 100) / 100;
 
           results[type] = {

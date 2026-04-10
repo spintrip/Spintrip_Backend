@@ -548,7 +548,7 @@ const extend = async (req, res) => {
     const additionalHours = calculateTripHours(currentEndDate, newEndDate, currentEndTime, newEndTime);
     const cph = await Pricing.findOne({ where: { vehicleid: booking.vehicleid } });
     let additionalAmount = Math.round(cph.costperhr * additionalHours);
-    additionalAmount += 20 * (additionalAmount) / 100;
+    additionalAmount += (tax.Commission || 20) * (additionalAmount) / 100;
     const tax = await Tax.findOne({ where: { id: 1 } });
     if (!tax) {
       return res.status(404).json({ message: 'Tax data not found' });
@@ -798,8 +798,8 @@ const userbookings = async (req, res) => {
       // PARSE AND FORMAT NEW CAB BOOKING REQUESTS
       const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
       const GST_RATE = taxRow ? taxRow.GST : 5.0;
-      const COMMISSION_RATE = taxRow ? taxRow.cabCommission : 20.0;
-      const TDS_RATE = taxRow ? taxRow.TDS : 5.0;
+      const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+      const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
       const cabBookingPromises = cabBookings.map(async (cab) => {
         const vehicle = cab.vehicleId ? await Vehicle.findOne({ where: { vehicleid: cab.vehicleId } }) : null;
         let vehicleModel = cab.cabType || "Mini Cab";
@@ -846,10 +846,10 @@ const userbookings = async (req, res) => {
         }
 
         const amt = cab.estimatedPrice || cab.finalPrice || 0;
-        const netBaseAmount = amt / 1.05;
+        const netBaseAmount = amt / (1 + (GST_RATE / 100));
         const gstOut = amt - netBaseAmount;
-        const commOut = netBaseAmount * 0.20;
-        const tdsOut = netBaseAmount * 0.01; // 1% Gross
+        const commOut = netBaseAmount * (COMMISSION_RATE / 100);
+        const tdsOut = netBaseAmount * (TDS_RATE / 100); // 1% Gross
         const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
         return {
@@ -944,10 +944,10 @@ const userbookings = async (req, res) => {
           }
         }
         const amt = cab.estimatedPrice || cab.finalPrice || 0;
-        const netBaseAmount = amt / 1.05;
+        const netBaseAmount = amt / (1 + (GST_RATE / 100));
         const gstOut = amt - netBaseAmount;
-        const commOut = netBaseAmount * 0.20;
-        const tdsOut = netBaseAmount * 0.01; // 1% Gross
+        const commOut = netBaseAmount * (COMMISSION_RATE / 100);
+        const tdsOut = netBaseAmount * (TDS_RATE / 100); // 1% Gross
         const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
         return {
