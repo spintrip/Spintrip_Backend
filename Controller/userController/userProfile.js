@@ -146,7 +146,8 @@ const getAllVehicleTypes = async (req, res) => {
 
   const postaddress = async (req, res) => {
     try {
-      const { fullAddress, latitude, longitude } = req.body;
+      const { fullAddress, latitude, longitude, addressType } = req.body;
+      const type = addressType || 'Other';
 
       const userId = req.user.id;
       const user = await User.findByPk(userId);
@@ -154,9 +155,20 @@ const getAllVehicleTypes = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
   
-  
       if (!fullAddress || !latitude || !longitude) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // 🏆 Smart Overwrite: If Home/Work exists, update it instead of creating duplicates
+      if (type === 'Home' || type === 'Work') {
+        const existing = await UserAddress.findOne({ where: { userid: userId, addressType: type } });
+        if (existing) {
+          await existing.update({ fullAddress, latitude, longitude });
+          return res.status(200).json({
+            message: `${type} address updated successfully`,
+            data: existing,
+          });
+        }
       }
   
       const address = await UserAddress.create({
@@ -165,6 +177,7 @@ const getAllVehicleTypes = async (req, res) => {
         fullAddress,
         latitude,
         longitude,
+        addressType: type,
       });
   
       res.status(201).json({

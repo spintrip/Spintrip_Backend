@@ -577,7 +577,7 @@ const findvehicles = async (req, res) => {
         costperhr = Math.round(cph.costperhr);
 
         // Combine the Car data with the pricing information
-        return { ...availableVehicle, pricing: { costPerHr: costperhr, hours: hours, amount: amount }, Additional };
+        return { ...availableVehicle, pricing: { costPerHr: costperhr, costperhr: costperhr, hours: hours, amount: amount }, Additional };
       } else {
         // Handle the case where Pricing data is not available
         return { ...availableVehicle, pricing: 0, Additional };

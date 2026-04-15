@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const { Booking, CabBookingRequest, Wallet, WalletTransaction, sequelize } = require('../Models');
+const { Booking, CabBookingRequest, Wallet, WalletTransaction, sequelize, ReferralReward } = require('../Models');
 const uuid = require('uuid');
 const { Op } = require('sequelize');
 const moment = require('moment');
@@ -121,7 +121,28 @@ const initCronJobs = () => {
     }
   });
 
-  console.log('[Cron] Initialized Ghost Booking Sweeper (Runs every 5 minutes)');
+  // Referral Reward Expiry Sweeper (Runs daily at midnight)
+  cron.schedule('0 0 * * *', async () => {
+    console.log('[Cron] Running Referral Reward Expiry Sweeper...');
+    try {
+      const [expiredCount] = await ReferralReward.update(
+        { status: 'expired' },
+        {
+          where: {
+            status: 'earned',
+            expiryDate: { [Op.lt]: new Date() }
+          }
+        }
+      );
+      if (expiredCount > 0) {
+        console.log(`[Cron] Expired ${expiredCount} referral rewards.`);
+      }
+    } catch (error) {
+      console.error('[Cron] Error running referral reward expiry sweeper:', error.message);
+    }
+  });
+
+  console.log('[Cron] Initialized all jobs (Ghost Bookings & Referral Expiry)');
 };
 
 module.exports = {

@@ -1480,8 +1480,11 @@ const endTrip = async (req, res) => {
     // Set Driver to Online so they can receive new pings
     await Driver.update({ isActive: true }, { where: { id: driverId }, transaction });
 
-    // Remove the soft booking entry
-    await CabBookingRequest.destroy({ where: { bookingId }, transaction });
+    // Update the CabBookingRequest as completed instead of destroying it
+    await CabBookingRequest.update(
+      { status: "completed", endTripTime: new Date() },
+      { where: { bookingId }, transaction }
+    );
 
     // --- REFERRAL SYSTEM LOGIC ---
     // Check if this is the user's first successful booking to trigger rewards

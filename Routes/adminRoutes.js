@@ -5,7 +5,7 @@ const {
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
   getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
-  getAllBookings, createAdminBooking, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
+  getAllBookings, getSelfDriveBookings, getCabBookings, createAdminBooking, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
@@ -190,7 +190,7 @@ router.get('/getAllBlogs', authenticate, restrictToSuperadmin, getAllBlogs);
 router.get('/getBlogById/:id', authenticate, restrictToSuperadmin, getBlogById);
 router.get('/device', authenticate, restrictToSuperadmin, getDevice);
 router.get('/device/:id', authenticate, restrictToSuperadmin, getDeviceById);
-router.get('/activate-vehicle/:id', authenticate, restrictToSuperadmin, postActiveVehicle);
+router.put('/activate-vehicle/:id', authenticate, restrictToSuperadmin, postActiveVehicle);
 // router.get('/car-device', getCarDevice);
 
 // router.get('/car-device/:id', getCarDeviceById);
@@ -240,6 +240,8 @@ router.delete('/listings/:id', authenticate, restrictToSuperadmin, deleteListing
 
 // Booking routes
 router.get('/bookings', authenticate, restrictToSuperadmin, getAllBookings);
+router.get('/bookings/self-drive', authenticate, restrictToSuperadmin, getSelfDriveBookings);
+router.get('/bookings/cab', authenticate, restrictToSuperadmin, getCabBookings);
 router.get('/bookings/:id', authenticate, restrictToSuperadmin, getBookingById);
 router.put('/bookings/:id', authenticate, restrictToSuperadmin, updateBookingById);
 router.delete('/bookings/:id', authenticate, restrictToSuperadmin, deleteBookingById);

@@ -1,4 +1,25 @@
-const { Vehicle, VehicleAdditional, Listing , Car, Bike } = require('../../Models');
+const { Vehicle, VehicleAdditional, Listing , Car, Bike, Cab, User, UserAdditional } = require('../../Models');
+
+// Helper to resolve vehicle brand + model
+const resolveVehicleName = async (vehicleId, type) => {
+  try {
+    if (!vehicleId) return 'N/A';
+    if (type == 1) { // Bike
+      const bike = await Bike.findByPk(vehicleId);
+      return bike ? `${bike.brand} ${bike.bikemodel}` : 'Bike ID: ' + vehicleId;
+    } else if (type == 2) { // Car
+      const car = await Car.findByPk(vehicleId);
+      return car ? `${car.brand} ${car.carmodel}` : 'Car ID: ' + vehicleId;
+    } else if (type == 3) { // Cab
+      const cab = await Cab.findByPk(vehicleId);
+      return cab ? `${cab.brand} ${cab.model}` : 'Cab ID: ' + vehicleId;
+    }
+    return 'Vehicle ID: ' + vehicleId;
+  } catch (error) {
+    return 'Error resolving name';
+  }
+};
+
 
 // Get all cars with additional information
 const getAllvehicles = async (req, res) => {
@@ -7,12 +28,29 @@ const getAllvehicles = async (req, res) => {
     const vehiclesWithAdditionalInfo = await Promise.all(
       vehicles.map(async (vehicle) => {
         const additionalInfo = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
+        const vehicleName = await resolveVehicleName(vehicle.vehicleid, vehicle.vehicletype);
+        
+        let hostName = 'N/A';
+        let hostPhone = 'N/A';
+        if (vehicle.hostId) {
+          const host = await User.findByPk(vehicle.hostId, { include: [{ model: UserAdditional }] });
+          if (host) {
+            hostPhone = host.phone;
+            hostName = host.UserAdditional?.FullName || 'N/A';
+          }
+        }
+
         return {
           ...vehicle.toJSON(),
+          vehicleName: vehicleName,
+          hostName: hostName,
+          hostPhone: hostPhone,
           additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
         };
+
       })
     );
+
 
     res.status(200).json({ message: "All available vehicles", vehicles: vehiclesWithAdditionalInfo });
   } catch (error) {
@@ -23,17 +61,24 @@ const getAllvehicles = async (req, res) => {
 
 const postActiveVehicle = async (req, res) => {
   try {
-    const vehicles = await Vehicle.findByPk(req.params.id);
-    if (!vehicles) {
+    const vehicle = await Vehicle.findByPk(req.params.id);
+    if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    const updatedVehicles = await vehicles.update(
-      { activated: true },);
 
-    res.status(200).json({ message: "vehicle activated", vehicles: updatedVehicles });
+    // Allow toggling: if activated is provided in body use it, otherwise default to true
+    const newStatus = req.body.activated !== undefined ? req.body.activated : true;
+    
+    await vehicle.update({ activated: newStatus });
+
+    res.status(200).json({ 
+      message: `Vehicle ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+      activated: newStatus,
+      vehicle 
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Error vehicle activated', error });
+    console.log("Error toggling vehicle activation:", error);
+    res.status(500).json({ message: 'Error updating vehicle activation status', error: error.message });
   }
 };
 
@@ -46,12 +91,16 @@ const getvehicleById = async (req, res) => {
     }
 
     const additionalInfo = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
+    const vehicleName = await resolveVehicleName(vehicle.vehicleid, vehicle.vehicletype);
+    
     res.status(200).json({
       vehicle: {
         ...vehicle.toJSON(),
+        vehicleName,
         additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
       },
     });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Error fetching vehicle', error });
@@ -153,12 +202,18 @@ const deleteListingById = async (req, res) => {
 // Get all listings
 const cars = async (req, res) => {
   try {
-    const car = await Car.findAll();
-    if (!car) {
-      return res.status(404).json({ message: 'Cars not found' });
-    }
+    const cars = await Car.findAll();
+    const enrichedCars = await Promise.all(cars.map(async (car) => {
+      const vehicle = await Vehicle.findByPk(car.vehicleid);
+      return {
+        ...car.toJSON(),
+        vehicleType: vehicle?.vehicletype || '2',
+        activated: vehicle?.activated || false
+      };
+    }));
 
-    return res.status(200).json({ car});
+    return res.status(200).json({ car: enrichedCars });
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: 'Error fetching car', error });
@@ -220,11 +275,17 @@ const deleteCars = async (req, res) => {
 
 const bikes = async (req, res) => {
   try {
-    const bike = await Bike.findAll();
-    if (!bike) {
-      return res.status(404).json({ message: 'Bike not found' });
-    }
-    return res.status(200).json({ bike });
+    const bikes = await Bike.findAll();
+    const enrichedBikes = await Promise.all(bikes.map(async (bike) => {
+      const vehicle = await Vehicle.findByPk(bike.vehicleid);
+      return {
+        ...bike.toJSON(),
+        vehicleType: vehicle?.vehicletype || '1',
+        activated: vehicle?.activated || false
+      };
+    }));
+    return res.status(200).json({ bike: enrichedBikes });
+
   } catch (error) {
     console.log(error);
    return res.status(500).json({ message: 'Error fetching Bike', error });

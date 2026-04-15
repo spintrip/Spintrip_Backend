@@ -84,8 +84,11 @@ const getBookingDetails = async (bookingId) => {
       endDate: booking.endTripDate,
       endTime: booking.endTripTime,
     };
-    hostEmail = hostEmail.Email;
-    return { userEmail, hostEmail, bookingDetails };
+    
+    // Safety check for hostEmail
+    const finalHostEmail = hostEmail ? hostEmail.Email : 'support@spintrip.in'; 
+    
+    return { userEmail, hostEmail: finalHostEmail, bookingDetails };
   } catch (error) {
     console.error('Error in getBookingDetails:', error);
     throw error;
@@ -123,6 +126,10 @@ const booking = async (req, res) => {
       const vehicle = await Vehicle.findByPk(vehicleid, { transaction: t });
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    if (!vehicle.activated) {
+      return res.status(403).json({ message: 'This vehicle is currently not activated and cannot be booked' });
     }
 
     const isCab = vehicle.vehicletype == 3; // 🚕 CAB FLAG
@@ -276,7 +283,10 @@ const booking = async (req, res) => {
             },
           ],
         },
-        include: [Vehicle],
+        include: [{ 
+          model: Vehicle,
+          required: true // Forces INNER JOIN to support FOR UPDATE locking
+        }],
         transaction: t,
         lock: t.LOCK.UPDATE
       });
@@ -295,6 +305,9 @@ const booking = async (req, res) => {
     if (!isCab) {
       // 🚗 🏍 Rental pricing
       let cph = await Pricing.findOne({ where: { vehicleid: vehicleid } });
+      if (!cph) {
+        return res.status(400).json({ message: 'Pricing data not found for this vehicle. Please contact support.' });
+      }
       let hours = calculateTripHours(startDate, endDate, startTime, endTime);
       amount = Math.round(cph.costperhr * hours);
 
@@ -369,8 +382,8 @@ const booking = async (req, res) => {
       throw innerError;
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error processing booking' });
+    console.error("Booking Error Detail:", error);
+    res.status(500).json({ message: 'Error processing booking', detail: error.message });
   }
 };
 
@@ -773,11 +786,11 @@ const userbookings = async (req, res) => {
           hostId: checkData(vehicle.hostId),
           vehicleModel: vehicleModel,
           vehicletype: vehicle.vehicletype,
-          vehicleImage1: checkImage(vehicleAdditional.vehicleImage1),
-          vehicleImage2: checkImage(vehicleAdditional.vehicleImage2),
-          vehicleImage3: checkImage(vehicleAdditional.vehicleImage3),
-          vehicleImage4: checkImage(vehicleAdditional.vehicleImage4),
-          vehicleImage5: checkImage(vehicleAdditional.vehicleImage5),
+          vehicleImage1: checkImage(vehicleAdditional.vehicleimage1),
+          vehicleImage2: checkImage(vehicleAdditional.vehicleimage2),
+          vehicleImage3: checkImage(vehicleAdditional.vehicleimage3),
+          vehicleImage4: checkImage(vehicleAdditional.vehicleimage4),
+          vehicleImage5: checkImage(vehicleAdditional.vehicleimage5),
           rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided", 
           latitude: checkData(vehicleAdditional.latitude),
           longitude: checkData(vehicleAdditional.longitude),
@@ -808,7 +821,7 @@ const userbookings = async (req, res) => {
           const cabData = await Cab.findOne({ where: { vehicleid: vehicle.vehicleid } });
           const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: vehicle.vehicleid } });
           if (cabData && cabData.brand) vehicleModel = cabData.brand.charAt(0).toUpperCase() + cabData.brand.slice(1).toLowerCase();
-          if (vehicleAdditional && vehicleAdditional.vehicleImage1) vehicleImage1 = vehicleAdditional.vehicleImage1;
+          if (vehicleAdditional && vehicleAdditional.vehicleimage1) vehicleImage1 = vehicleAdditional.vehicleimage1;
         }
 
         let pickupObj = {

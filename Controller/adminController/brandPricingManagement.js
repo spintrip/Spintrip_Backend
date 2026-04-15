@@ -72,6 +72,7 @@ const updatePricingById = async (req, res) => {
     const { vehicleid } = req.params;
     const { 
       costperhr, 
+      costPerHr,
       pricingType, 
       priceperkm, 
       fixedPrice, 
@@ -80,13 +81,15 @@ const updatePricingById = async (req, res) => {
       extraKmPrice 
     } = req.body;
 
+    const finalCostPerHr = (costPerHr !== undefined) ? costPerHr : costperhr;
+
     const pricing = await Pricing.findOne({ where: { vehicleid } });
     if (!pricing) {
       return res.status(404).json({ message: 'Pricing record not found' });
     }
 
     await pricing.update({ 
-      costperhr, 
+      costperhr: finalCostPerHr, 
       pricingType, 
       priceperkm, 
       fixedPrice, 

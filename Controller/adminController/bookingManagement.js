@@ -1,6 +1,27 @@
-const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, sequelize } = require('../../Models');
+const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, Car, Bike, sequelize } = require('../../Models');
 const { notifyBookingAllocation } = require('../../Utils/notificationService');
 const { refundBookingCoins } = require('../cabController');
+
+// Helper to resolve vehicle brand + model
+const resolveVehicleName = async (vehicleId, type) => {
+  try {
+    if (!vehicleId) return 'N/A';
+    if (type == 1) { // Bike
+      const bike = await Bike.findByPk(vehicleId);
+      return bike ? `${bike.brand} ${bike.bikemodel}` : 'Bike ID: ' + vehicleId;
+    } else if (type == 2) { // Car
+      const car = await Car.findByPk(vehicleId);
+      return car ? `${car.brand} ${car.carmodel}` : 'Car ID: ' + vehicleId;
+    } else if (type == 3) { // Cab
+      const cab = await Cab.findByPk(vehicleId);
+      return cab ? `${cab.brand} ${cab.model}` : 'Cab ID: ' + vehicleId;
+    }
+    return 'Vehicle ID: ' + vehicleId;
+  } catch (error) {
+    return 'Error resolving name';
+  }
+};
+
 
 const createAdminBooking = async (req, res) => {
   const {
@@ -98,7 +119,7 @@ const getAllBookings = async (req, res) => {
     });
 
 
-    const mappedCabBookings = cabBookingsRaw.map(cab => {
+    const mappedCabBookings = await Promise.all(cabBookingsRaw.map(async (cab) => {
       let statusInt = 5;
       if (cab.status === 'pending') statusInt = 5;
       else if (cab.status === 'accepted') statusInt = 1;
@@ -106,10 +127,12 @@ const getAllBookings = async (req, res) => {
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
 
+      const vehicleName = await resolveVehicleName(cab.vehicleId, 3);
+
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
-        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A', // New field
+        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A',
         customerPhone: cab.Customer?.phone || 'N/A',
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
@@ -131,7 +154,7 @@ const getAllBookings = async (req, res) => {
         pickUpLat: cab.startLocationLatitude || null,
         pickUpLng: cab.startLocationLongitude || null,
         distance: '',
-        carname: cab.cabType || '',
+        carname: vehicleName, // Resolved brand + model
         pointAToBDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
         pointAToBTime: cab.time || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[1].slice(0, 5) : ''),
         paymentMethod: cab.paymentStatus || '',
@@ -140,7 +163,7 @@ const getAllBookings = async (req, res) => {
         type: 'cab',
         isCab: true
       };
-    });
+    }));
 
     const unifiedBookings = [...bookings, ...mappedCabBookings];
 
@@ -150,6 +173,121 @@ const getAllBookings = async (req, res) => {
     res.status(500).json({ message: 'Error fetching bookings', error });
   }
 };
+
+// --- SEGREGATED SESSIONS ---
+
+// Get only Self-Drive (Rental) Bookings
+const getSelfDriveBookings = async (req, res) => {
+  try {
+    const rentals = await Booking.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+
+    const enrichedRentals = await Promise.all(rentals.map(async (booking) => {
+      const json = booking.toJSON();
+      
+      // Resolve Vehicle Brand + Model
+      // Self-Drive typically comes from Car (2) or Bike (1). We check type from Vehicle table.
+      const vehicle = await Vehicle.findByPk(json.vehicleid);
+      const vehicleName = await resolveVehicleName(json.vehicleid, vehicle ? vehicle.vehicletype : 2);
+      
+      // Resolve Customer Info
+      const user = await User.findByPk(json.id, {
+        include: [{ model: UserAdditional }]
+      });
+
+      return {
+        ...json,
+        customerName: user?.UserAdditional?.FullName || 'N/A',
+        customerPhone: user?.phone || 'N/A',
+        carname: vehicleName,
+        pickUpLocation: json.pickup?.address || '',
+        dropOffLocation: json.destination?.address || '',
+        isCab: false,
+        type: 'rental'
+      };
+
+    }));
+
+    res.status(200).json({ message: "Self-Drive Booking Session", bookings: enrichedRentals });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching self-drive bookings", error: error.message });
+  }
+};
+
+// Get only Cab Trip Bookings
+const getCabBookings = async (req, res) => {
+  try {
+    const cabBookingsRaw = await CabBookingRequest.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'Customer',
+          attributes: ['phone'],
+          include: [{
+            model: UserAdditional,
+            attributes: ['FullName']
+          }]
+        }
+      ]
+    });
+
+    const mappedCabBookings = await Promise.all(cabBookingsRaw.map(async (cab) => {
+      let statusInt = 5;
+      if (cab.status === 'pending') statusInt = 5;
+      else if (cab.status === 'accepted') statusInt = 1;
+      else if (cab.status === 'started') statusInt = 2;
+      else if (cab.status === 'completed') statusInt = 3;
+      else if (cab.status === 'cancelled') statusInt = 4;
+
+      const vehicleName = await resolveVehicleName(cab.vehicleId, 3);
+
+      return {
+        Bookingid: cab.bookingId,
+        id: cab.userId,
+        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A',
+        customerPhone: cab.Customer?.phone || 'N/A',
+        vehicleid: cab.vehicleId,
+        driverid: cab.driverid,
+        date: cab.date,
+        time: cab.time,
+        status: statusInt,
+        amount: cab.estimatedPrice || 0,
+        GSTAmount: cab.gstAmount || Math.round((cab.estimatedPrice - (cab.estimatedPrice / 1.05)) * 100) / 100,
+        totalUserAmount: cab.estimatedPrice || 0,
+        TDSAmount: cab.tdsAmount || Math.round(((cab.estimatedPrice / 1.05) * 0.01) * 100) / 100,
+        totalHostAmount: cab.payToDriver || 0,
+        confirmationFee: cab.confirmationFee || 0,
+        payToDriver: cab.payToDriver || 0,
+        startTripDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
+        startTripTime: cab.startTripTime,
+        endTripTime: cab.endTripTime,
+        pickUpLocation: cab.startLocationAddress || '',
+        dropOffLocation: cab.endLocationAddress || '',
+        pickUpLat: cab.startLocationLatitude || null,
+        pickUpLng: cab.startLocationLongitude || null,
+        distance: cab.distanceTaken || '',
+        carname: vehicleName,
+        pointAToBDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
+        pointAToBTime: cab.time || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[1].slice(0, 5) : ''),
+        paymentMethod: cab.paymentStatus || '',
+        createdAt: cab.createdAt,
+        updatedAt: cab.updatedAt,
+        type: 'cab',
+        isCab: true
+      };
+
+    }));
+
+    res.status(200).json({ message: "Cab Booking Session", bookings: mappedCabBookings });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching cab bookings", error: error.message });
+  }
+};
+
 
 // Get a booking by ID
 const getBookingById = async (req, res) => {
@@ -373,5 +511,6 @@ const sendCabInvoice = async (req, res) => {
 
 module.exports = {
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
-  cancelCabBooking, sendCabInvoice, createAdminBooking
+  cancelCabBooking, sendCabInvoice, createAdminBooking,
+  getSelfDriveBookings, getCabBookings
 };

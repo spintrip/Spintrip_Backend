@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    isBot: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   });
 
 

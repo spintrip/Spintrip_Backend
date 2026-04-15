@@ -309,8 +309,10 @@ const putVehicleAdditional = async (req, res) => {
 
     const updatedvehicleAdditional = await vehicleAdditional.update(updateData, { where: { vehicleid: vehicleid } });
 
+    const finalCostPerHr = (req.body.costPerHr !== undefined) ? req.body.costPerHr : req.body.costperhr;
+
     const pricingPayload = {
-      costperhr: costperhr || null,
+      costperhr: (finalCostPerHr === '' || finalCostPerHr === undefined || finalCostPerHr === null) ? null : finalCostPerHr,
     };
 
     let price = await Pricing.findOne({ where: { vehicleid } });
@@ -323,18 +325,20 @@ const putVehicleAdditional = async (req, res) => {
         ...pricingPayload,
       });
     }
+    const safeInt = (val) => (val === '' || val === undefined || val === null ? null : parseInt(val));
+
     let Additional;
     if (vehicle.vehicletype == 1) {
       Additional = await Bike.findOne({ where: { vehicleid: vehicleid } });
       await Additional.update({
-        HorsePower: horsePower, helmet: helmet, helmetSpace: helmetSpace, FuelType: fuelType
+        HorsePower: safeInt(horsePower), helmet: helmet, helmetSpace: helmetSpace, FuelType: safeInt(fuelType)
       })
     }
     if (vehicle.vehicletype == 2) {
       Additional = await Car.findOne({ where: { vehicleid: vehicleid } });
       console.log(ac);
       const additional1 = await Additional.update({
-        HorsePower: horsePower,
+        HorsePower: safeInt(horsePower),
         AC: ac,
         Musicsystem: musicSystem,
         Autowindow: autoWindow,
@@ -344,7 +348,7 @@ const putVehicleAdditional = async (req, res) => {
         Reversecamera: reverseCamera,
         Transmission: transmission,
         Airbags: airBags,
-        FuelType: fuelType,
+        FuelType: safeInt(fuelType),
         PetFriendly: petFriendly,
         PowerSteering: powerSteering,
         ABS: abs,
@@ -415,7 +419,7 @@ const postPricing = async (req, res) => {
     const { vehicleid } = req.body;
     const Price = await Pricing.findOne({ where: { vehicleid: vehicleid } })
     if (Price) {
-      res.status(201).json({ "message": "price for the vehicle", vehicleid: Price.vehicleid, costPerHr: Price.costperhr });
+      res.status(201).json({ "message": "price for the vehicle", vehicleid: Price.vehicleid, costPerHr: Price.costperhr, costperhr: Price.costperhr });
     }
     else {
       res.status(400).json({ "message": "pricing cannot be found" });
@@ -571,7 +575,7 @@ const getVehicleAdditional = async (req, res) => {
       res.status(200).json({
         message: "vehicle Additional data, no image found",
         vehicleAdditionals,
-        additional,
+        additional: { ...additional, pricing: { costPerHr: pricing.costperhr, costperhr: pricing.costperhr } },
         booleanSpecs,
         updatedFeatures
       });

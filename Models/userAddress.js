@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: false,
       },
       fullAddress: {
-        type: DataTypes.STRING(100),
+        type: DataTypes.STRING(500),
         allowNull: false,
       },
       latitude: {
@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
       longitude: {
         type: DataTypes.STRING(100),
         allowNull: false,
+      },
+      addressType: {
+        type: DataTypes.STRING(20),
+        defaultValue: 'Other', // Values: 'Home', 'Work', 'Other'
       },
     });
   

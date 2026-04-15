@@ -14,6 +14,22 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING, 
         defaultValue: 'open' 
       },
+      category: {
+        type: DataTypes.STRING,
+        defaultValue: 'general'
+      },
+      bookingId: {
+        type: DataTypes.STRING(36),
+        allowNull: true
+      },
+      vehicleId: {
+        type: DataTypes.STRING(36),
+        allowNull: true
+      },
+      metadata: {
+        type: DataTypes.JSON,
+        allowNull: true
+      },
       priority: { 
         type: DataTypes.INTEGER, 
         defaultValue: 1 

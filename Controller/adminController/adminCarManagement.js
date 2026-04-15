@@ -1,4 +1,25 @@
-const {CarAdditional, Admin, Vehicle, VehicleAdditional} = require('../../Models');
+const {CarAdditional, Admin, Vehicle, VehicleAdditional, Car, Bike, Cab} = require('../../Models');
+
+// Helper to resolve vehicle brand + model
+const resolveVehicleName = async (vehicleId, type) => {
+  try {
+    if (!vehicleId) return 'N/A';
+    if (type == 1) { // Bike
+      const bike = await Bike.findByPk(vehicleId);
+      return bike ? `${bike.brand} ${bike.bikemodel}` : 'Bike ID: ' + vehicleId;
+    } else if (type == 2) { // Car
+      const car = await Car.findByPk(vehicleId);
+      return car ? `${car.brand} ${car.carmodel}` : 'Car ID: ' + vehicleId;
+    } else if (type == 3) { // Cab
+      const cab = await Cab.findByPk(vehicleId);
+      return cab ? `${cab.brand} ${cab.model}` : 'Cab ID: ' + vehicleId;
+    }
+    return 'Vehicle ID: ' + vehicleId;
+  } catch (error) {
+    return 'Error resolving name';
+  }
+};
+
 const fs = require('fs');
 const path = require('path');
 
@@ -23,11 +44,14 @@ const pendingVehicleProfile = async (req, res) => {
       const updatedProfiles = await Promise.all(
         pendingProfiles.map(async (profile) => {
           const vehicle = await Vehicle.findByPk(profile.vehicleid);
+          const vehicleName = vehicle ? await resolveVehicleName(vehicle.vehicleid, vehicle.vehicletype) : 'Unknown';
           
           return {
             ...profile.toJSON(),
+            vehicleName: vehicleName,
             vehicle: vehicle ? vehicle.toJSON() : null
           };
+
         })
       );
   
