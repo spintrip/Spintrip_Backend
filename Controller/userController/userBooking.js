@@ -159,10 +159,10 @@ const booking = async (req, res) => {
       return res.status(404).json({ message: 'Host not found' });
     }
 
-    if (host.onlyVerifiedUsers) {
+    if (!isCab) {
       const userAdditional = await UserAdditional.findOne({ where: { id: userId } });
-      if (!userAdditional || userAdditional.verification_status == 1 || userAdditional.verification_status == null) {
-        return res.status(403).json({ message: 'Only verified users can book this vehicle' });
+      if (!userAdditional || userAdditional.verification_status != 2) {
+        return res.status(403).json({ message: 'You must be a verified user to book a self-drive vehicle. Please complete your profile verification.' });
       }
     }
 
@@ -1009,7 +1009,15 @@ const userbookings = async (req, res) => {
       res.status(200).json({ message: [] });
     }
   } catch (err) {
-    require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\nUserBookings Crash: ' + (err.stack || err.message) + '\\n\\n');
+    try {
+      const path = require('path');
+      const fs = require('fs');
+      const logDir = path.join(__dirname, '..', '..', 'Logs');
+      if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+      fs.appendFileSync(path.join(logDir, 'cab_error.txt'), new Date().toISOString() + '\nUserBookings Crash: ' + (err.stack || err.message) + '\n\n');
+    } catch (logErr) {
+      console.error("Failed to write to log file:", logErr);
+    }
     console.error(err);
     res.status(500).json({ message: 'Server error: ' + (err.message || '') });
   }
