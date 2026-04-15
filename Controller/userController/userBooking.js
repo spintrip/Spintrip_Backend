@@ -560,9 +560,12 @@ const extend = async (req, res) => {
     // Create the extended booking if all checks pass
     const additionalHours = calculateTripHours(currentEndDate, newEndDate, currentEndTime, newEndTime);
     const cph = await Pricing.findOne({ where: { vehicleid: booking.vehicleid } });
+    const tax = await Tax.findOne({ where: { id: 1 } });
+    if (!tax) {
+      return res.status(404).json({ message: 'Tax data not found. Please contact admin.' });
+    }
     let additionalAmount = Math.round(cph.costperhr * additionalHours);
     additionalAmount += (tax.Commission || 20) * (additionalAmount) / 100;
-    const tax = await Tax.findOne({ where: { id: 1 } });
     if (!tax) {
       return res.status(404).json({ message: 'Tax data not found' });
     }
@@ -712,6 +715,11 @@ const userbookings = async (req, res) => {
     const bookings = await Booking.findAll({ where: { id: userId } });
     const cabBookings = await CabBookingRequest.findAll({ where: { userId } });
     const user = await User.findOne({ where: { id: userId } });
+    const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
+    const GST_RATE = taxRow ? taxRow.GST : 5.0;
+    const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+    const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
+
     if (bookings && bookings.length > 0) {
       const featureList = await Feature.findAll();
       const featureMap = featureList.reduce((map, feature) => {
@@ -809,10 +817,6 @@ const userbookings = async (req, res) => {
       const userBookings = (await Promise.all(userBookingPromises)).filter(booking => booking !== null);
 
       // PARSE AND FORMAT NEW CAB BOOKING REQUESTS
-      const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
-      const GST_RATE = taxRow ? taxRow.GST : 5.0;
-      const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
-      const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
       const cabBookingPromises = cabBookings.map(async (cab) => {
         const vehicle = cab.vehicleId ? await Vehicle.findOne({ where: { vehicleid: cab.vehicleId } }) : null;
         let vehicleModel = cab.cabType || "Mini Cab";

@@ -169,7 +169,7 @@ const tripstart = async (req, res) => {
     res.status(201).json({ message: 'Trip has started' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error: ' + error.message });
+    res.status(500).json({ message: 'Server error: ' + err.message });
   }
 };
 
