@@ -1582,9 +1582,9 @@ const endTrip = async (req, res) => {
 //   }
 // };
 
-const getMatchedOperationalCity = async (address, inputCity = "") => {
+const getMatchedOperationalCity = async (address, inputCity = "", preFetchedCities = null) => {
   try {
-    const cities = await City.findAll({ where: { isActive: true } });
+    const cities = preFetchedCities || await City.findAll({ where: { isActive: true } });
     let addrLower = (address || "").toLowerCase().trim();
     let cityLower = (inputCity || "").toLowerCase().trim();
 
@@ -1943,8 +1943,28 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
  */
 const getBulkEstimates = async (req, res) => {
   const { origin, destination, cabTypes, bookingType = "Local", address = "", city = "" } = req.body;
-  console.log(req.body);
+  
   try {
+    // 1. Core Data Synchronization (Pre-fetch outside loop for performance)
+    const [taxRow, activeCities] = await Promise.all([
+      Tax.findOne({ order: [['createdAt', 'DESC']] }),
+      City.findAll({ where: { isActive: true } })
+    ]);
+
+    const matchedCity = await getMatchedOperationalCity(address, city, activeCities);
+    
+    // 2. Fetch all potentially relevant RateCards for this city in one go
+    const allRateCards = await HostCabRateCard.findAll({
+      where: {
+        isActive: true,
+        city: matchedCity ? { [Op.iLike]: matchedCity } : { [Op.ne]: null }
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
+    const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
+
     const originStr = typeof origin === "string" ? origin : `${origin?.latitude || 0},${origin?.longitude || 0}`;
     const destinationValid = (destination && (typeof destination === 'string' || (destination?.latitude && destination?.longitude)));
     const destStr = destinationValid ? (typeof destination === "string" ? destination : `${destination.latitude},${destination.longitude}`) : originStr;
@@ -1966,9 +1986,7 @@ const getBulkEstimates = async (req, res) => {
       }
     }
 
-    const matchedCity = await getMatchedOperationalCity(address, city);
-
-    // 🔥 UNIVERSAL SMART ROUTING
+    // 🛡️ UNIVERSAL SMART ROUTING
     const originAddr = (origin?.address || "").toLowerCase();
     const destAddr = (destination?.address || "").toLowerCase();
     let evaluatedType = bookingType;
@@ -1982,33 +2000,21 @@ const getBulkEstimates = async (req, res) => {
     }
 
     const results = {};
-    console.log(`[Estimates] Calculating for ${cabTypes.join(', ')} in ${matchedCity || 'Unknown City'} (Type: ${evaluatedType})`);
+    console.log(`[Estimates] Calculating for ${cabTypes.join(', ')} in ${matchedCity || 'Unknown City'} (Type: ${evaluatedType}) [Optimized]`);
 
     for (const type of cabTypes) {
-      // 🚀 FUZZY MATCHING: Look for exact match or keyword match (e.g., "Mini" matches "Mini Cab")
-      let rateCards = await HostCabRateCard.findAll({
-        where: {
-          [Op.or]: [
-            { cabType: { [Op.iLike]: type.trim() } },
-            { cabType: { [Op.iLike]: `%${type.trim()}%` } }
-          ],
-          isActive: true
-        },
-        order: [['createdAt', 'DESC']]
-      });
+      // 🚀 FAST FUZZY MATCH: Filter from the already pre-fetched allRateCards array
+      const cleanedType = type.trim().toLowerCase();
+      let card = allRateCards.find(rc => 
+        rc.cabType.toLowerCase() === cleanedType || 
+        rc.cabType.toLowerCase().includes(cleanedType) || 
+        cleanedType.includes(rc.cabType.toLowerCase())
+      );
 
-      // 🛡️ SMART FALLBACK: If no match for this specific type, use the most recent active card available in the city
-      if (rateCards.length === 0) {
-        console.log(`[Estimates] No rate cards for ${type}, falling back to general active cards...`);
-        rateCards = await HostCabRateCard.findAll({
-           where: { isActive: true },
-           order: [['createdAt', 'DESC']]
-        });
+      // Fallback: If no exact/keyword match, just use the most recent card in the city
+      if (!card && allRateCards.length > 0) {
+        card = allRateCards[0];
       }
-
-      if (rateCards.length === 0) continue;
-
-      const card = (matchedCity ? rateCards.find(rc => rc.city?.toLowerCase() === matchedCity.toLowerCase()) : null) || rateCards[0];
 
       if (card) {
         let base = 0;
@@ -2033,10 +2039,6 @@ const getBulkEstimates = async (req, res) => {
         const total = Math.round((base * (ratio > 2.5 ? 1.3 : 1) * (card.surgeMultiplier || 1.0)) + (card.tollCharges || 0));
 
         if (total > 0) {
-          const taxRow = await Tax.findOne({ order: [['createdAt', 'DESC']] });
-          const COMMISSION_RATE = taxRow ? (taxRow.Commission || 20.0) : 20.0;
-          const TDS_RATE = taxRow ? taxRow.TDS : 1.0;
-
           const netBase = total / 1.05;
           const comm = netBase * (COMMISSION_RATE / 100);
           const tds = netBase * (TDS_RATE / 100);
