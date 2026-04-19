@@ -1,25 +1,53 @@
 const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, Car, Bike, sequelize } = require('../../Models');
-const { notifyBookingAllocation } = require('../../Utils/notificationService');
+const { notifyBookingAllocation, notifyUserById } = require('../../Utils/notificationService');
 const { refundBookingCoins } = require('../cabController');
 
-// Helper to resolve vehicle brand + model
-const resolveVehicleName = async (vehicleId, type) => {
-  try {
-    if (!vehicleId) return 'N/A';
-    if (type == 1) { // Bike
-      const bike = await Bike.findByPk(vehicleId);
-      return bike ? `${bike.brand} ${bike.bikemodel}` : 'Bike ID: ' + vehicleId;
-    } else if (type == 2) { // Car
-      const car = await Car.findByPk(vehicleId);
-      return car ? `${car.brand} ${car.carmodel}` : 'Car ID: ' + vehicleId;
-    } else if (type == 3) { // Cab
-      const cab = await Cab.findByPk(vehicleId);
-      return cab ? `${cab.brand} ${cab.model}` : 'Cab ID: ' + vehicleId;
-    }
-    return 'Vehicle ID: ' + vehicleId;
-  } catch (error) {
-    return 'Error resolving name';
+const { Op } = require('sequelize');
+
+// Optimize backend N+1 Queries: Batch fetching helpers
+const prefetchVehicleNames = async (vehicleRequests) => {
+  const bikeIds = [...new Set(vehicleRequests.filter(v => v.type == 1 && v.id).map(v => v.id))];
+  const carIds = [...new Set(vehicleRequests.filter(v => v.type == 2 && v.id).map(v => v.id))];
+  const cabIds = [...new Set(vehicleRequests.filter(v => v.type == 3 && v.id).map(v => v.id))];
+
+  const map = {};
+
+  if (bikeIds.length > 0) {
+    const bikes = await Bike.findAll({ where: { vehicleid: { [Op.in]: bikeIds } } });
+    bikes.forEach(b => map[`1_${b.vehicleid}`] = `${b.brand} ${b.bikemodel}`);
   }
+  if (carIds.length > 0) {
+    const cars = await Car.findAll({ where: { vehicleid: { [Op.in]: carIds } } });
+    cars.forEach(c => map[`2_${c.vehicleid}`] = `${c.brand} ${c.carmodel}`);
+  }
+  if (cabIds.length > 0) {
+    const cabs = await Cab.findAll({ where: { vehicleid: { [Op.in]: cabIds } } });
+    cabs.forEach(c => map[`3_${c.vehicleid}`] = `${c.brand} ${c.model}`);
+  }
+  return map;
+};
+
+const prefetchUsers = async (userIds) => {
+  const cleanIds = [...new Set(userIds.filter(id => id))];
+  if (cleanIds.length === 0) return {};
+  const users = await User.findAll({
+    where: { id: { [Op.in]: cleanIds } },
+    include: [{ model: UserAdditional }]
+  });
+  const map = {};
+  users.forEach(u => map[u.id] = u);
+  return map;
+};
+
+const prefetchVehicles = async (vehicleIds) => {
+  const cleanIds = [...new Set(vehicleIds.filter(id => id))];
+  if (cleanIds.length === 0) return {};
+  const vehicles = await Vehicle.findAll({
+    where: { vehicleid: { [Op.in]: cleanIds } }
+  });
+  const map = {};
+  vehicles.forEach(v => map[v.vehicleid] = v);
+  return map;
 };
 
 
@@ -119,7 +147,11 @@ const getAllBookings = async (req, res) => {
     });
 
 
-    const mappedCabBookings = await Promise.all(cabBookingsRaw.map(async (cab) => {
+    // ⚡ PREFETCH CAB VEHICLE NAMES
+    const cabVehicleRequests = cabBookingsRaw.map(cab => ({ id: cab.vehicleId, type: 3 }));
+    const cabVehicleNamesMap = await prefetchVehicleNames(cabVehicleRequests);
+
+    const mappedCabBookings = cabBookingsRaw.map((cab) => {
       let statusInt = 5;
       if (cab.status === 'pending') statusInt = 5;
       else if (cab.status === 'accepted') statusInt = 1;
@@ -127,7 +159,7 @@ const getAllBookings = async (req, res) => {
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
 
-      const vehicleName = await resolveVehicleName(cab.vehicleId, 3);
+      const vehicleName = cabVehicleNamesMap[`3_${cab.vehicleId}`] || 'Cab ID: ' + cab.vehicleId;
 
       return {
         Bookingid: cab.bookingId,
@@ -154,7 +186,7 @@ const getAllBookings = async (req, res) => {
         pickUpLat: cab.startLocationLatitude || null,
         pickUpLng: cab.startLocationLongitude || null,
         distance: '',
-        carname: vehicleName, // Resolved brand + model
+        carname: vehicleName, // Resolved brand + model from batch fetch
         pointAToBDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
         pointAToBTime: cab.time || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[1].slice(0, 5) : ''),
         paymentMethod: cab.paymentStatus || '',
@@ -163,7 +195,7 @@ const getAllBookings = async (req, res) => {
         type: 'cab',
         isCab: true
       };
-    }));
+    });
 
     const unifiedBookings = [...bookings, ...mappedCabBookings];
 
@@ -183,18 +215,25 @@ const getSelfDriveBookings = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
-    const enrichedRentals = await Promise.all(rentals.map(async (booking) => {
+    // ⚡ PREFETCH RELATIONS
+    const vehicleMap = await prefetchVehicles(rentals.map(r => r.vehicleid));
+    const userMap = await prefetchUsers(rentals.map(r => r.id));
+    
+    // ⚡ PREFETCH VEHICLE NAMES
+    const vehicleRequests = rentals.map(r => {
+      const v = vehicleMap[r.vehicleid];
+      return { id: r.vehicleid, type: v ? v.vehicletype : 2 };
+    });
+    const vehicleNamesMap = await prefetchVehicleNames(vehicleRequests);
+
+    const enrichedRentals = rentals.map((booking) => {
       const json = booking.toJSON();
       
-      // Resolve Vehicle Brand + Model
-      // Self-Drive typically comes from Car (2) or Bike (1). We check type from Vehicle table.
-      const vehicle = await Vehicle.findByPk(json.vehicleid);
-      const vehicleName = await resolveVehicleName(json.vehicleid, vehicle ? vehicle.vehicletype : 2);
+      const v = vehicleMap[json.vehicleid];
+      const type = v ? v.vehicletype : 2;
+      const vehicleName = vehicleNamesMap[`${type}_${json.vehicleid}`] || 'Vehicle ID: ' + json.vehicleid;
       
-      // Resolve Customer Info
-      const user = await User.findByPk(json.id, {
-        include: [{ model: UserAdditional }]
-      });
+      const user = userMap[json.id];
 
       return {
         ...json,
@@ -207,7 +246,7 @@ const getSelfDriveBookings = async (req, res) => {
         type: 'rental'
       };
 
-    }));
+    });
 
     res.status(200).json({ message: "Self-Drive Booking Session", bookings: enrichedRentals });
   } catch (error) {
@@ -234,7 +273,11 @@ const getCabBookings = async (req, res) => {
       ]
     });
 
-    const mappedCabBookings = await Promise.all(cabBookingsRaw.map(async (cab) => {
+    // ⚡ PREFETCH CAB VEHICLE NAMES
+    const cabVehicleRequests = cabBookingsRaw.map(cab => ({ id: cab.vehicleId, type: 3 }));
+    const cabVehicleNamesMap = await prefetchVehicleNames(cabVehicleRequests);
+
+    const mappedCabBookings = cabBookingsRaw.map((cab) => {
       let statusInt = 5;
       if (cab.status === 'pending') statusInt = 5;
       else if (cab.status === 'accepted') statusInt = 1;
@@ -242,7 +285,7 @@ const getCabBookings = async (req, res) => {
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
 
-      const vehicleName = await resolveVehicleName(cab.vehicleId, 3);
+      const vehicleName = cabVehicleNamesMap[`3_${cab.vehicleId}`] || 'Cab ID: ' + cab.vehicleId;
 
       return {
         Bookingid: cab.bookingId,
@@ -279,7 +322,7 @@ const getCabBookings = async (req, res) => {
         isCab: true
       };
 
-    }));
+    });
 
     res.status(200).json({ message: "Cab Booking Session", bookings: mappedCabBookings });
   } catch (error) {
@@ -401,8 +444,18 @@ const updateBookingById = async (req, res) => {
           await notifyBookingAllocation(
             cabBooking.bookingId,
             updatedFields.driverid || cabBooking.driverid,
-            cabBooking.userId
+            cabBooking.userId,
+            true // 🔔 High Priority Ringing
           );
+        }
+
+        // 🔔 Notify User for Status Changes
+        if (updatedFields.status === 2) {
+          await notifyUserById(cabBooking.userId, "Trip Started", "Your trip has been started by admin.", { bookingId: cabBooking.bookingId, type: "trip_started", click_action: "FLUTTER_NOTIFICATION_CLICK" });
+        } else if (updatedFields.status === 3) {
+          await notifyUserById(cabBooking.userId, "Trip Completed", "Your trip has been completed. Thank you!", { bookingId: cabBooking.bookingId, type: "trip_completed", click_action: "FLUTTER_NOTIFICATION_CLICK" });
+        } else if (updatedFields.status === 4) {
+          await notifyUserById(cabBooking.userId, "Booking Cancelled", "Your booking has been cancelled by admin.", { bookingId: cabBooking.bookingId, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
         }
 
         return res.status(200).json({ message: 'Cab Booking updated successfully', booking: cabBooking });
@@ -455,6 +508,13 @@ const cancelCabBooking = async (req, res) => {
       await refundBookingCoins(id, t);
 
       await t.commit();
+
+      // 🔔 Notify User & Driver
+      await notifyUserById(booking.userId, "Booking Cancelled", "Your cab booking has been cancelled by admin.", { bookingId: id, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
+      if (booking.driverid) {
+          await notifyUserById(booking.driverid, "Booking Cancelled", `The booking ${id} has been cancelled by admin.`, { bookingId: id, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
+      }
+
       res.status(200).json({ message: 'Cab Booking Cancelled successfully and coins refunded (if any)', booking });
     } catch (err) {
       await t.rollback();

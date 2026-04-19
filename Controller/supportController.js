@@ -3,6 +3,7 @@ const {
   Device, HostPayment, DriverWithdrawal, Vehicle 
 } = require('../Models');
 const uuid = require('uuid');
+const { notifyUserById } = require('../Utils/notificationService');
 
 // SPINTRIP POLICIES (Extracted from Frontend policy.dart)
 const POLICIES = {
@@ -298,6 +299,15 @@ const resolveSupportTicket = async (req, res) => {
     }
     supportTicket.status = 'resolved';
     await supportTicket.save();
+
+    // 🔔 Notify User
+    await notifyUserById(
+      supportTicket.userId,
+      "Support Ticket Resolved",
+      `Your ticket regarding "${supportTicket.subject}" has been marked as resolved.`,
+      { supportId, type: "support_update", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+    );
+
     res.status(200).json(supportTicket);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -334,6 +344,15 @@ const viewSupportTickets = async (req, res) => {
       await SupportChat.create({ id:id, supportId: ticketId, adminId: req.user.id, senderId: req.user.id,  message: reply  });
       ticket.status = 'Replied';
       await ticket.save();
+
+      // 🔔 Notify User
+      await notifyUserById(
+        ticket.userId,
+        "New Message from Support",
+        `We have replied to your ticket: "${ticket.subject}". Check the chat for details.`,
+        { supportId: ticketId, type: "support_reply", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+      );
+
       res.status(200).json({ message: 'Reply sent successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Server error', error });

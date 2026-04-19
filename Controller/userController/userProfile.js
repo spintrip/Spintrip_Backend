@@ -110,7 +110,7 @@ const getAllVehicleTypes = async (req, res) => {
       }
   
       // Update additional user information
-      const { dlNumber, fullName, aadharId, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber } = req.body;
+      const { dlNumber, fullName, aadharId, aadharNumber, panNumber, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber } = req.body;
       
       if (user.role === 'Driver' || user.role === 'driver') {
         const { Driver } = require('../../Models');
@@ -130,12 +130,28 @@ const getAllVehicleTypes = async (req, res) => {
       await userAdditional.update({
         Dlverification: dlNumber,
         FullName: fullName,
-        AadharVfid: aadharId,
+        AadharVfid: aadharNumber || aadharId,
+        PanVfid: panNumber, // 🆔 Support PAN storage from mobile app
         Email: email,
         Address: address,
         CurrentAddressVfid: currentAddressVfId,
         ml_data: mlData
       });
+
+      // 🔄 SYNC: If they are a driver, also update DriverAdditional for consistency in host/profile
+      if (user.role === 'Driver' || user.role === 'driver') {
+        const [driverAdditional] = await DriverAdditional.findOrCreate({
+          where: { id: userId },
+          defaults: { id: userId }
+        });
+        await driverAdditional.update({
+          FullName: fullName,
+          AadharVfid: aadharNumber || aadharId,
+          PanVfid: panNumber,
+          Email: email,
+          Address: address,
+        });
+      }
   
       res.status(200).json({ message: 'Profile Updated successfully' });
     } catch (error) {
@@ -239,12 +255,28 @@ const getAllVehicleTypes = async (req, res) => {
           pan: panFile ? panFile[0].location : undefined,
           verification_status: 1
         });
+
+        // 🔄 SYNC: If driver, also update DriverAdditional
+        if (user.role === 'Driver' || user.role === 'driver') {
+          const [driverAdd] = await DriverAdditional.findOrCreate({ where: { id: userId }, defaults: { id: userId } });
+          await driverAdd.update({
+            dl: dlFile ? dlFile[0].location : undefined,
+            aadhar: aadharFile ? aadharFile[0].location : undefined,
+            pan: panFile ? panFile[0].location : undefined,
+            verification_status: 1
+          });
+        }
       }
   
       if (profilePic) {
-        await userAdditional.update({
-          profilepic: profilePic[0].location,
-        });
+        const picLocation = profilePic[0].location;
+        await userAdditional.update({ profilepic: picLocation });
+        
+        // 🔄 SYNC PROFILE PIC
+        if (user.role === 'Driver' || user.role === 'driver') {
+           const [driverAdd] = await DriverAdditional.findOrCreate({ where: { id: userId }, defaults: { id: userId } });
+           await driverAdd.update({ profilepic: picLocation });
+        }
       }
   
       res.status(200).json({ message: 'Profile Updated successfully' });

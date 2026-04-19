@@ -16,7 +16,11 @@ const checkData = (value) => {
   return value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
 }
 const checkProfileImg = (value) => {
-  return value !== null && value !== undefined ? value : noProfileImg;
+  return value !== null && value !== undefined && value.length > 0 ? value[0] : noProfileImg;
+}
+
+const checkImage = (value) => {
+  return value !== null && value !== undefined && value.length > 0 ? value[0] : null;
 }
 
 const profileImageStorage = multerS3({
@@ -117,6 +121,7 @@ const hostProfile = async (req, res) => {
     // }));
     const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
     const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
+    const panFile = additionalInfo.pan ? [additionalInfo.pan] : [];
     
     const hostDriverLookup = await Driver.findOne({ where: { id: hostId } });
 
@@ -130,8 +135,9 @@ const hostProfile = async (req, res) => {
       address: checkData(additionalInfo.Address),
       verificationStatus: checkStatus(additionalInfo.verification_status),
       phone: user.phone,
-      profilePic: checkProfileImg(profilePic),
-      aadhar: checkProfileImg(aadharFile),
+      profileImage: checkProfileImg(profilePic), // 🔄 Standardized key
+      aadhar: checkImage(aadharFile), // 🔄 Single string
+      pan: checkImage(panFile), // 🔄 Single string
       businessName: checkData(additionalInfo.businessName),
       upiId: hostDriverLookup ? hostDriverLookup.upiId : null,
       bankAccountNumber: hostDriverLookup ? hostDriverLookup.bankAccountNumber : null,
@@ -154,7 +160,20 @@ const driverProfile = async (req, res) => {
     }
 
     const user = await User.findByPk(driverId);
-    const additionalInfo = await DriverAdditional.findByPk(driverId);
+    let additionalInfo = await DriverAdditional.findByPk(driverId);
+
+    // 🔄 FALLBACK: If driver-specific info is missing or set to placeholder, check the main UserAdditional table
+    if (!additionalInfo || !additionalInfo.AadharVfid || additionalInfo.AadharVfid === 'Not Provided') {
+      const userAdd = await UserAdditional.findByPk(driverId);
+      if (userAdd) {
+        additionalInfo = additionalInfo || {}; 
+        additionalInfo.FullName = (additionalInfo.FullName && additionalInfo.FullName !== 'Not Provided') ? additionalInfo.FullName : userAdd.FullName;
+        additionalInfo.Email = (additionalInfo.Email && additionalInfo.Email !== 'Not Provided') ? additionalInfo.Email : userAdd.Email;
+        additionalInfo.AadharVfid = (additionalInfo.AadharVfid && additionalInfo.AadharVfid !== 'Not Provided') ? additionalInfo.AadharVfid : userAdd.AadharVfid;
+        additionalInfo.PanVfid = additionalInfo.PanVfid || userAdd.PanVfid;
+        additionalInfo.Address = (additionalInfo.Address && additionalInfo.Address !== 'Not Provided') ? additionalInfo.Address : userAdd.Address;
+      }
+    }
 
     const host = driver.hostid
       ? await Host.findByPk(driver.hostid)
@@ -168,6 +187,10 @@ const driverProfile = async (req, res) => {
       ? [additionalInfo.aadhar]
       : [];
 
+    const panFile = additionalInfo?.pan
+      ? [additionalInfo.pan]
+      : [];
+
     const profile = {
       id: driver.id,
       fullName: additionalInfo?.FullName || null,
@@ -175,14 +198,16 @@ const driverProfile = async (req, res) => {
       aadharNumber: additionalInfo?.AadharVfid || null,
       address: additionalInfo?.Address || null,
       phone: user?.phone || null,
-      profilePic,
-      aadhar: aadharFile,
+      profileImage: checkImage(profilePic), // 🔄 Standardized key
+      aadhar: checkImage(aadharFile), // 🔄 Single string instead of array
+      pan: checkImage(panFile), // 🔄 Single string instead of array
       hostId: driver.hostid || null,
       hostAssigned: !!driver.hostid,
       createdAt: driver.createdAt,
       updatedAt: driver.updatedAt,
       upiId: driver.upiId || null,
       bankAccountNumber: driver.bankAccountNumber || null,
+      panNumber: additionalInfo?.PanVfid || null, // 🆔 Driver PAN storage
       isActive: driver?.isActive !== undefined ? driver.isActive : false
     };
 
@@ -203,14 +228,28 @@ const updateProfile = async (req, res) => {
     if (!host) {
       const driver = await Driver.findByPk(hostId);
       if (driver) {
-         const { fullName, aadharId, email, address, upiId, bankAccountNumber } = req.body;
-         if (fullName || aadharId || email || address) {
+         const { fullName, aadharId, aadharNumber, panNumber, email, address, upiId, bankAccountNumber } = req.body;
+         if (fullName || aadharId || aadharNumber || panNumber || email || address) {
             await DriverAdditional.update({
               FullName: fullName,
-              AadharVfid: aadharId,
+              AadharVfid: aadharNumber || aadharId,
+              PanVfid: panNumber,
               Email: email,
               Address: address,
             }, { where: { id: hostId } });
+
+            // 🔄 SYNC: Also update UserAdditional for consistency in users/profile
+            const [userAdditional] = await UserAdditional.findOrCreate({
+              where: { id: hostId },
+              defaults: { id: hostId }
+            });
+            await userAdditional.update({
+              FullName: fullName,
+              AadharVfid: aadharNumber || aadharId,
+              PanVfid: panNumber,
+              Email: email,
+              Address: address,
+            });
          }
          
          await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: hostId } });
@@ -221,15 +260,15 @@ const updateProfile = async (req, res) => {
     }
 
     // Update additional user information
-    const { fullName, aadharId, email, address, businessName, GSTnumber, PANnumber, onlyVerifiedUsers } = req.body;
+    const { fullName, aadharId, aadharNumber, panNumber, email, address, businessName, GSTnumber, PANnumber, onlyVerifiedUsers } = req.body;
 
-    if (fullName || aadharId || email || address || businessName || GSTnumber || PANnumber) {
+    if (fullName || aadharId || aadharNumber || panNumber || email || address || businessName || GSTnumber || PANnumber) {
       await HostAdditional.update({
         FullName: fullName,
         businessName: businessName,
         GSTnumber: GSTnumber,
-        PANnumber: PANnumber,
-        AadharVfid: aadharId,
+        PANnumber: panNumber || PANnumber,
+        AadharVfid: aadharNumber || aadharId,
         Email: email,
         Address: address,
       }, { where: { id: hostId } });
@@ -575,7 +614,7 @@ const verifyProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const { aadharFile, profilePic, dlFile } = req.files || {};
+    const { aadharFile, profilePic, dlFile, panFile } = req.files || {};
 
     if (user.role === 'Driver' || user.role === 'driver') {
       const [driverAdditional] = await DriverAdditional.findOrCreate({
@@ -585,6 +624,15 @@ const verifyProfile = async (req, res) => {
       if (profilePic && profilePic[0]) await driverAdditional.update({ profilepic: profilePic[0].location, verification_status: 1 });
       if (dlFile && dlFile[0]) await driverAdditional.update({ dl: dlFile[0].location, verification_status: 1 });
       if (aadharFile && aadharFile[0]) await driverAdditional.update({ aadhar: aadharFile[0].location, verification_status: 1 });
+      if (panFile && panFile[0]) await driverAdditional.update({ pan: panFile[0].location, verification_status: 1 });
+      
+      // 🔄 SYNC: Also update UserAdditional for consistency
+      const [userAdditional] = await UserAdditional.findOrCreate({ where: { id: userId }, defaults: { id: userId } });
+      if (profilePic && profilePic[0]) await userAdditional.update({ profilepic: profilePic[0].location });
+      if (dlFile && dlFile[0]) await userAdditional.update({ dl: dlFile[0].location });
+      if (aadharFile && aadharFile[0]) await userAdditional.update({ aadhar: aadharFile[0].location });
+      if (panFile && panFile[0]) await userAdditional.update({ pan: panFile[0].location, verification_status: 1 });
+
       return res.status(200).json({ message: 'Driver Profile updated successfully' });
     }
 
@@ -603,6 +651,10 @@ const verifyProfile = async (req, res) => {
 
     if (aadharFile && aadharFile[0]) {
       await hostAdditional.update({ aadhar: aadharFile[0].location || null });
+    }
+
+    if (panFile && panFile[0]) {
+      await hostAdditional.update({ pan: panFile[0].location || null }); // Assuming HostAdditional might also need PAN photo
     }
 
     res.status(200).json({ message: 'Profile updated successfully' });

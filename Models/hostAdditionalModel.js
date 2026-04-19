@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
       CurrentAddressVfid: { type: DataTypes.STRING, unique: true },
       ml_data: DataTypes.BLOB,
       profilepic: DataTypes.STRING,
-      aadhar: DataTypes.STRING
+      aadhar: DataTypes.STRING,
+      pan: DataTypes.STRING // 🖼️ Added for PAN photo storage
     });
 
   

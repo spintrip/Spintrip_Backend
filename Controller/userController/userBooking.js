@@ -1,5 +1,5 @@
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction, CabBookingRequest, CabBookingAccepted } = require('../../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction, CabBookingRequest, CabBookingAccepted, Offer } = require('../../Models');
 const uuid = require('uuid');
 const { Op } = require('sequelize');
 const moment = require('moment');
@@ -15,6 +15,7 @@ const {
 } = require('../../Controller/emailController');
 const { checkData, checkStatus } = require('./userProfile');
 const { refundBookingCoins } = require('../cabController');
+const { notifyUserById } = require('../../Utils/notificationService');
 
 const noVehicleImg = `https://spintrip-s3bucket.s3.ap-south-1.amazonaws.com/vehicleAdditional/no_image.png`;
 
@@ -323,6 +324,40 @@ const booking = async (req, res) => {
       amount = req.body.amount || 0;
     }
 
+    // --- 🎟️ PROMO CODE USAGE ---
+    let discountAmount = 0;
+    let offerId = null;
+
+    if (req.body.promoCode) {
+      const promoCode = req.body.promoCode;
+      const offer = await Offer.findOne({
+        where: {
+          code: promoCode,
+          isActive: true,
+          [Op.or]: [
+            { expiryDate: null },
+            { expiryDate: { [Op.gt]: new Date() } }
+          ]
+        },
+        transaction: t
+      });
+
+      if (offer) {
+        if (amount >= offer.minAmount) {
+          let promoDiscount = amount * (offer.percentage / 100);
+          if (promoDiscount > offer.maxDiscount) promoDiscount = offer.maxDiscount;
+          
+          if (promoDiscount > 0) {
+            discountAmount = Math.round(promoDiscount * 100) / 100;
+            amount = Math.round((amount - discountAmount) * 100) / 100;
+            offerId = offer.id;
+            console.log(`Promo ${promoCode} applied: ₹${discountAmount} discount on self-drive booking`);
+          }
+        }
+      }
+    }
+    // --------------------------
+
     let driverId = null;
     if (isCab) {
       const cabData = await Cab.findOne({ where: { vehicleid } });
@@ -353,6 +388,9 @@ const booking = async (req, res) => {
       driverid: isCab ? driverId : null,
       pickup: isCab ? pickup : null,
       destination: isCab ? destination : null,
+
+      discountAmount: discountAmount,
+      offerId: offerId,
     }, { transaction: t });
 
     await t.commit();
@@ -376,6 +414,42 @@ const booking = async (req, res) => {
     // await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
 
     res.status(201).json({ message: 'Booking successful', bookings });
+
+    // ✉️ Automated Welcome Message from Host (Airbnb style)
+    if (!isCab) {
+      const welcomeMessage = "Thank you for booking my vehicle! We are excited to host you. Please reach out if you have any questions before your trip.";
+      try {
+        await Chat.create({
+          bookingId: bookingid,
+          senderId: host.id,
+          receiverId: userId,
+          message: welcomeMessage
+        });
+
+        // 🔔 Notify Customer about the new message
+        await notifyUserById(
+          userId,
+          "New Message from Host",
+          welcomeMessage,
+          { bookingId: bookingid, senderId: host.id, type: "chat", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        );
+      } catch (chatError) {
+        console.error("Error sending automated welcome message:", chatError);
+        // We don't fail the booking if the automated message fails
+      }
+    }
+
+    // 🔔 Notify Host/Driver
+    const recipientId = isCab ? driverId : host.id;
+    if (recipientId) {
+      await notifyUserById(
+        recipientId,
+        "New Booking Received",
+        isCab ? `You have been assigned a new cab booking (ID: ${bookingid}).` : `New rental booking for your vehicle (ID: ${bookingid}).`,
+        { bookingId: bookingid, type: "new_booking", click_action: "FLUTTER_NOTIFICATION_CLICK" },
+        true // 🔔 High Priority Ringing
+      );
+    }
 
     } catch (innerError) {
       await t.rollback();
@@ -668,6 +742,18 @@ const cancelbooking = async (req, res) => {
           },
           { where: { Bookingid: bookingId } }
         );
+
+        // 🔔 Notify Host/Driver
+        const recipientId = booking.driverid || (await Vehicle.findByPk(booking.vehicleid))?.hostId;
+        if (recipientId) {
+          await notifyUserById(
+            recipientId,
+            "Booking Cancelled",
+            `Booking ID: ${bookingId} has been cancelled by the user.`,
+            { bookingId, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+          );
+        }
+
         res.status(201).json({ message: 'Trip Has been Cancelled' });
       }
       else {

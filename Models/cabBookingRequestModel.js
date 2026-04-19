@@ -56,6 +56,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.FLOAT,
         defaultValue: 0.0,
       },
+      discountAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+      offerId: { type: DataTypes.STRING(36), allowNull: true },
+      offerCode: { type: DataTypes.STRING, allowNull: true },
     });
   
     CabBookingRequest.associate = (models) => {

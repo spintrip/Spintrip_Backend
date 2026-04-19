@@ -4,6 +4,7 @@ const { User, Vehicle, Chat, Cab, UserAdditional, Listing, sequelize, Booking, P
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, DriverAdditional, BookingExtension, Transaction,
   Driver, CabBookingRequest, Wallet, WalletTransaction } = require('../../Models');
   const { Op } = require('sequelize');
+const { notifyUserById } = require('../../Utils/notificationService');
 const {
   sendBookingConfirmationEmail,
   sendBookingCompletionEmail,
@@ -132,6 +133,14 @@ const tripstart = async (req, res) => {
         await cabBooking.save({ transaction: t });
         await t.commit();
 
+        // 🔔 Notify User
+        await notifyUserById(
+          cabBooking.userId,
+          "Trip Started",
+          "Your cab journey has officially started!",
+          { bookingId, type: "trip_started", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        );
+
         return res.status(201).json({ message: 'Trip has started' });
       } catch (err) {
         await t.rollback();
@@ -167,6 +176,14 @@ const tripstart = async (req, res) => {
 
 
     res.status(201).json({ message: 'Trip has started' });
+
+    // 🔔 Notify User
+    await notifyUserById(
+      booking.id,
+      "Trip Started",
+      "Your rental trip has officially started. Have a safe drive!",
+      { bookingId, type: "trip_started", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+    );
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error: ' + err.message });
@@ -232,6 +249,14 @@ const bookingcompleted = async (req, res) => {
           console.error("Failed to generate or send cab invoice: ", emailErr);
         }
 
+        // 🔔 Notify User
+        await notifyUserById(
+          cabBooking.userId,
+          "Trip Completed",
+          "Your cab ride has been completed. Thank you for using Spintrip!",
+          { bookingId, type: "trip_completed", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        );
+
         return res.status(201).json({ message: 'Booking is now Complete and Payout Credited', redirectTo: '/rating', bookingId });
       } catch (err) {
         await t.rollback();
@@ -249,17 +274,15 @@ const bookingcompleted = async (req, res) => {
     });
 
     if (booking) {
-      // OTP Verification
-      if (!UserOtp) {
-        return res.status(400).json({ message: 'User OTP is required to complete the booking' });
-      }
-
-      const user = await User.findOne({
-        where: { id: booking.id }
-      });
-      
-      if (!user || user.otp != UserOtp) {
-        return res.status(400).json({ message: 'Invalid OTP' });
+      // OTP Verification (Optional for self-drive/legacy, enforced only if provided)
+      if (UserOtp) {
+        const user = await User.findOne({
+          where: { id: booking.id }
+        });
+        
+        if (!user || user.otp != UserOtp) {
+          return res.status(400).json({ message: 'Invalid OTP' });
+        }
       }
       const vehicle = await Vehicle.findOne({
         where: {
@@ -289,6 +312,14 @@ const bookingcompleted = async (req, res) => {
         console.error("Failed to generate or send invoice: ", invoiceErr);
         // We do not return 500 here because the trip itself successfully ended
       }
+
+      // 🔔 Notify User
+      await notifyUserById(
+        booking.id,
+        "Trip Completed",
+        "Your rental trip has been completed successfully.",
+        { bookingId, type: "trip_completed", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+      );
 
       return res.status(201).json({ message: 'booking complete', redirectTo: '/rating', bookingId });
     }

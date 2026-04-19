@@ -35,6 +35,46 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     await sequelize.query(`ALTER TABLE "UserAddresses" ALTER COLUMN "fullAddress" TYPE VARCHAR(500);`);
     
     console.log('Database Health Check: All schemas optimized and expanded.');
+    
+    // AUTO-PATCH: Fix Supports table schema
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "category" VARCHAR(255) DEFAULT 'general';`);
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "bookingId" VARCHAR(36);`);
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "vehicleId" VARCHAR(36);`);
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "metadata" JSONB;`);
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "priority" INTEGER DEFAULT 1;`);
+    await sequelize.query(`ALTER TABLE "Supports" ADD COLUMN IF NOT EXISTS "escalations" INTEGER DEFAULT 0;`);
+    
+    // AUTO-PATCH: Fix SupportChats table schema
+    await sequelize.query(`ALTER TABLE "SupportChats" ADD COLUMN IF NOT EXISTS "isBot" BOOLEAN DEFAULT FALSE;`);
+    await sequelize.query(`ALTER TABLE "SupportChats" ADD COLUMN IF NOT EXISTS "adminId" VARCHAR(36);`);
+    
+    // AUTO-PATCH: Offers & Discounts schema expansion
+    await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "discountAmount" DOUBLE PRECISION DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "offerId" VARCHAR(36);`);
+    
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "Offers" (
+        "id" UUID PRIMARY KEY,
+        "code" VARCHAR(255) NOT NULL UNIQUE,
+        "percentage" DOUBLE PRECISION DEFAULT 0,
+        "maxDiscount" DOUBLE PRECISION DEFAULT 0,
+        "minAmount" DOUBLE PRECISION DEFAULT 0,
+        "expiryDate" TIMESTAMP WITH TIME ZONE,
+        "isActive" BOOLEAN DEFAULT TRUE,
+        "usageLimit" INTEGER DEFAULT -1,
+        "usedCount" INTEGER DEFAULT 0,
+        "description" TEXT,
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "discountAmount" DOUBLE PRECISION DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "offerId" VARCHAR(36);`);
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "offerCode" VARCHAR(255);`);
+
+    console.log('Offers and Discounts schema synchronized.');
+    console.log('Support schema synchronized.');
 
   } catch (error) {
     console.error('Error during Database initialization/health check:', error.message);
@@ -98,6 +138,7 @@ db.HostCabRateCard = require('./rateCardModel')(sequelize, DataTypes);
 db.DriverWithdrawal = require('./driverWithdrawalModel')(sequelize, DataTypes);
 db.VehicleType = require('./vehicleTypeModel')(sequelize, DataTypes);
 db.ReferralReward = require('./referralRewardModel')(sequelize, DataTypes);
+db.Offer = require('./OfferModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
@@ -105,7 +146,7 @@ const associateModels = () => {
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
-    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward, Offer
   } = sequelize.models;
 
   // User and related associations

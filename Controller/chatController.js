@@ -1,5 +1,6 @@
 const db = require('../Models');
 const Chat = db.Chat;
+const { notifyUserById } = require('../Utils/notificationService');
 
 // Send a message
 exports.sendMessage = async (req, res) => {
@@ -9,6 +10,15 @@ exports.sendMessage = async (req, res) => {
 
     try {
         const newMessage = await Chat.create({ bookingId, senderId, receiverId, message });
+        
+        // 🔔 Notify Receiver
+        await notifyUserById(
+            receiverId,
+            "New Message",
+            message.length > 50 ? message.substring(0, 47) + "..." : message,
+            { bookingId, senderId, type: "chat", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        );
+
         res.status(201).json(newMessage);
     } catch (error) {
         res.status(500).json({ error: error.message });

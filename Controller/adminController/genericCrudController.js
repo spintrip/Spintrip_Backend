@@ -19,26 +19,40 @@ const getModel = (modelName) => {
   return null;
 };
 
-// Create a new record
 const createRecord = async (req, res) => {
   try {
     const model = getModel(req.params.modelName);
-    if (!model) return res.status(404).json({ success: false, message: `Model '${req.params.modelName}' not found` });
+    console.log(`[AdminCRUD] Attempting to create record for model: ${req.params.modelName}`);
+    if (!model) {
+      console.log(`[AdminCRUD] Model not found: ${req.params.modelName}`);
+      return res.status(404).json({ success: false, message: `Model '${req.params.modelName}' not found` });
+    }
     
     // Sandbox restriction: Cab admins can only create Vehicles of type 3
     if (req.user && req.user.adminRole === 'cabadmin' && model.name === 'Vehicle') {
       req.body.vehicletype = '3';
     }
 
-    // Auto-generate UUID for missing primary keys if the model isn't autoIncrement
+    // Sanitize payload: strip out empty strings so PostgreSQL defaults take over
+    Object.keys(req.body).forEach(k => {
+      if (req.body[k] === '' || req.body[k] === null || req.body[k] === undefined) {
+        delete req.body[k];
+      }
+    });
+
     const pk = model.primaryKeyAttribute || 'id';
     if (!req.body[pk] && model.rawAttributes[pk] && !model.rawAttributes[pk].autoIncrement) {
       req.body[pk] = uuidv4();
     }
+    
+    console.log(`[AdminCRUD] Final payload for ${model.name}:`, req.body);
 
     const record = await model.create(req.body);
+    console.log(`[AdminCRUD] Success! Record created for ${model.name}`);
     res.status(201).json({ success: true, message: `${req.params.modelName} created successfully`, data: record });
   } catch (error) {
+    console.error(`[AdminCRUD] Create Error in model ${req.params.modelName}:`, error.message);
+    console.error(error.stack);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

@@ -29,7 +29,9 @@ module.exports = (sequelize, DataTypes) => {
     destination: {
       type: DataTypes.JSONB,
       allowNull: true,
-    }
+    },
+    discountAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
+    offerId: { type: DataTypes.STRING(36), allowNull: true }
   });
 
   Booking.associate = (models) => {

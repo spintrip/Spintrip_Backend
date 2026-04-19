@@ -16,16 +16,17 @@ const {
   CabToDriver,
   Wallet,
   WalletTransaction,
-  HostCabRateCard,
-  City,
   Tax,
   ReferralReward,
+  Offer,
+  HostCabRateCard,
+  City,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
 const geolib = require("geolib");
 const { sendOTP, generateOTP } = require('./hostcontroller/hostBooking');
-const { sendPushNotification, notifyBookingAllocation } = require('../Utils/notificationService');
+const { sendPushNotification, notifyBookingAllocation, notifyUserById } = require('../Utils/notificationService');
 
 // Google Maps API Configuration
 const GOOGLE_MAPS_API_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
@@ -547,7 +548,10 @@ const bookCab = async (req, res) => {
       const tdsAmount = netBase * 0.01; // 1% of Gross Amount (excluding GST) as per Section 194-O
       const driverPay = Math.round((netBase - commissionAmount - tdsAmount) * 100) / 100;
       const platformFee = Math.round((totalPrice - driverPay) * 100) / 100;
-      return { driverPay, platformFee };
+      const gstAmount = Math.round((totalPrice - netBase) * 100) / 100;
+      const subtotalBasePrice = Math.round(netBase * 100) / 100;
+
+      return { driverPay, platformFee, gstAmount, subtotalBasePrice, commissionAmount, tdsAmount };
     };
 
     if (estimatedPrice) {
@@ -555,6 +559,10 @@ const bookCab = async (req, res) => {
       const originalBreakdown = await calculateSegregation(estimatedPrice);
       payToDriverAmount = originalBreakdown.driverPay;
       confirmationFeeAmount = originalBreakdown.platformFee;
+      var subtotalBasePrice = originalBreakdown.subtotalBasePrice;
+      var gstAmount = originalBreakdown.gstAmount;
+      var commissionAmount = originalBreakdown.commissionAmount;
+      var tdsAmount = originalBreakdown.tdsAmount;
     } else {
       // Fallback estimate price internally
       const estimate = await estimatePrice({
@@ -569,6 +577,10 @@ const bookCab = async (req, res) => {
       originalEstimatedPrice = estimatedPrice;
       payToDriverAmount = estimate.driverEarnings;
       confirmationFeeAmount = estimate.confirmationFee;
+      var subtotalBasePrice = estimate.subtotalBasePrice;
+      var gstAmount = estimate.gstAmount;
+      var commissionAmount = estimate.commissionAmount;
+      var tdsAmount = estimate.tdsAmount;
     }
 
     if (!estimatedPrice || !confirmationFeeAmount) {
@@ -622,10 +634,51 @@ const bookCab = async (req, res) => {
                       referenceId: bookingId
                   }, { transaction: t });
 
-                  console.log(`User ${userId} applied ${allowedDiscount} Gold Coins for booking ${bookingId} (Safety Cap Active)`);
+          console.log(`User ${userId} applied ${allowedDiscount} Gold Coins for booking ${bookingId} (Safety Cap Active)`);
               }
           }
       }
+
+      // --- 🎟️ PROMO CODE USAGE ---
+      if (req.body.promoCode) {
+        const promoCode = req.body.promoCode;
+        const offer = await Offer.findOne({
+          where: {
+            code: promoCode,
+            isActive: true,
+            [Op.or]: [
+              { expiryDate: null },
+              { expiryDate: { [Op.gt]: new Date() } }
+            ]
+          },
+          transaction: t
+        });
+
+        if (offer) {
+          // Validate logic (same as controller but inside transaction)
+          if (originalEstimatedPrice >= offer.minAmount) {
+             let promoDiscount = originalEstimatedPrice * (offer.percentage / 100);
+             if (promoDiscount > offer.maxDiscount) promoDiscount = offer.maxDiscount;
+             
+             // Safety cap: Ensure platform fee doesn't go below negative (rare but possible with high discounts)
+             const maxSubsidyPossible = confirmationFeeAmount;
+             const finalPromoDiscount = Math.min(promoDiscount, maxSubsidyPossible);
+
+             if (finalPromoDiscount > 0) {
+               estimatedPrice = Math.round((estimatedPrice - finalPromoDiscount) * 100) / 100;
+               confirmationFeeAmount = Math.round((confirmationFeeAmount - finalPromoDiscount) * 100) / 100;
+               
+               // Update request data for persistence
+               req.discountAmount = (req.discountAmount || 0) + finalPromoDiscount;
+               req.offerId = offer.id;
+               req.offerCode = offer.code;
+
+               console.log(`Promo ${promoCode} applied: ₹${finalPromoDiscount} discount on booking ${bookingId}`);
+             }
+          }
+        }
+      }
+      // --------------------------
       // --------------------------
 
       // Note: Backend wallet checks and debits are now removed for cab bookings.
@@ -660,13 +713,21 @@ const bookCab = async (req, res) => {
         endLocationLongitude: endLocation?.longitude || startLocation.longitude,
         endLocationAddress: endLocation?.address || startLocation.address || "",
         estimatedPrice: estimatedPrice,
+        subtotalBasePrice: subtotalBasePrice,
+        gstAmount: gstAmount,
+        commissionAmount: commissionAmount,
+        tdsAmount: tdsAmount,
+        driverEarnings: payToDriverAmount,
         status: "pending",
         paymentStatus: "pending",
         cabType: dbCabType,
         confirmationFee: confirmationFeeAmount,
         payToDriver: payToDriverAmount,
         otp: rideOtp,
-        bookingType: bookingType || "Local"
+        bookingType: bookingType || "Local",
+        discountAmount: req.discountAmount || 0,
+        offerId: req.offerId || null,
+        offerCode: req.offerCode || null,
       }, { transaction: t });
 
       await t.commit();
@@ -1092,8 +1153,13 @@ const acceptBooking = async (req, res) => {
       tripOtp,
     });
 
-    // Notify the user (replace with actual notification logic)
-    console.log(`Notifying user ${booking.userId}: Booking confirmed with OTP ${tripOtp}`);
+    // 🔔 Notify the user
+    await notifyUserById(
+      booking.userId,
+      "Booking Accepted",
+      `Your cab booking has been accepted! Your Trip OTP is ${tripOtp}.`,
+      { bookingId, tripOtp, type: "booking_confirmed", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+    );
 
     res.status(200).json({
       message: "Booking accepted successfully",
@@ -1208,7 +1274,7 @@ const superhostAssignDriver = async (req, res) => {
     await booking.save();
 
     // --- SEND NOTIFICATIONS (GENERIC HELPER) ---
-    await notifyBookingAllocation(booking.bookingId, driverId, booking.userId);
+    await notifyBookingAllocation(booking.bookingId, driverId, booking.userId, true);
 
     res.status(200).json({ message: "Driver and vehicle assigned successfully.", booking });
   } catch (error) {
@@ -1374,11 +1440,13 @@ const startTrip = async (req, res) => {
 
     await transaction.commit();
 
-    // Notify User
-    const userDevice = await Device.findOne({ where: { userId: booking.id } });
-    if (userDevice && userDevice.token) {
-      sendPushNotification(userDevice.token, "Trip Started", "Your ride has officially started. Have a safe journey!");
-    }
+    // 🔔 Notify User
+    await notifyUserById(
+      booking.id,
+      "Trip Started",
+      "Your ride has officially started. Have a safe journey!",
+      { bookingId, type: "trip_started", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+    );
 
     res.status(200).json({ message: "Trip started successfully.", bookingId });
   } catch (error) {
@@ -1523,11 +1591,13 @@ const endTrip = async (req, res) => {
 
     await transaction.commit(); // Commit the transaction
 
-    // Notify User
-    const userDevice = await Device.findOne({ where: { userId: booking.id } });
-    if (userDevice && userDevice.token) {
-      sendPushNotification(userDevice.token, "Trip Ended", "Your ride has been completed successfully.");
-    }
+    // 🔔 Notify User
+    await notifyUserById(
+      booking.id,
+      "Trip Ended",
+      "Your ride has been completed successfully.",
+      { bookingId, type: "trip_completed", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+    );
 
     res.status(200).json({
       message: "Trip ended successfully.",
@@ -1585,23 +1655,46 @@ const endTrip = async (req, res) => {
 const getMatchedOperationalCity = async (address, inputCity = "", preFetchedCities = null) => {
   try {
     const cities = preFetchedCities || await City.findAll({ where: { isActive: true } });
-    let addrLower = (address || "").toLowerCase().trim();
-    let cityLower = (inputCity || "").toLowerCase().trim();
+    
+    // Normalize function for robust comparisons
+    const normalize = (str) => (str || "").toLowerCase().trim().replace(/bengaluru/g, "bangalore").replace(/\s+/g, '');
 
-    if (cityLower) {
-      const match = cities.find(c => c.name.toLowerCase() === cityLower || cityLower.includes(c.name.toLowerCase()));
-      if (match) return match.name;
+    const normAddress = normalize(address);
+    const normInputCity = normalize(inputCity);
+
+    console.log(`[CityMatch] Normalizing: InputCity="${inputCity}" -> "${normInputCity}", Address(snippet)="${address?.substring(0, 30)}..."`);
+
+    // 1. Check against Input City (High priority)
+    if (normInputCity) {
+      const match = cities.find(c => {
+        const normDbCity = normalize(c.name);
+        return normDbCity === normInputCity || normInputCity.includes(normDbCity);
+      });
+      if (match) {
+        console.log(`[CityMatch] Found exact match via InputCity: ${match.name}`);
+        return match.name;
+      }
     }
-    addrLower = addrLower.replace(/bengaluru/g, "bangalore");
-    if (addrLower.includes("560300") || addrLower.includes("devanahalli")) {
-      addrLower += " bangalore";
+
+    // 2. Special handling for Bangalore pin-codes/suburbs
+    let searchAddr = normAddress;
+    if (searchAddr.includes("560300") || searchAddr.includes("devanahalli")) {
+      searchAddr += "bangalore";
     }
+
+    // 3. Check against Address (Fuzzy match)
     for (const cityObj of cities) {
-      let cityName = cityObj.name.toLowerCase().trim().replace(/bengaluru/g, "bangalore");
-      if (addrLower.includes(cityName)) return cityObj.name;
+      const normDbCity = normalize(cityObj.name);
+      if (searchAddr.includes(normDbCity)) {
+        console.log(`[CityMatch] Found fuzzy match via Address: ${cityObj.name}`);
+        return cityObj.name;
+      }
     }
+
+    console.log(`[CityMatch] No match found after checking ${cities.length} active cities.`);
     return null;
   } catch (err) {
+    console.error("[CityMatch] Exception:", err.message);
     return null;
   }
 };
@@ -1787,10 +1880,21 @@ const getMatchedOperationalCity = async (address, inputCity = "", preFetchedCiti
  */
 const getCabAvailability = async (req, res) => {
   const { address, city } = req.body;
+  console.log(`[Backend] cab-availability request received for address: "${address}", city: "${city}"`);
   try {
+    console.log("[Backend] cab-availability: Starting getMatchedOperationalCity...");
     const matchedCity = await getMatchedOperationalCity(address, city);
-    if (!matchedCity) return res.status(200).json({ available: false, services: [], message: "Not operational here." });
+    console.log(`[Backend] cab-availability: matchedCity result = "${matchedCity}"`);
+    
+    if (!matchedCity) {
+      console.log("[Backend] cab-availability: No operational city match found.");
+      return res.status(200).json({ available: false, services: [], message: "Not operational here." });
+    }
+    
+    console.log(`[Backend] cab-availability: Searching for rate cards in "${matchedCity}"...`);
     const rateCards = await HostCabRateCard.findAll({ where: { city: { [Op.iLike]: matchedCity }, isActive: true } });
+    console.log(`[Backend] cab-availability: Found ${rateCards.length} rate cards.`);
+    
     if (rateCards.length === 0) return res.status(200).json({ available: false, services: [], message: "No active rate cards." });
 
     let services = new Set(['Local']);
@@ -1973,16 +2077,21 @@ const getBulkEstimates = async (req, res) => {
 
     if (destinationValid) {
       try {
+        console.log(`[GoogleAPI] Fetching distance for ${originStr} -> ${destStr}...`);
         const googleRes = await axios.get(
-          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`
+          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originStr}&destinations=${destStr}&key=${GOOGLE_MAPS_API_KEY}`,
+          { timeout: 5000 } // 🛡️ 5s Safety Timeout
         );
         const element = googleRes.data?.rows?.[0]?.elements?.[0];
         if (element?.status === "OK") {
            distanceKm = element.distance.value / 1000;
            durationMin = element.duration.value / 60;
+           console.log(`[GoogleAPI] result: ${distanceKm}km, ${durationMin}mins`);
+        } else {
+           console.warn(`[GoogleAPI] warning: Status ${element?.status || 'UNKNOWN'}`);
         }
       } catch (axiosErr) {
-        console.error("Google Maps API Error in getBulkEstimates:", axiosErr.message);
+        console.error("Google Maps API Timeout or Error in getBulkEstimates:", axiosErr.message);
       }
     }
 
@@ -2046,6 +2155,8 @@ const getBulkEstimates = async (req, res) => {
 
           results[type] = {
             estimatedPrice: total,
+            subtotalBasePrice: Math.round(netBase * 100) / 100,
+            gstAmount: Math.round((total - netBase) * 100) / 100,
             distance: distanceKm,
             duration: durationMin,
             extraHourRate: card.extraHourRate || 0,
@@ -2053,6 +2164,7 @@ const getBulkEstimates = async (req, res) => {
             localExtraKmRate: card.localExtraKmRate || 0,
             airportExtraKmRate: card.airportExtraKmRate || 0,
             tdsAmount: Math.round(tds * 100) / 100,
+            commissionAmount: Math.round(comm * 100) / 100,
             payToDriver: driverPay,
             confirmationFee: Math.round((total - driverPay) * 100) / 100
           };

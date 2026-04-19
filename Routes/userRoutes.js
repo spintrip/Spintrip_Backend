@@ -17,6 +17,7 @@ const { getAllBlogs, getBlogById } = require('../Controller/blogController');
 const chatController = require('../Controller/chatController');
 const { createSupportTicket, addSupportMessage, viewSupportChats, viewUserSupportTickets } = require('../Controller/supportController');
 const { initiatePayment, initiateCabPayment, verifyCabPayment, checkPaymentStatus, phonePayment, webhook } = require('../Controller/paymentController');
+const offerController = require('../Controller/usercontroller/offerController');
 const multerS3 = require('multer-s3');
 const s3 = require('../s3Config');
 const multer = require('multer');
@@ -158,5 +159,9 @@ router.put('/vehicle-images', authenticate, uploadvehicleImages, putVehicleAddit
 router.post('/verify-aadhar', authenticate, verifyAadhar);
 router.post('/verify-pan', authenticate, verifyPan);
 router.post('/verify-dl', authenticate, verifyDl);
+
+// Offers & Promo Codes
+router.get('/offers', authenticate, offerController.getAvailableOffers);
+router.post('/apply-promo', authenticate, offerController.validateOffer);
 
 module.exports = router;

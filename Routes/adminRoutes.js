@@ -283,11 +283,14 @@ router.post('/notifications', authenticate, restrictToSuperadmin, sendNotificati
 
 // ----------------------------------------------------------------------
 // GENERIC CRUD ROUTES FOR ALL MODELS
+// Handles both JSON and Multipart/Form-Data (without files)
 // ----------------------------------------------------------------------
-router.post('/crud/:modelName', authenticate, restrictToSuperadmin, createRecord);
+const uploadNone = multer().none();
+
+router.post('/crud/:modelName', authenticate, restrictToSuperadmin, uploadNone, createRecord);
 router.get('/crud/:modelName', authenticate, restrictToSuperadmin, getAllRecords);
 router.get('/crud/:modelName/:id', authenticate, restrictToSuperadmin, getRecordById);
-router.put('/crud/:modelName/:id', authenticate, restrictToSuperadmin, updateRecord);
+router.put('/crud/:modelName/:id', authenticate, restrictToSuperadmin, uploadNone, updateRecord);
 router.delete('/crud/:modelName/:id', authenticate, restrictToSuperadmin, deleteRecord);
 
 module.exports = router;

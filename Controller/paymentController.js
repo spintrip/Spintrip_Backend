@@ -19,7 +19,7 @@ const initiateCabPayment = async (req, res) => {
     const linkId = `cab_fee_${bookingId.substring(0, 8)}_${uuid.v4().substring(0, 4)}`;
 
     const createOrderRequest = {
-      link_amount: '1',
+      link_amount: roundedAmount,
       link_currency: 'INR',
       link_id: linkId,
       link_purpose: `Cab Booking Confirmation Fee (#${bookingId.substring(0, 8)})`,

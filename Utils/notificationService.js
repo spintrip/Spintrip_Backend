@@ -7,8 +7,9 @@ const { User } = require('../Models/index');
  * @param {string} title - The notification title.
  * @param {string} body - The notification body.
  * @param {object} dataPayload - Any extra data to send (optional).
+ * @param {boolean} isHighPriority - If true, triggers high-importance channel and sound.
  */
-const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => {
+const sendPushNotification = async (fcmToken, title, body, dataPayload = {}, isHighPriority = false) => {
   if (!fcmToken) return false;
 
   const message = {
@@ -24,7 +25,7 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
             title: title,
             body: body,
           },
-          sound: 'default',
+          sound: isHighPriority ? 'alarm.caf' : 'default',
           badge: 1,
         },
       },
@@ -38,8 +39,9 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
       notification: {
         icon: 'ic_launcher',
         color: '#FFFFFF',
-        sound: 'default',
+        sound: isHighPriority ? 'alarm' : 'default',
         priority: 'high',
+        channel_id: isHighPriority ? 'high_importance_channel' : 'default',
       },
       data: dataPayload,
     },
@@ -49,7 +51,7 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
 
   try {
     const response = await admin.messaging().send(message);
-    console.log('Successfully sent message:', response);
+    console.log(`Successfully sent ${isHighPriority ? 'High-Priority' : 'Normal'} message:`, response);
     return true;
   } catch (error) {
     console.log('Error sending message:', error);
@@ -60,7 +62,7 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}) => 
 /**
  * Generic helper to notify both Driver and Customer when a booking is allocated.
  */
-const notifyBookingAllocation = async (bookingId, driverId, userId) => {
+const notifyBookingAllocation = async (bookingId, driverId, userId, isHighPriority = false) => {
   try {
     // 1. Notify Driver
     const driver = await User.findByPk(driverId);
@@ -69,7 +71,8 @@ const notifyBookingAllocation = async (bookingId, driverId, userId) => {
         driver.fcmToken,
         "New Ride Assigned",
         `You have been assigned a new ride (ID: ${bookingId}). Check your upcoming trips!`,
-        { bookingId, type: "assignment", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        { bookingId, type: "assignment", click_action: "FLUTTER_NOTIFICATION_CLICK" },
+        isHighPriority
       );
     } else {
       console.log(`Notification skipped: Driver ${driverId} has no fcmToken.`);
@@ -83,7 +86,8 @@ const notifyBookingAllocation = async (bookingId, driverId, userId) => {
         customer.fcmToken,
         "Driver Assigned",
         `${driverName} has been assigned to your booking #${bookingId}. Your ride is confirmed!`,
-        { bookingId, type: "status_update", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+        { bookingId, type: "status_update", click_action: "FLUTTER_NOTIFICATION_CLICK" },
+        false // Usually normal priority for customer
       );
     }
 
@@ -94,4 +98,21 @@ const notifyBookingAllocation = async (bookingId, driverId, userId) => {
   }
 };
 
-module.exports = { sendPushNotification, notifyBookingAllocation };
+/**
+ * Generic helper to notify a user by their ID.
+ */
+const notifyUserById = async (userId, title, body, dataPayload = {}, isHighPriority = false) => {
+  try {
+    const user = await User.findByPk(userId);
+    if (user && user.fcmToken) {
+      return await sendPushNotification(user.fcmToken, title, body, dataPayload, isHighPriority);
+    }
+    console.log(`Notification skipped: User ${userId} not found or has no fcmToken.`);
+    return false;
+  } catch (error) {
+    console.error(`Error in notifyUserById (${userId}):`, error.message);
+    return false;
+  }
+};
+
+module.exports = { sendPushNotification, notifyBookingAllocation, notifyUserById };
