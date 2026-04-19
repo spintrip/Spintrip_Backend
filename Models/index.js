@@ -73,7 +73,12 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "offerId" VARCHAR(36);`);
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "offerCode" VARCHAR(255);`);
 
+    // AUTO-PATCH: Driver Verification schema expansion
+    await sequelize.query(`ALTER TABLE "DriverAdditionals" ADD COLUMN IF NOT EXISTS "PanVfid" VARCHAR(20);`);
+    await sequelize.query(`ALTER TABLE "DriverAdditionals" ADD COLUMN IF NOT EXISTS "pan" VARCHAR(500);`);
+
     console.log('Offers and Discounts schema synchronized.');
+    console.log('Driver Verification schema synchronized.');
     console.log('Support schema synchronized.');
 
   } catch (error) {
