@@ -77,7 +77,9 @@ const getAllDrivers = async (req, res) => {
             json.verification_status = additionalInfo.verification_status || 0;
             json.profilepic = additionalInfo.profilepic || null;
             json.aadhar = additionalInfo.aadhar || null;
+            json.pan = additionalInfo.pan || null;
             json.dl = additionalInfo.dl || null;
+            json.businessName = additionalInfo.businessName || '--';
             json.latitude = json.Cab?.Vehicle?.VehicleAdditional?.latitude || null;
             json.longitude = json.Cab?.Vehicle?.VehicleAdditional?.longitude || null;
             json.additionalInfo = additionalInfo; // Crucial for frontend mapping

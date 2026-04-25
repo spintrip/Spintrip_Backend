@@ -21,6 +21,7 @@ const {
   Offer,
   HostCabRateCard,
   City,
+  SurgePrice,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
@@ -554,34 +555,25 @@ const bookCab = async (req, res) => {
       return { driverPay, platformFee, gstAmount, subtotalBasePrice, commissionAmount, tdsAmount };
     };
 
-    if (estimatedPrice) {
-      // 1. Always calculate the DRIVER'S SHARE based on the Original Price for protection
-      const originalBreakdown = await calculateSegregation(estimatedPrice);
-      payToDriverAmount = originalBreakdown.driverPay;
-      confirmationFeeAmount = originalBreakdown.platformFee;
-      var subtotalBasePrice = originalBreakdown.subtotalBasePrice;
-      var gstAmount = originalBreakdown.gstAmount;
-      var commissionAmount = originalBreakdown.commissionAmount;
-      var tdsAmount = originalBreakdown.tdsAmount;
-    } else {
-      // Fallback estimate price internally
-      const estimate = await estimatePrice({
-        origin: startLocation,
-        destination: endLocation || startLocation,
-        vehicleId,
-        cabType,
-        bookingType,
-        address: startLocation.address || ""
-      });
-      estimatedPrice = estimate.estimatedPrice;
-      originalEstimatedPrice = estimatedPrice;
-      payToDriverAmount = estimate.driverEarnings;
-      confirmationFeeAmount = estimate.confirmationFee;
-      var subtotalBasePrice = estimate.subtotalBasePrice;
-      var gstAmount = estimate.gstAmount;
-      var commissionAmount = estimate.commissionAmount;
-      var tdsAmount = estimate.tdsAmount;
-    }
+    // 🔥 SERVER-SIDE PRICE LOCK: Always re-calculate using the master logic (with surge)
+    const estimate = await estimatePrice({
+      origin: startLocation,
+      destination: endLocation || startLocation,
+      vehicleId,
+      cabType,
+      bookingType,
+      address: startLocation.address || ""
+    });
+
+    estimatedPrice = estimate.estimatedPrice;
+    originalEstimatedPrice = estimatedPrice;
+    payToDriverAmount = estimate.driverEarnings;
+    confirmationFeeAmount = estimate.confirmationFee;
+    var subtotalBasePrice = estimate.subtotalBasePrice;
+    var gstAmount = estimate.gstAmount;
+    var commissionAmount = estimate.commissionAmount;
+    var tdsAmount = estimate.tdsAmount;
+    const surgeMultiplier = estimate.surgeMultiplier || 1.0;
 
     if (!estimatedPrice || !confirmationFeeAmount) {
       return res.status(500).json({ message: "Failed to estimate price or calculate confirmation fee." });
@@ -977,7 +969,16 @@ const createSoftBooking = async (req, res) => {
       return res.status(400).json({ message: "Missing required parameters." });
     }
 
-    // Estimate price internally (Now includes exact commission breakdown)
+    // Estimate price internally (Now includes exact commission breakdown + Surge Lock)
+    const estimate = await estimatePrice({ 
+      origin: startLocation, 
+      destination: endLocation, 
+      cabType: req.body.cabType || "Mini", 
+      bookingType: req.body.bookingType || "Local",
+      address: startLocation.address || "",
+      city: req.body.city || ""
+    });
+
     const {
       subtotalBasePrice,
       gstAmount,
@@ -985,7 +986,7 @@ const createSoftBooking = async (req, res) => {
       commissionAmount,
       tdsAmount,
       driverEarnings,
-    } = await estimatePrice({ origin: startLocation, destination: endLocation, cabType, bookingType });
+    } = estimate;
 
     if (!estimatedPrice || !commissionAmount) {
       return res.status(500).json({ message: "Failed to estimate price or calculate commission." });
@@ -1904,6 +1905,66 @@ const getEstimate = async (req, res) => {
 };
 
 /**
+ * Core Dynamic Surge Multiplier Helper (IST-Aware)
+ */
+const getActiveSurgeMultiplier = async (city, cabType) => {
+  try {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+    
+    // Format: HH:mm:ss for DB comparison
+    const currentTime = istTime.toISOString().split('T')[1].substring(0, 8);
+    const currentDate = istTime.toISOString().split('T')[0];
+    const currentDay = istTime.getUTCDay(); // 0=Sun, 1=Mon...
+
+    const activeSurge = await SurgePrice.findOne({
+      where: {
+        isActive: true,
+        [Op.or]: [
+          { city: city },
+          { city: null }
+        ],
+        [Op.or]: [
+          { cabType: cabType },
+          { cabType: null }
+        ],
+        [Op.or]: [
+          { // Check recursive time slot + date range
+            startDate: { [Op.lte]: currentDate },
+            endDate: { [Op.gte]: currentDate }
+          },
+          { startDate: null }
+        ]
+      },
+      order: [
+        ['multiplier', 'DESC'], // Use highest multiplier first
+        ['city', 'DESC'], // Priority to city-specific
+        ['cabType', 'DESC'] // Priority to category-specific
+      ]
+    });
+
+    // console.log(activeSurge);
+
+    if (!activeSurge) return 1.0;
+
+    // Time Check
+    if (currentTime < activeSurge.startTime || currentTime > activeSurge.endTime) return 1.0;
+
+    // Day of Week Check
+    if (activeSurge.daysOfWeek) {
+      const allowedDays = activeSurge.daysOfWeek.split(',');
+      if (!allowedDays.includes(currentDay.toString())) return 1.0;
+    }
+
+    return activeSurge.multiplier || 1.0;
+  } catch (error) {
+    console.error("Surge Multiplier Error:", error.message);
+    return 1.0;
+  }
+};
+
+/**
  * Core Dynamic Price Estimation Engine
  */
 const estimatePrice = async ({ origin, destination, cabType, bookingType = "Local", address = "", city = "" }) => {
@@ -1976,21 +2037,14 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     }
 
     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-    const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+    const trafficMult = ratio > 2.5 ? 1.3 : (ratio 
+      > 1.5 ? 1.1 : 1);
 
-    // 🕒 DYNAMIC PEAK SURGE STEERING (IST UTC+5:30)
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset);
-    const hour = istTime.getUTCHours();
+    const hostSurgeFromCard = (rateCard.surgeMultiplier || 1.0);
     
-    let timeSteeringMultiplier = 1.0;
-    if (hour >= 8 && hour <= 10) timeSteeringMultiplier = rateCard.morningSurge || 1.0;
-    else if (hour >= 12 && hour <= 14) timeSteeringMultiplier = rateCard.afternoonSurge || 1.0;
-    else if (hour >= 17 && hour <= 20) timeSteeringMultiplier = rateCard.eveningSurge || 1.0;
-    else if (hour >= 23 || hour <= 4) timeSteeringMultiplier = rateCard.nightSurge || 1.0;
-
-    const hostSurge = (rateCard.surgeMultiplier || 1.0) * timeSteeringMultiplier;
+    // 🔥 NEW: Apply Global Surge Overrides
+    const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, cabType);
+    const hostSurge = hostSurgeFromCard * globalSurgeMultiplier;
 
     const total = (evaluatedType === 'Airport' || evaluatedType === 'Rentals')
       ? Math.max(Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0)), 500)
@@ -2016,7 +2070,9 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       extraHourRate: rateCard.extraHourRate || 0,
       extraKmRate: rateCard.extraKmRate || 0,
       localExtraKmRate: rateCard.localExtraKmRate || 0,
-      airportExtraKmRate: rateCard.airportExtraKmRate || 0
+      airportExtraKmRate: rateCard.airportExtraKmRate || 0,
+      surgeMultiplier: hostSurge, // 🔥 EXPOSED
+      isSurgeApplied: hostSurge > 1.0
     };
   } catch (err) {
     return { estimatedPrice: null, error: "Calculation failed" };
@@ -2093,6 +2149,12 @@ const getBulkEstimates = async (req, res) => {
     const results = {};
     console.log(`[Estimates] Calculating for ${cabTypes.join(', ')} in ${matchedCity || 'Unknown City'} (Type: ${evaluatedType}) [Optimized]`);
 
+    // 🕒 DYNAMIC PEAK SURGE STEERING (IST UTC+5:30) - Calculate once per bulk request
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+    const hour = istTime.getUTCHours();
+
     for (const type of cabTypes) {
       // 🚀 FAST FUZZY MATCH: Filter from the already pre-fetched allRateCards array
       const cleanedType = type.trim().toLowerCase();
@@ -2127,7 +2189,21 @@ const getBulkEstimates = async (req, res) => {
         }
 
         const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
-        const total = Math.round((base * (ratio > 2.5 ? 1.3 : 1) * (card.surgeMultiplier || 1.0)) + (card.tollCharges || 0));
+        const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
+
+        const hostSurgeFromCard = (card.surgeMultiplier || 1.0);
+        
+        // 🔥 NEW: Check Global Surge per vehicle type
+        const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, type);
+        
+        let total = Math.round((base * trafficMult * hostSurgeFromCard * globalSurgeMultiplier) + (card.tollCharges || 0));
+
+        // 🛡️ THE PRODUCTION FLOOR (Ensures consistency with estimatePrice)
+        if (evaluatedType === 'Airport' || evaluatedType === 'Rentals') {
+          total = Math.max(total, 500);
+        } else {
+          total = Math.max(total, 100);
+        }
 
         if (total > 0) {
           const netBase = total / 1.05;
@@ -2148,7 +2224,9 @@ const getBulkEstimates = async (req, res) => {
             tdsAmount: Math.round(tds * 100) / 100,
             commissionAmount: Math.round(comm * 100) / 100,
             payToDriver: driverPay,
-            confirmationFee: Math.round((total - driverPay) * 100) / 100
+            confirmationFee: Math.round((total - driverPay) * 100) / 100,
+            surgeMultiplier: hostSurgeFromCard * globalSurgeMultiplier, // 🔥 EXPOSED
+            isSurgeApplied: (hostSurgeFromCard * globalSurgeMultiplier) > 1.0
           };
         }
       }

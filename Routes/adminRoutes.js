@@ -21,6 +21,9 @@ const {
   getAllWithdrawals, approveWithdrawal, rejectWithdrawal, convertHostToDriver
 } = require('../Controller/adminController/adminController');
 const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require('../Controller/blogController');
+const { 
+  getSurgeRules, createSurgeRule, updateSurgeRule, deleteSurgeRule 
+} = require('../Controller/adminController/surgeManagement');
 const { addCab, addDriver, assignDriverToVehicle } = require('../Controller/cabController');
 
 const multer = require('multer');
@@ -292,5 +295,10 @@ router.get('/crud/:modelName', authenticate, restrictToSuperadmin, getAllRecords
 router.get('/crud/:modelName/:id', authenticate, restrictToSuperadmin, getRecordById);
 router.put('/crud/:modelName/:id', authenticate, restrictToSuperadmin, uploadNone, updateRecord);
 router.delete('/crud/:modelName/:id', authenticate, restrictToSuperadmin, deleteRecord);
+
+router.get('/surge-pricing', authenticate, restrictToSuperadmin, getSurgeRules);
+router.post('/surge-pricing', authenticate, restrictToSuperadmin, createSurgeRule);
+router.put('/surge-pricing/:id', authenticate, restrictToSuperadmin, updateSurgeRule);
+router.delete('/surge-pricing/:id', authenticate, restrictToSuperadmin, deleteSurgeRule);
 
 module.exports = router;

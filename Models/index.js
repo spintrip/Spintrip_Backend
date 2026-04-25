@@ -77,6 +77,25 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     await sequelize.query(`ALTER TABLE "DriverAdditionals" ADD COLUMN IF NOT EXISTS "PanVfid" VARCHAR(20);`);
     await sequelize.query(`ALTER TABLE "DriverAdditionals" ADD COLUMN IF NOT EXISTS "pan" VARCHAR(500);`);
 
+    // AUTO-PATCH: Global Surge Pricing schema
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "SurgePrices" (
+        "id" UUID PRIMARY KEY,
+        "name" VARCHAR(255) NOT NULL,
+        "city" VARCHAR(255),
+        "cabType" VARCHAR(255),
+        "multiplier" DOUBLE PRECISION DEFAULT 1.0,
+        "startTime" TIME NOT NULL,
+        "endTime" TIME NOT NULL,
+        "startDate" DATE,
+        "endDate" DATE,
+        "daysOfWeek" VARCHAR(255),
+        "isActive" BOOLEAN DEFAULT TRUE,
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
     console.log('Offers and Discounts schema synchronized.');
     console.log('Driver Verification schema synchronized.');
     console.log('Support schema synchronized.');
@@ -144,6 +163,7 @@ db.DriverWithdrawal = require('./driverWithdrawalModel')(sequelize, DataTypes);
 db.VehicleType = require('./vehicleTypeModel')(sequelize, DataTypes);
 db.ReferralReward = require('./referralRewardModel')(sequelize, DataTypes);
 db.Offer = require('./OfferModel')(sequelize, DataTypes);
+db.SurgePrice = require('./SurgeModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
@@ -151,7 +171,7 @@ const associateModels = () => {
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
-    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward, Offer
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward, Offer, SurgePrice
   } = sequelize.models;
 
   // User and related associations
