@@ -8,12 +8,29 @@ function roundToTwo(num) {
 }
 const initiateCabPayment = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id);
-    const { amount, bookingId } = req.body;
+    const { CabBookingRequest } = require('../Models');
+    const { bookingId } = req.body;
 
-    if (!amount || !bookingId) {
-      return res.status(400).json({ message: 'Amount and bookingId are required' });
+    if (!bookingId) {
+      return res.status(400).json({ message: 'bookingId is required' });
     }
+
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // ✅ ZERO-RUPEE PAYMENT BYPASS
+    if (booking.paymentStatus === 'paid' || booking.confirmationFee <= 0) {
+      return res.status(200).json({
+        message: 'Payment bypassed (fully subsidized)',
+        status: 'paid',
+        paymentUrl: null
+      });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    const amount = booking.confirmationFee;
 
     const roundedAmount = roundToTwo(amount);
     const linkId = `cab_fee_${bookingId.substring(0, 8)}_${uuid.v4().substring(0, 4)}`;

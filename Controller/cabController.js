@@ -598,33 +598,20 @@ const bookCab = async (req, res) => {
           const userWallet = await Wallet.findOne({ 
             where: { userId }, 
             transaction: t,
-            lock: t.LOCK.UPDATE // Lock for atomic balance check
+            lock: t.LOCK.UPDATE 
           });
 
           // Usage Cap: Strictly limit to 100 coins per booking
           if (userWallet && userWallet.balance >= 100) {
               const maxDiscountPossible = 100.0;
-              
-              // 🛡️ SAFETY FLOOR: User must pay at least (DriverPay + GST + TDS)
-              // Taxes on collected amount X = X * (0.05 + 0.01) / 1.05 = X * 0.06 / 1.05
-              // Remaining for platform = X - Taxes. We want X - Taxes >= payToDriverAmount
-              // X * (1 - 0.06/1.05) >= payToDriverAmount => X * (0.99/1.05) >= payToDriverAmount
-              // X >= payToDriverAmount * (1.05 / 0.99)
               const minUserPayment = Math.round((payToDriverAmount * (1.05 / 0.99)) * 100) / 100;
-              const allowedDiscount = Math.floor(Math.min(maxDiscountPossible, originalEstimatedPrice - minUserPayment));
+              const allowedDiscount = Math.floor(Math.min(maxDiscountPossible, originalEstimatedPrice - minUserPayment, confirmationFeeAmount));
 
               if (allowedDiscount > 0) {
-                  // 1. Reduce the price shown to the user
                   estimatedPrice = Math.max(0, originalEstimatedPrice - allowedDiscount);
-                  
-                  // 2. Reduce the platform's confirmation fee (subsidy)
-                  // Note: payToDriverAmount remains unchanged (Calculated on original fare above)
-                  confirmationFeeAmount = Math.round((estimatedPrice - payToDriverAmount) * 100) / 100;
-
-                  // 3. Deduct from Wallet
+                  confirmationFeeAmount = Math.max(0, Math.round((estimatedPrice - payToDriverAmount) * 100) / 100);
                   await userWallet.decrement('balance', { by: allowedDiscount, transaction: t });
 
-                  // 4. Log Transaction
                   await WalletTransaction.create({
                       id: uuid.v4(),
                       walletId: userWallet.id,
@@ -634,13 +621,12 @@ const bookCab = async (req, res) => {
                       referenceId: bookingId
                   }, { transaction: t });
 
-          console.log(`User ${userId} applied ${allowedDiscount} Gold Coins for booking ${bookingId} (Safety Cap Active)`);
+                  console.log(`User ${userId} applied ${allowedDiscount} Gold Coins for booking ${bookingId}`);
               }
           }
-      }
-
-      // --- 🎟️ PROMO CODE USAGE ---
-      if (req.body.promoCode) {
+      } 
+      // --- 🎟️ PROMO CODE USAGE --- (Mutually Exclusive)
+      else if (req.body.promoCode) {
         const promoCode = req.body.promoCode;
         const offer = await Offer.findOne({
           where: {
@@ -654,53 +640,30 @@ const bookCab = async (req, res) => {
           transaction: t
         });
 
-        if (offer) {
-          // Validate logic (same as controller but inside transaction)
-          if (originalEstimatedPrice >= offer.minAmount) {
-             let promoDiscount = originalEstimatedPrice * (offer.percentage / 100);
-             if (promoDiscount > offer.maxDiscount) promoDiscount = offer.maxDiscount;
+        if (offer && originalEstimatedPrice >= offer.minAmount) {
+           let promoDiscount = originalEstimatedPrice * (offer.percentage / 100);
+           if (promoDiscount > offer.maxDiscount) promoDiscount = offer.maxDiscount;
+           
+           const maxSubsidyPossible = confirmationFeeAmount;
+           const finalPromoDiscount = Math.min(promoDiscount, maxSubsidyPossible);
+
+           if (finalPromoDiscount > 0) {
+             estimatedPrice = Math.round((estimatedPrice - finalPromoDiscount) * 100) / 100;
+             confirmationFeeAmount = Math.round((confirmationFeeAmount - finalPromoDiscount) * 100) / 100;
              
-             // Safety cap: Ensure platform fee doesn't go below negative (rare but possible with high discounts)
-             const maxSubsidyPossible = confirmationFeeAmount;
-             const finalPromoDiscount = Math.min(promoDiscount, maxSubsidyPossible);
+             req.discountAmount = finalPromoDiscount;
+             req.offerId = offer.id;
+             req.offerCode = offer.code;
 
-             if (finalPromoDiscount > 0) {
-               estimatedPrice = Math.round((estimatedPrice - finalPromoDiscount) * 100) / 100;
-               confirmationFeeAmount = Math.round((confirmationFeeAmount - finalPromoDiscount) * 100) / 100;
-               
-               // Update request data for persistence
-               req.discountAmount = (req.discountAmount || 0) + finalPromoDiscount;
-               req.offerId = offer.id;
-               req.offerCode = offer.code;
-
-               console.log(`Promo ${promoCode} applied: ₹${finalPromoDiscount} discount on booking ${bookingId}`);
-             }
-          }
+             console.log(`Promo ${promoCode} applied: ₹${finalPromoDiscount} discount`);
+           }
         }
       }
-      // --------------------------
-      // --------------------------
 
-      // Note: Backend wallet checks and debits are now removed for cab bookings.
-      // Confirmation fee (26%) is handled via payroll/external payment.
-
-      // let dbCabType = cabType;
-      // if (dbCabType) {
-      //   let lower = dbCabType.toLowerCase();
-      //   if (lower.includes('mini')) dbCabType = 'mini cab';
-      //   else if (lower.includes('sedan')) dbCabType = 'sedan';
-      //   else if (lower.includes('suv')) dbCabType = 'suv';
-      //   else if (lower.includes('12')) dbCabType = '12 seater';
-      //   else if (lower.includes('lux')) dbCabType = 'luxury';
-      //   else dbCabType = 'mini cab'; // Fallback
-      // }
       let dbCabType = cabType ? cabType.trim() : 'mini eco';
-
-      // Generate a secure 4-digit Ride OTP for this booking
       const rideOtp = Math.floor(1000 + Math.random() * 9000);
 
-      // Create the booking request
-      await CabBookingRequest.create({
+      const booking = await CabBookingRequest.create({
         bookingId,
         userId,
         vehicleId,
@@ -729,6 +692,12 @@ const bookCab = async (req, res) => {
         offerId: req.offerId || null,
         offerCode: req.offerCode || null,
       }, { transaction: t });
+
+      // ✅ ZERO-RUPEE PAYMENT BYPASS
+      if (confirmationFeeAmount <= 0) {
+         await booking.update({ paymentStatus: "paid" }, { transaction: t });
+         console.log(`Booking ${bookingId} bypassed payment due to zero commission.`);
+      }
 
       await t.commit();
     } catch (innerError) {
@@ -1969,8 +1938,8 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
 
     if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
       evaluatedType = 'Airport'; // Keyword match = Airport
-    } else if (distanceKm >= 300) {
-      evaluatedType = 'Outstation'; // 50km+ = Outstation
+    } else if (distanceKm >= 100) {
+      evaluatedType = 'Outstation'; // 100km+ = Outstation
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
       evaluatedType = 'Local'; // Short Non-Airport = Local
     }
@@ -2008,7 +1977,20 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
 
     const ratio = distanceKm > 0 ? durationMin / distanceKm : 0;
     const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
-    const hostSurge = rateCard.surgeMultiplier || 1.0;
+
+    // 🕒 DYNAMIC PEAK SURGE STEERING (IST UTC+5:30)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+    const hour = istTime.getUTCHours();
+    
+    let timeSteeringMultiplier = 1.0;
+    if (hour >= 8 && hour <= 10) timeSteeringMultiplier = rateCard.morningSurge || 1.0;
+    else if (hour >= 12 && hour <= 14) timeSteeringMultiplier = rateCard.afternoonSurge || 1.0;
+    else if (hour >= 17 && hour <= 20) timeSteeringMultiplier = rateCard.eveningSurge || 1.0;
+    else if (hour >= 23 || hour <= 4) timeSteeringMultiplier = rateCard.nightSurge || 1.0;
+
+    const hostSurge = (rateCard.surgeMultiplier || 1.0) * timeSteeringMultiplier;
 
     const total = (evaluatedType === 'Airport' || evaluatedType === 'Rentals')
       ? Math.max(Math.round((subtotalBasePrice * trafficMult * hostSurge) + (rateCard.tollCharges || 0)), 500)
