@@ -654,7 +654,6 @@ const bookCab = async (req, res) => {
 
       let dbCabType = cabType ? cabType.trim() : 'mini eco';
       const rideOtp = Math.floor(1000 + Math.random() * 9000);
-
       const booking = await CabBookingRequest.create({
         bookingId,
         userId,
@@ -684,48 +683,32 @@ const bookCab = async (req, res) => {
         offerId: req.offerId || null,
         offerCode: req.offerCode || null,
       }, { transaction: t });
-
-      // ✅ ZERO-RUPEE PAYMENT BYPASS
-      if (confirmationFeeAmount <= 0) {
+      // ✅ ZERO-RUPEE PAYMENT BYPASS (With Epsilon for technical robustness)
+      const isBypassed = confirmationFeeAmount < 1.0;
+      if (isBypassed) {
          await booking.update({ paymentStatus: "paid" }, { transaction: t });
-         console.log(`Booking ${bookingId} bypassed payment due to zero commission.`);
+         console.log(`Booking ${bookingId} bypassed payment due to zero/negligible commission.`);
       }
 
       await t.commit();
+
+      const customer = await User.findByPk(userId);
+      if (customer && customer.fcmToken && !isBypassed) {
+        await sendPushNotification(customer.fcmToken, "Complete Your Payment", `Please complete the confirmation fee (Rs. ${confirmationFeeAmount}) to confirm your cab booking.`);
+      }
+
+      res.status(201).json({ 
+        message: isBypassed ? "Booking confirmed (Subsidized)" : "Booking created. Please complete payment.", 
+        bookingId, 
+        estimatedPrice,
+        paymentBypassed: isBypassed 
+      });
     } catch (innerError) {
-      await t.rollback();
+      if (t) await t.rollback();
       throw innerError;
     }
-
-    // Notify drivers ONLY if this is a live Local ride or a specific vehicle was already picked.
-    if (bookingType === 'Local' || bookingType === 'Daily' || vehicleId) {
-      const notificationText = "New booking request nearby";
-      const notificationMetadata = { bookingId, startLocation, endLocation, estimatedPrice };
-
-      // DISABLED - Express Route cannot be called directly without res object
-      // const drivers = await searchForCabs({ body: { fromLocation: startLocation, searchRadius: 5 } });
-
-      //for (const driver of drivers.nearbyDrivers) {
-      //  if (driver.deviceToken) {
-      //    await publishMessage(`driver-${driver.driverId}`, { text: notificationText, metadata: notificationMetadata });
-      //  }
-      //  await sendNotification({
-      //    receiverIds: [driver.driverId],
-      //    receiverType: "driver",
-      //    text: notificationText,
-      //    metadata: notificationMetadata,
-      //  });
-      //}
-    }
-
-    const customer = await User.findByPk(userId);
-    if (customer && customer.fcmToken) {
-      await sendPushNotification(customer.fcmToken, "Complete Your Payment", `Please complete the 26% confirmation fee (Rs. ${confirmationFeeAmount}) to confirm your cab booking.`);
-    }
-
-    res.status(201).json({ message: "Booking created and drivers notified", bookingId, estimatedPrice });
   } catch (error) {
-    require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\n' + (error.stack || error.message) + '\\n\\n');
+    //require('fs').appendFileSync('C:/Users/Admin/Spintrip New Vision/cab_error.txt', new Date().toISOString() + '\\n' + (error.stack || error.message) + '\\n\\n');
     console.error("Error booking cab:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -2226,7 +2209,9 @@ const getBulkEstimates = async (req, res) => {
             payToDriver: driverPay,
             confirmationFee: Math.round((total - driverPay) * 100) / 100,
             surgeMultiplier: hostSurgeFromCard * globalSurgeMultiplier, // 🔥 EXPOSED
-            isSurgeApplied: (hostSurgeFromCard * globalSurgeMultiplier) > 1.0
+            isSurgeApplied: (hostSurgeFromCard * globalSurgeMultiplier) > 1.0,
+            commissionAmount: Math.round(comm * 100) / 100,
+            tdsAmount: Math.round(tds * 100) / 100,
           };
         }
       }

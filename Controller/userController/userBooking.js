@@ -965,7 +965,7 @@ const userbookings = async (req, res) => {
           commissionAmount: Math.round(commOut * 100) / 100,
           tdsAmount: Math.round(tdsOut * 100) / 100,
           driverEarnings: dEarn,
-          confirmationFee: cab.confirmationFee || Math.round((amt - dEarn) * 100) / 100,
+          confirmationFee: cab.confirmationFee,
           payToDriver: cab.payToDriver || dEarn,
           startTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),
           endTripDate: checkData(cab.date || cab.createdAt.toISOString().split('T')[0]),

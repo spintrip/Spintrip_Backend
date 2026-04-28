@@ -9,8 +9,8 @@ function roundToTwo(num) {
 const initiateCabPayment = async (req, res) => {
   try {
     const { CabBookingRequest } = require('../Models');
-    const { bookingId } = req.body;
-
+    const { bookingId, amount: reqAmount } = req.body;
+    
     if (!bookingId) {
       return res.status(400).json({ message: 'bookingId is required' });
     }
@@ -30,7 +30,8 @@ const initiateCabPayment = async (req, res) => {
     }
 
     const user = await User.findByPk(req.user.id);
-    const amount = booking.confirmationFee;
+    // 🛡️ FINANCIAL INTEGRITY: Primary favour the discounted amount sent by the app for Referral/Promo syncing
+    const amount = (reqAmount && parseFloat(reqAmount) > 0) ? parseFloat(reqAmount) : booking.confirmationFee;
 
     const roundedAmount = roundToTwo(amount);
     const linkId = `cab_fee_${bookingId.substring(0, 8)}_${uuid.v4().substring(0, 4)}`;
