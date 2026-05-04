@@ -1605,6 +1605,18 @@ const endTrip = async (req, res) => {
 //   }
 // };
 
+// Normalize address display for common locations (e.g. Airport)
+const normalizeAddressDisplay = (address) => {
+  if (!address) return address;
+  const addrLower = address.toLowerCase();
+  if (addrLower.includes("560300") || addrLower.includes("devanahalli") || addrLower.includes("kial") || addrLower.includes("bial")) {
+    if (!addrLower.includes("airport")) {
+       return "Kempegowda International Airport (BLR)";
+    }
+  }
+  return address;
+};
+
 const getMatchedOperationalCity = async (address, inputCity = "", preFetchedCities = null) => {
   try {
     const cities = preFetchedCities || await City.findAll({ where: { isActive: true } });
@@ -2123,10 +2135,10 @@ const getBulkEstimates = async (req, res) => {
     const originAddr = (origin?.address || "").toLowerCase();
     const destAddr = (destination?.address || "").toLowerCase();
     let evaluatedType = bookingType;
-    console.log(`[Routing] Initial bookingType: ${originAddr}, ${destAddr}. Evaluating based on address and distance...`);
-    if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
+    console.log(`[Routing] Evaluating based on address and distance...`);
+    if ((originAddr.includes("airport") || destAddr.includes("airport") || originAddr.includes("560300") || destAddr.includes("560300")) && distanceKm < 50) {
       evaluatedType = 'Airport';
-    } else if (distanceKm >=50) {
+    } else if (distanceKm >= 100) {
       evaluatedType = 'Outstation';
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
       evaluatedType = 'Local';
