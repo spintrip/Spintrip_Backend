@@ -2179,7 +2179,7 @@ const getBulkEstimates = async (req, res) => {
         } else if (evaluatedType === 'Outstation') {
           const perKm = card.outstationPerKmPrice || 0;
           const allowance = card.driverAllowancePerDay || 0;
-          base = (Math.max(distanceKm, 50) * perKm) + allowance;
+          base = (Math.max(distanceKm, 300) * perKm) + allowance;
           console.log(`[Pricing] [${type}] Outstation trip. Per km: ${perKm}, Allowance: ${allowance}, Distance: ${distanceKm}km`);
         } else {
           // ✅ LOCAL BASE FARE Logic
