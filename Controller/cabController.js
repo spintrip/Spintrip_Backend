@@ -2161,12 +2161,14 @@ const getBulkEstimates = async (req, res) => {
           const airportBase = card.airportTransferPrice || 0;
           const airportExtra = card.airportExtraKmRate || 0;
           base = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
+          console.log(`[Pricing] [${type}] Airport transfer. Base: ${airportBase}, Extra per km: ${airportExtra}, Distance: ${distanceKm}km`);
         } else if (evaluatedType === 'Rentals') {
           base = card.fullDayPrice || 0;
         } else if (evaluatedType === 'Outstation') {
           const perKm = card.outstationPerKmPrice || 0;
           const allowance = card.driverAllowancePerDay || 0;
           base = (Math.max(distanceKm, 50) * perKm) + allowance;
+          console.log(`[Pricing] [${type}] Outstation trip. Per km: ${perKm}, Allowance: ${allowance}, Distance: ${distanceKm}km`);
         } else {
           // ✅ LOCAL BASE FARE Logic
           const baseFare = 150;
