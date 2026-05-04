@@ -2005,17 +2005,20 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     if (evaluatedType === 'Airport') {
       const airportBase = rateCard.airportTransferPrice || 0;
       const airportExtra = rateCard.airportExtraKmRate || 0;
+      console.log(`[Pricing] Airport transfer detected. Base: ${airportBase}, Extra per km: ${airportExtra}, Distance: ${distanceKm}km`);
       subtotalBasePrice = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
     } else if (evaluatedType === 'Rentals') {
       subtotalBasePrice = rateCard.fullDayPrice || 0;
     } else if (evaluatedType === 'Outstation') {
       const perKm = rateCard.outstationPerKmPrice || 0;
       const allowance = rateCard.driverAllowancePerDay || 0;
+      console.log(`[Pricing] Outstation trip detected. Per km: ${perKm}, Allowance: ${allowance}, Distance: ${distanceKm}km`);
       subtotalBasePrice = (Math.max(distanceKm, 50) * perKm) + allowance;
     } else {
       // ✅ LOCAL BASE FARE Logic
       const baseFare = 150;
       const localExtra = rateCard.localExtraKmRate || 0;
+      console.log(`[Pricing] Local trip detected. Base Fare: ${baseFare}, Extra per km: ${localExtra}, Distance: ${distanceKm}km`);
       subtotalBasePrice = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * localExtra);
     }
 
