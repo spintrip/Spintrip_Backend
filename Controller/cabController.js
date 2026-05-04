@@ -2123,10 +2123,10 @@ const getBulkEstimates = async (req, res) => {
     const originAddr = (origin?.address || "").toLowerCase();
     const destAddr = (destination?.address || "").toLowerCase();
     let evaluatedType = bookingType;
-
+    console.log(`[Routing] Initial bookingType: ${originAddr}, ${destAddr}. Evaluating based on address and distance...`);
     if ((originAddr.includes("airport") || destAddr.includes("airport")) && distanceKm < 50) {
       evaluatedType = 'Airport';
-    } else if (distanceKm >= 300) {
+    } else if (distanceKm >=50) {
       evaluatedType = 'Outstation';
     } else if (bookingType !== 'Rentals' && bookingType !== 'Outstation') {
       evaluatedType = 'Local';
