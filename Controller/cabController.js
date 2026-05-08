@@ -562,7 +562,11 @@ const bookCab = async (req, res) => {
       vehicleId,
       cabType,
       bookingType,
-      address: startLocation.address || ""
+      address: startLocation.address || "",
+      date: startDate,
+      time: startTime,
+      days: req.body.days || 1,
+      isRoundTrip: req.body.isRoundTrip
     });
 
     estimatedPrice = estimate.estimatedPrice;
@@ -682,6 +686,8 @@ const bookCab = async (req, res) => {
         discountAmount: req.discountAmount || 0,
         offerId: req.offerId || null,
         offerCode: req.offerCode || null,
+        days: req.body.days || 1,
+        isRoundTrip: req.body.isRoundTrip !== false,
       }, { transaction: t });
       // ✅ ZERO-RUPEE PAYMENT BYPASS (With Epsilon for technical robustness)
       const isBypassed = confirmationFeeAmount < 1.0;
@@ -959,7 +965,11 @@ const createSoftBooking = async (req, res) => {
       cabType: req.body.cabType || "Mini", 
       bookingType: req.body.bookingType || "Local",
       address: startLocation.address || "",
-      city: req.body.city || ""
+      city: req.body.city || "",
+      date: startDate,
+      time: startTime,
+      days: req.body.days || 1,
+      isRoundTrip: req.body.isRoundTrip
     });
 
     const {
@@ -1003,6 +1013,8 @@ const createSoftBooking = async (req, res) => {
         endLocationLongitude: endLocation?.longitude || startLocation.longitude,
         estimatedPrice: estimatedPrice,
         status: 5, // Status 5 is 'Assigning Driver'
+        days: req.body.days || 1,
+        isRoundTrip: req.body.isRoundTrip !== false,
       }, { transaction: t });
 
       await t.commit();
@@ -1902,16 +1914,24 @@ const getEstimate = async (req, res) => {
 /**
  * Core Dynamic Surge Multiplier Helper (IST-Aware)
  */
-const getActiveSurgeMultiplier = async (city, cabType) => {
+const getActiveSurgeMultiplier = async (city, cabType, scheduledDate = null, scheduledTime = null) => {
   try {
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset);
-    
-    // Format: HH:mm:ss for DB comparison
-    const currentTime = istTime.toISOString().split('T')[1].substring(0, 8);
-    const currentDate = istTime.toISOString().split('T')[0];
-    const currentDay = istTime.getUTCDay(); // 0=Sun, 1=Mon...
+    let currentDate = scheduledDate;
+    let currentTime = scheduledTime;
+    let currentDay = null;
+
+    if (!currentDate || !currentTime) {
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const istTime = new Date(now.getTime() + istOffset);
+      
+      currentTime = currentTime || istTime.toISOString().split('T')[1].substring(0, 8);
+      currentDate = currentDate || istTime.toISOString().split('T')[0];
+      currentDay = istTime.getUTCDay(); // 0=Sun, 1=Mon...
+    } else {
+      // Calculate day of week from provided date
+      currentDay = new Date(currentDate).getDay();
+    }
 
     const activeSurge = await SurgePrice.findOne({
       where: {
@@ -1924,12 +1944,20 @@ const getActiveSurgeMultiplier = async (city, cabType) => {
           { cabType: cabType },
           { cabType: null }
         ],
-        [Op.or]: [
-          { // Check recursive time slot + date range
-            startDate: { [Op.lte]: currentDate },
-            endDate: { [Op.gte]: currentDate }
+        [Op.and]: [
+          {
+            [Op.or]: [
+              {
+                startDate: { [Op.lte]: currentDate },
+                endDate: { [Op.gte]: currentDate }
+              },
+              { startDate: null }
+            ]
           },
-          { startDate: null }
+          {
+            startTime: { [Op.lte]: currentTime },
+            endTime: { [Op.gte]: currentTime }
+          }
         ]
       },
       order: [
@@ -1938,6 +1966,16 @@ const getActiveSurgeMultiplier = async (city, cabType) => {
         ['cabType', 'DESC'] // Priority to category-specific
       ]
     });
+
+    if (!activeSurge) return 1.0;
+
+    // Filter by daysOfWeek if present
+    if (activeSurge.daysOfWeek) {
+      const days = activeSurge.daysOfWeek.split(',').map(d => d.trim());
+      if (!days.includes(currentDay.toString())) {
+        return 1.0; // Day doesn't match
+      }
+    }
 
     // console.log(activeSurge);
 
@@ -1962,7 +2000,7 @@ const getActiveSurgeMultiplier = async (city, cabType) => {
 /**
  * Core Dynamic Price Estimation Engine
  */
-const estimatePrice = async ({ origin, destination, cabType, bookingType = "Local", address = "", city = "" }) => {
+const estimatePrice = async ({ origin, destination, cabType, bookingType = "Local", address = "", city = "", date = null, time = null, days = 1, isRoundTrip = true }) => {
   try {
     const originStr = typeof origin === "string" ? origin : `${origin?.latitude || 0},${origin?.longitude || 0}`;
     const destinationValid = (destination && (typeof destination === 'string' || (destination?.latitude && destination?.longitude)));
@@ -2024,8 +2062,13 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     } else if (evaluatedType === 'Outstation') {
       const perKm = rateCard.outstationPerKmPrice || 0;
       const allowance = rateCard.driverAllowancePerDay || 0;
-      console.log(`[Pricing] Outstation trip detected. Per km: ${perKm}, Allowance: ${allowance}, Distance: ${distanceKm}km`);
-      subtotalBasePrice = (Math.max(distanceKm, 50) * perKm) + allowance;
+      const numDays = parseInt(days) || 1;
+      
+      if (isRoundTrip !== false) {
+        subtotalBasePrice = (Math.max(distanceKm, 300 * numDays) * perKm) + (allowance * numDays);
+      } else {
+        subtotalBasePrice = (distanceKm * perKm * 1.5) + allowance;
+      }
     } else {
       // ✅ LOCAL BASE FARE Logic
       const baseFare = 150;
@@ -2039,9 +2082,9 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       > 1.5 ? 1.1 : 1);
 
     const hostSurgeFromCard = (rateCard.surgeMultiplier || 1.0);
-    
+    console.log(`[Pricing] Calculated base price: ${matchedCity}, ${cabType}, ${date}, ${time}, Host Surge from Card: ${hostSurgeFromCard}`); 
     // 🔥 NEW: Apply Global Surge Overrides
-    const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, cabType);
+    const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, cabType, date, time);
     const hostSurge = hostSurgeFromCard * globalSurgeMultiplier;
 
     const total = (evaluatedType === 'Airport' || evaluatedType === 'Rentals')
@@ -2148,10 +2191,10 @@ const getBulkEstimates = async (req, res) => {
     console.log(`[Estimates] Calculating for ${cabTypes.join(', ')} in ${matchedCity || 'Unknown City'} (Type: ${evaluatedType}) [Optimized]`);
 
     // 🕒 DYNAMIC PEAK SURGE STEERING (IST UTC+5:30) - Calculate once per bulk request
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istTime = new Date(now.getTime() + istOffset);
-    const hour = istTime.getUTCHours();
+    const scheduledDate = req.body.date;
+    const scheduledTime = req.body.time;
+    const days = parseInt(req.body.days) || 1;
+    const isRoundTrip = req.body.isRoundTrip !== false; // Default to true
 
     for (const type of cabTypes) {
       // 🚀 FAST FUZZY MATCH: Filter from the already pre-fetched allRateCards array
@@ -2179,8 +2222,16 @@ const getBulkEstimates = async (req, res) => {
         } else if (evaluatedType === 'Outstation') {
           const perKm = card.outstationPerKmPrice || 0;
           const allowance = card.driverAllowancePerDay || 0;
-          base = (Math.max(distanceKm, 300) * perKm) + allowance;
-          console.log(`[Pricing] [${type}] Outstation trip. Per km: ${perKm}, Allowance: ${allowance}, Distance: ${distanceKm}km`);
+          
+          if (isRoundTrip) {
+            // 🔄 ROUND TRIP: Daily minimum and allowance per day
+            base = (Math.max(distanceKm, 300 * days) * perKm) + (allowance * days);
+            console.log(`[Pricing] [${type}] Round Trip Outstation for ${days} days. Base: ${base}`);
+          } else {
+            // ➡️ ONE WAY: Actual distance + 1.5x Rate + 1 Day Allowance
+            base = (distanceKm * perKm * 1.5) + allowance;
+            console.log(`[Pricing] [${type}] One-Way Outstation. Base: ${base}`);
+          }
         } else {
           // ✅ LOCAL BASE FARE Logic
           const baseFare = 150;
@@ -2192,10 +2243,10 @@ const getBulkEstimates = async (req, res) => {
         const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
 
         const hostSurgeFromCard = (card.surgeMultiplier || 1.0);
-        
+         //console.log(`[Pricing] Calculated base price: ${matchedCity}, ${type}, ${scheduledDate}, ${scheduledTime}, Host Surge from Card: ${hostSurgeFromCard}`); 
         // 🔥 NEW: Check Global Surge per vehicle type
-        const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, type);
-        
+        const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, type, scheduledDate, scheduledTime);
+        //console.log(`[Surge] Global surge multiplier for ${type}: ${globalSurgeMultiplier}`);
         let total = Math.round((base * trafficMult * hostSurgeFromCard * globalSurgeMultiplier) + (card.tollCharges || 0));
 
         // 🛡️ THE PRODUCTION FLOOR (Ensures consistency with estimatePrice)
