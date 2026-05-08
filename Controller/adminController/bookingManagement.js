@@ -413,6 +413,7 @@ const getBookingById = async (req, res) => {
           bookingType: cabBooking.bookingType || 'Cab',
           offerCode: cabBooking.offerCode || '',
           discountAmount: cabBooking.discountAmount || 0,
+          commissionAmount: cabBooking.commissionAmount || 0,
           isCab: true
         };
       }
