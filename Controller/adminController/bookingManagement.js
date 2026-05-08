@@ -158,13 +158,14 @@ const getAllBookings = async (req, res) => {
       else if (cab.status === 'started') statusInt = 2;
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
+      else if (cab.status === 'completed_with_review') statusInt = 6;
 
       const vehicleName = cabVehicleNamesMap[`3_${cab.vehicleId}`] || 'Cab ID: ' + cab.vehicleId;
 
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
-        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A',
+        customerName: cab.Customer?.UserAdditional?.FullName || cab.Customer?.phone || 'N/A',
         customerPhone: cab.Customer?.phone || 'N/A',
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
@@ -193,6 +194,7 @@ const getAllBookings = async (req, res) => {
         createdAt: cab.createdAt,
         updatedAt: cab.updatedAt,
         type: 'cab',
+        bookingType: cab.bookingType || 'Local',
         isCab: true
       };
     });
@@ -237,13 +239,14 @@ const getSelfDriveBookings = async (req, res) => {
 
       return {
         ...json,
-        customerName: user?.UserAdditional?.FullName || 'N/A',
+        customerName: user?.UserAdditional?.FullName || user?.phone || 'N/A',
         customerPhone: user?.phone || 'N/A',
         carname: vehicleName,
         pickUpLocation: json.pickup?.address || '',
         dropOffLocation: json.destination?.address || '',
         isCab: false,
-        type: 'rental'
+        type: 'rental',
+        bookingType: 'Rental'
       };
 
     });
@@ -284,13 +287,14 @@ const getCabBookings = async (req, res) => {
       else if (cab.status === 'started') statusInt = 2;
       else if (cab.status === 'completed') statusInt = 3;
       else if (cab.status === 'cancelled') statusInt = 4;
+      else if (cab.status === 'completed_with_review') statusInt = 6;
 
       const vehicleName = cabVehicleNamesMap[`3_${cab.vehicleId}`] || 'Cab ID: ' + cab.vehicleId;
 
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
-        customerName: cab.Customer?.UserAdditional?.FullName || 'N/A',
+        customerName: cab.Customer?.UserAdditional?.FullName || cab.Customer?.phone || 'N/A',
         customerPhone: cab.Customer?.phone || 'N/A',
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
@@ -319,6 +323,7 @@ const getCabBookings = async (req, res) => {
         createdAt: cab.createdAt,
         updatedAt: cab.updatedAt,
         type: 'cab',
+        bookingType: cab.bookingType || 'Local',
         isCab: true
       };
 
@@ -340,11 +345,29 @@ const getBookingById = async (req, res) => {
     let cabBooking = null;
 
     if (isNaN(id) || String(id).startsWith('CB-')) {
-      cabBooking = await CabBookingRequest.findOne({ where: { bookingId: id } });
+      cabBooking = await CabBookingRequest.findOne({ 
+        where: { bookingId: id },
+        include: [{
+          model: User,
+          as: 'Customer',
+          include: [{ model: UserAdditional }]
+        }]
+      });
     } else {
-      booking = await Booking.findByPk(id);
+      booking = await Booking.findByPk(id, {
+        include: [{
+          model: User,
+          include: [{ model: UserAdditional }]
+        }]
+      });
       if (!booking) {
-        cabBooking = await CabBookingRequest.findByPk(id);
+        cabBooking = await CabBookingRequest.findByPk(id, {
+          include: [{
+            model: User,
+            as: 'Customer',
+            include: [{ model: UserAdditional }]
+          }]
+        });
       }
     }
 
@@ -356,10 +379,13 @@ const getBookingById = async (req, res) => {
         else if (cabBooking.status === 'started') statusInt = 2;
         else if (cabBooking.status === 'completed') statusInt = 3;
         else if (cabBooking.status === 'cancelled') statusInt = 4;
+        else if (cabBooking.status === 'completed_with_review') statusInt = 6;
 
         booking = {
           Bookingid: cabBooking.bookingId,
           id: cabBooking.userId,
+          customerName: cabBooking.Customer?.UserAdditional?.FullName || cabBooking.Customer?.phone || 'N/A',
+          customerPhone: cabBooking.Customer?.phone || 'N/A',
           vehicleid: cabBooking.vehicleId,
           driverid: cabBooking.driverid,
           date: cabBooking.date,
@@ -384,9 +410,27 @@ const getBookingById = async (req, res) => {
           paymentMethod: cabBooking.paymentStatus || '',
           createdAt: cabBooking.createdAt,
           updatedAt: cabBooking.updatedAt,
+          bookingType: cabBooking.bookingType || 'Cab',
+          offerCode: cabBooking.offerCode || '',
+          discountAmount: cabBooking.discountAmount || 0,
           isCab: true
         };
       }
+    } else {
+        // Enrich Rental/Self-Drive Booking
+        const json = booking.toJSON();
+        const user = json.User;
+        booking = {
+            ...json,
+            Bookingid: json.Bookingid,
+            id: json.userId || json.id,
+            customerName: user?.UserAdditional?.FullName || user?.phone || 'N/A',
+            customerPhone: user?.phone || 'N/A',
+            offerId: json.offerId || '',
+            discountAmount: json.discountAmount || 0,
+            isCab: false,
+            type: 'rental'
+        };
     }
 
     if (!booking) {
@@ -427,6 +471,7 @@ const updateBookingById = async (req, res) => {
           if (updatedFields.status === 2) enumStatus = 'started';
           if (updatedFields.status === 3) enumStatus = 'completed';
           if (updatedFields.status === 4) enumStatus = 'cancelled';
+          if (updatedFields.status === 6) enumStatus = 'completed_with_review';
           cabUpdates.status = enumStatus;
         }
         if (updatedFields.vehicleid !== undefined) cabUpdates.vehicleId = updatedFields.vehicleid;

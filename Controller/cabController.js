@@ -215,6 +215,23 @@ const assignDriverToVehicle = async (req, res) => {
   }
 };
 
+const unassignDriverFromVehicle = async (req, res) => {
+  const vehicleId = req.body.vehicleId || req.body.vehicleid;
+  const hostId = req.user.id;
+
+  try {
+    // If Admin is doing it, we don't necessarily enforce hostId checking unless we want to, 
+    // but the route is restricted to Superadmin anyway if we set it up that way.
+    // Let's assume the cab exists.
+    await Cab.update({ driverId: null }, { where: { vehicleid: vehicleId } });
+
+    res.status(200).json({ message: "Driver unassigned successfully" });
+  } catch (error) {
+    console.error("Error unassigning driver:", error.message);
+    res.status(500).json({ message: "Error unassigning driver", error: error.message });
+  }
+};
+
 /**
  * Search for nearby cabs
  */
@@ -679,6 +696,7 @@ const bookCab = async (req, res) => {
         status: "pending",
         paymentStatus: "pending",
         cabType: dbCabType,
+        bookingType: bookingType || 'Local',
         confirmationFee: confirmationFeeAmount,
         payToDriver: payToDriverAmount,
         otp: rideOtp,
@@ -1013,6 +1031,7 @@ const createSoftBooking = async (req, res) => {
         endLocationLongitude: endLocation?.longitude || startLocation.longitude,
         estimatedPrice: estimatedPrice,
         status: 5, // Status 5 is 'Assigning Driver'
+        bookingType: req.body.bookingType || 'Local',
         days: req.body.days || 1,
         isRoundTrip: req.body.isRoundTrip !== false,
       }, { transaction: t });
@@ -2412,5 +2431,6 @@ module.exports = {
   trackDriverLocation,
   toggleDriverStatus,
   cancelUnpaidBooking,
-  refundBookingCoins
+  refundBookingCoins,
+  unassignDriverFromVehicle
 };

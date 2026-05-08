@@ -24,7 +24,7 @@ const { createBlog, updateBlog, deleteBlog, getAllBlogs, getBlogById } = require
 const { 
   getSurgeRules, createSurgeRule, updateSurgeRule, deleteSurgeRule 
 } = require('../Controller/adminController/surgeManagement');
-const { addCab, addDriver, assignDriverToVehicle } = require('../Controller/cabController');
+const { addCab, addDriver, assignDriverToVehicle, unassignDriverFromVehicle } = require('../Controller/cabController');
 
 const multer = require('multer');
 const multerS3 = require('multer-s3');
@@ -74,6 +74,7 @@ router.post('/users/:id/convert-to-driver', authenticate, restrictToSuperadmin, 
 router.post('/cab/add-cab', authenticate, addCab);
 router.post('/cab/add-driver', authenticate, addDriver);
 router.post('/cab/assign-driver-vehicle', authenticate, assignDriverToVehicle);
+router.post('/cab/unassign-driver-vehicle', authenticate, restrictToSuperadmin, unassignDriverFromVehicle);
 // Add this function (perhaps near your new 'getAllVehicleTypes'):
 const getAllCities = async (req, res) => {
   try {
