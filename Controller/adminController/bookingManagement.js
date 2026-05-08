@@ -195,6 +195,8 @@ const getAllBookings = async (req, res) => {
         updatedAt: cab.updatedAt,
         type: 'cab',
         bookingType: cab.bookingType || 'Local',
+        days: cab.days || 1,
+        isRoundTrip: cab.isRoundTrip !== false,
         isCab: true
       };
     });
@@ -324,6 +326,8 @@ const getCabBookings = async (req, res) => {
         updatedAt: cab.updatedAt,
         type: 'cab',
         bookingType: cab.bookingType || 'Local',
+        days: cab.days || 1,
+        isRoundTrip: cab.isRoundTrip !== false,
         isCab: true
       };
 
@@ -411,6 +415,8 @@ const getBookingById = async (req, res) => {
           createdAt: cabBooking.createdAt,
           updatedAt: cabBooking.updatedAt,
           bookingType: cabBooking.bookingType || 'Cab',
+          days: cabBooking.days || 1,
+          isRoundTrip: cabBooking.isRoundTrip !== false,
           offerCode: cabBooking.offerCode || '',
           discountAmount: cabBooking.discountAmount || 0,
           commissionAmount: cabBooking.commissionAmount || 0,
