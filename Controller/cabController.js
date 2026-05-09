@@ -2090,7 +2090,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       }
     } else {
       // ✅ LOCAL BASE FARE Logic
-      const baseFare = 150;
+      const baseFare = 100;
       const localExtra = rateCard.localExtraKmRate || 0;
       console.log(`[Pricing] Local trip detected. Base Fare: ${baseFare}, Extra per km: ${localExtra}, Distance: ${distanceKm}km`);
       subtotalBasePrice = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * localExtra);
@@ -2253,7 +2253,7 @@ const getBulkEstimates = async (req, res) => {
           }
         } else {
           // ✅ LOCAL BASE FARE Logic
-          const baseFare = 150;
+          const baseFare = 100;
           const localExtra = card.localExtraKmRate || 0;
           base = (distanceKm <= 2) ? baseFare : (baseFare + (distanceKm - 2) * localExtra);
         }
