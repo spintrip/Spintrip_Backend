@@ -96,6 +96,7 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
       );
     `);
 
+    await sequelize.query(`ALTER TABLE "SurgePrices" ADD COLUMN IF NOT EXISTS "bookingType" VARCHAR(20);`);
     console.log('Offers and Discounts schema synchronized.');
     console.log('Driver Verification schema synchronized.');
     console.log('Support schema synchronized.');
