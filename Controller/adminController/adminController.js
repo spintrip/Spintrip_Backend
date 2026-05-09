@@ -13,7 +13,7 @@ const {pendingProfile, approveProfile, rejectProfile} = require('./adminProfileM
 const {pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile} = require('./adminCarManagement');
 const { subscriptions } = require('./adminSubsctiptions');
 const { getAllFeedbacks, deleteFeedback } = require('./adminFeedbackManagement');
-const { createVehicleType, getAllVehicleTypes, deleteVehicleType } = require('./adminVehicleTypeManagement');
+const { createVehicleType, getAllVehicleTypes, deleteVehicleType, updateVehicleType } = require('./adminVehicleTypeManagement');
 const { createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord } = require('./genericCrudController');
 const { getAllCabs, getCabById, approveCabProfile, rejectCabProfile, getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver } = require('./adminCabDriverManagement');
 const { getAllWithdrawals, approveWithdrawal, rejectWithdrawal } = require('./adminWithdrawalManagement');
@@ -32,7 +32,7 @@ module.exports = {
   pendingProfile, approveProfile, rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile,postActiveVehicle,
   subscriptions,
   getAllFeedbacks, deleteFeedback,
-  createVehicleType, getAllVehicleTypes, deleteVehicleType,
+  createVehicleType, getAllVehicleTypes, deleteVehicleType, updateVehicleType,
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
   getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver,

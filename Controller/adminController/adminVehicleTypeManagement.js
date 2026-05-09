@@ -27,6 +27,25 @@ const getAllVehicleTypes = async (req, res) => {
   }
 };
 
+// Update a vehicle type by ID
+const updateVehicleType = async (req, res) => {
+  try {
+    const { name, description, basePrice } = req.body;
+    const vehicleType = await VehicleType.findByPk(req.params.id);
+    if (!vehicleType) {
+      return res.status(404).json({ success: false, message: 'Vehicle type not found' });
+    }
+    await vehicleType.update({
+      vehicletype: name,
+      description,
+      basePrice
+    });
+    res.status(200).json({ success: true, message: 'Vehicle type updated successfully', vehicleType });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 // Delete a vehicle type by ID
 const deleteVehicleType = async (req, res) => {
   try {
@@ -44,5 +63,6 @@ const deleteVehicleType = async (req, res) => {
 module.exports = {
   createVehicleType,
   getAllVehicleTypes,
-  deleteVehicleType
+  deleteVehicleType,
+  updateVehicleType
 };

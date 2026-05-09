@@ -14,7 +14,7 @@ const {
   pendingProfile, approveProfile, rejectProfile, pendingVehicleProfile, approveVehicleProfile, rejectVehicleProfile, subscriptions, postActiveVehicle,
 
   getAllFeedbacks, deleteFeedback,
-  createVehicleType, getAllVehicleTypes, deleteVehicleType,
+  createVehicleType, getAllVehicleTypes, deleteVehicleType, updateVehicleType,
   createRecord, getAllRecords, getRecordById, updateRecord, deleteRecord,
   getAllCabs, getCabById, approveCabProfile, rejectCabProfile,
   getAllDrivers, getDriverById, approveDriverProfile, rejectDriverProfile, deleteDriver,
@@ -154,6 +154,7 @@ router.delete('/feedbacks/:id', authenticate, restrictToSuperadmin, deleteFeedba
 // Vehicle Type routes
 router.post('/vehicle-types', authenticate, restrictToSuperadmin, createVehicleType);
 router.get('/vehicle-types', authenticate, restrictToSuperadmin, getAllVehicleTypes);
+router.put('/vehicle-types/:id', authenticate, restrictToSuperadmin, updateVehicleType);
 router.delete('/vehicle-types/:id', authenticate, restrictToSuperadmin, deleteVehicleType);
 
 // Host routes
