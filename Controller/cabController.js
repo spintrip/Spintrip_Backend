@@ -1933,7 +1933,7 @@ const getEstimate = async (req, res) => {
 /**
  * Core Dynamic Surge Multiplier Helper (IST-Aware)
  */
-const getActiveSurgeMultiplier = async (city, cabType, scheduledDate = null, scheduledTime = null) => {
+const getActiveSurgeMultiplier = async (city, cabType, bookingType = null, scheduledDate = null, scheduledTime = null) => {
   try {
     let currentDate = scheduledDate;
     let currentTime = scheduledTime;
@@ -1963,6 +1963,10 @@ const getActiveSurgeMultiplier = async (city, cabType, scheduledDate = null, sch
           { cabType: cabType },
           { cabType: null }
         ],
+        [Op.or]: [
+          { bookingType: bookingType },
+          { bookingType: null }
+        ],
         [Op.and]: [
           {
             [Op.or]: [
@@ -1982,6 +1986,7 @@ const getActiveSurgeMultiplier = async (city, cabType, scheduledDate = null, sch
       order: [
         ['multiplier', 'DESC'], // Use highest multiplier first
         ['city', 'DESC'], // Priority to city-specific
+        ['bookingType', 'DESC'], // Priority to type-specific
         ['cabType', 'DESC'] // Priority to category-specific
       ]
     });
@@ -2075,7 +2080,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
       const airportBase = rateCard.airportTransferPrice || 0;
       const airportExtra = rateCard.airportExtraKmRate || 0;
       console.log(`[Pricing] Airport transfer detected. Base: ${airportBase}, Extra per km: ${airportExtra}, Distance: ${distanceKm}km`);
-      subtotalBasePrice = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
+      subtotalBasePrice = (distanceKm <= 25) ? airportBase : (airportBase + (distanceKm - 25) * airportExtra);
     } else if (evaluatedType === 'Rentals') {
       subtotalBasePrice = rateCard.fullDayPrice || 0;
     } else if (evaluatedType === 'Outstation') {
@@ -2103,7 +2108,7 @@ const estimatePrice = async ({ origin, destination, cabType, bookingType = "Loca
     const hostSurgeFromCard = (rateCard.surgeMultiplier || 1.0);
     console.log(`[Pricing] Calculated base price: ${matchedCity}, ${cabType}, ${date}, ${time}, Host Surge from Card: ${hostSurgeFromCard}`); 
     // 🔥 NEW: Apply Global Surge Overrides
-    const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, cabType, date, time);
+    const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, cabType, evaluatedType, date, time);
     const hostSurge = hostSurgeFromCard * globalSurgeMultiplier;
 
     const total = (evaluatedType === 'Airport' || evaluatedType === 'Rentals')
@@ -2234,7 +2239,7 @@ const getBulkEstimates = async (req, res) => {
         if (evaluatedType === 'Airport') {
           const airportBase = card.airportTransferPrice || 0;
           const airportExtra = card.airportExtraKmRate || 0;
-          base = (distanceKm <= 35) ? airportBase : (airportBase + (distanceKm - 35) * airportExtra);
+          base = (distanceKm <= 25) ? airportBase : (airportBase + (distanceKm - 25) * airportExtra);
           console.log(`[Pricing] [${type}] Airport transfer. Base: ${airportBase}, Extra per km: ${airportExtra}, Distance: ${distanceKm}km`);
         } else if (evaluatedType === 'Rentals') {
           base = card.fullDayPrice || 0;

@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true, // Use null for "All Types"
     },
+    bookingType: {
+      type: DataTypes.ENUM("Local", "Outstation", "Airport", "Rentals"),
+      allowNull: true, // Use null for "All Booking Types"
+    },
     multiplier: {
       type: DataTypes.DOUBLE,
       defaultValue: 1.0,
