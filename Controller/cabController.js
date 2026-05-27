@@ -25,6 +25,7 @@ const {
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
+const { sendTelegramAlert } = require("../Utils/telegramService");
 const geolib = require("geolib");
 const { sendOTP, generateOTP } = require('./hostcontroller/hostBooking');
 const { sendPushNotification, notifyBookingAllocation, notifyUserById } = require('../Utils/notificationService');
@@ -721,6 +722,11 @@ const bookCab = async (req, res) => {
         await sendPushNotification(customer.fcmToken, "Complete Your Payment", `Please complete the confirmation fee (Rs. ${confirmationFeeAmount}) to confirm your cab booking.`);
       }
 
+      // Telegram Group Alert
+      const customerName = customer ? (customer.FullName || customer.phone || userId) : userId;
+      const tMsg = `🚕 <b>New Cab Booking Requested!</b>\n\n<b>User:</b> ${customerName}\n<b>Booking ID:</b> <code>${bookingId}</code>\n<b>Type:</b> ${dbCabType} (${bookingType})\n<b>Est. Price:</b> ₹${estimatedPrice}`;
+      sendTelegramAlert(tMsg);
+
       res.status(201).json({ 
         message: isBypassed ? "Booking confirmed (Subsidized)" : "Booking created. Please complete payment.", 
         bookingId, 
@@ -1105,7 +1111,7 @@ const acceptBooking = async (req, res) => {
 
     // Update soft booking to confirmed (status 1)
     await CabBookingRequest.update(
-      { status: 1, driverId },
+      { status: 1, driverId, otp: tripOtp },
       { where: { bookingId } }
     );
 
@@ -1421,6 +1427,11 @@ const startTrip = async (req, res) => {
       { status: "started", startTripTime: new Date() },
       { where: { bookingId }, transaction }
     );
+
+    // Generate and set the 4-digit End OTP for CabBookingAccepted
+    const endOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    acceptedBooking.tripOtp = endOtp;
+    await acceptedBooking.save({ transaction });
 
     await transaction.commit();
 

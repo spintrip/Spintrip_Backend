@@ -2,7 +2,7 @@ const axios = require('axios');
 const uuid = require('uuid');
 const { User, Vehicle, Chat, Cab, UserAdditional, Listing, sequelize, Booking, Pricing,
   carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, HostAdditional, VehicleAdditional, DriverAdditional, BookingExtension, Transaction,
-  Driver, CabBookingRequest, Wallet, WalletTransaction } = require('../../Models');
+  Driver, CabBookingRequest, Wallet, WalletTransaction, CabBookingAccepted } = require('../../Models');
   const { Op } = require('sequelize');
 const { notifyUserById } = require('../../Utils/notificationService');
 const {
@@ -120,17 +120,38 @@ const tripstart = async (req, res) => {
     // First, check CabBookingRequest
     const cabBooking = await CabBookingRequest.findOne({ where: { bookingId: bookingId } });
     if (cabBooking) {
-      if (cabBooking.status !== 'accepted' && cabBooking.status !== 'assigned') {
+      if (cabBooking.status != 1 && cabBooking.status !== 'pending_payment' && cabBooking.status !== 'accepted' && cabBooking.status !== 'assigned') {
          return res.status(404).json({ message: 'Trip already started or cancelled' });
       }
+      
+      let expectedOtp = cabBooking.otp;
+      if (!expectedOtp) {
+         // Fallback to checking CabBookingAccepted (just in case)
+         const accepted = await CabBookingAccepted.findOne({ where: { bookingId: bookingId } });
+         if (accepted && accepted.tripOtp) expectedOtp = accepted.tripOtp;
+      }
+      
       const userObj = await User.findOne({ where: { id: cabBooking.userId } });
-      if (!userObj || (userObj.otp != UserOtp && cabBooking.otp != UserOtp)) {
+      if (!userObj || (userObj.otp != UserOtp && expectedOtp != UserOtp)) {
          return res.status(400).json({ message: 'Invalid OTP' });
       }
       const t = await sequelize.transaction();
       try {
+        const endOtp = Math.floor(1000 + Math.random() * 9000);
         cabBooking.status = 'started';
+        cabBooking.otp = endOtp;
         await cabBooking.save({ transaction: t });
+
+        // Try to update CabBookingAccepted as well, fallback to raw query or just ignore if it fails
+        try {
+          await CabBookingAccepted.update(
+            { tripOtp: endOtp.toString() },
+            { where: { bookingId }, transaction: t }
+          );
+        } catch (e) {
+          console.error("CabBookingAccepted update failed, falling back to cabBooking.otp");
+        }
+
         await t.commit();
 
         // 🔔 Notify User
@@ -200,6 +221,11 @@ const bookingcompleted = async (req, res) => {
     if (cabBooking) {
       if (cabBooking.status !== 'started' && cabBooking.status !== 'ongoing') {
          return res.status(404).json({ message: 'Trip not started or already completed' });
+      }
+
+      // OTP Verification
+      if (UserOtp && cabBooking.otp && cabBooking.otp != UserOtp) {
+         return res.status(400).json({ message: 'Invalid OTP' });
       }
 
       // Process Completion

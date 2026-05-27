@@ -7,146 +7,146 @@ const s3 = require('../s3Config');
 const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
 
-  const generateLegalContractPDF = async (userEmail, hostEmail, bookingDetails) => {
+const generateLegalContractPDF = async (userEmail, hostEmail, bookingDetails) => {
     return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        const filePath = './legal_contract.pdf';
-  
-        const writeStream = fs.createWriteStream(filePath);
-        doc.pipe(writeStream);
-  
-        const logoPath = path.join(__dirname, 'assets', 'logo.png'); 
-        doc.image(logoPath, 50, 45, { width: 100 })
-          .moveDown(5); 
-  
-        doc
-          .fontSize(20)
-          .font('Helvetica-Bold')
-          .text('Legal Contract Between Host and User', { align: 'center' })
-          .moveDown(1);
-  
-        doc
-          .moveTo(50, 150)
-          .lineTo(550, 150)
-          .stroke()
-          .moveDown(2);
-  
-        doc
-          .fontSize(12)
-          .font('Helvetica-Bold')
-          .text('Booking Details:', { underline: true })
-          .moveDown(1);
-  
-        doc
-          .font('Helvetica')
-          .text('Car Model: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(bookingDetails.carModel)
-          .moveDown(0.5);
-  
-        doc
-          .font('Helvetica')
-          .text('Booking Start Date: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(bookingDetails.startDate)
-          .moveDown(0.5);
+        try {
+            const doc = new PDFDocument({ margin: 50 });
+            const filePath = './legal_contract.pdf';
 
-       doc
-          .font('Helvetica')
-          .text('Booking Start Time: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(bookingDetails.startTime)
-          .moveDown(0.5);  
+            const writeStream = fs.createWriteStream(filePath);
+            doc.pipe(writeStream);
 
-          doc
-          .font('Helvetica')
-          .text('Booking End Date: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(bookingDetails.endDate)
-          .moveDown(0.5);    
+            const logoPath = path.join(__dirname, 'assets', 'logo.png');
+            doc.image(logoPath, 50, 45, { width: 100 })
+                .moveDown(5);
 
-          doc
-          .font('Helvetica')
-          .text('Booking End Time: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(bookingDetails.endTime)
-          .moveDown(0.5);      
-  
-        doc
-          .font('Helvetica')
-          .text('Host Email: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(hostEmail)
-          .moveDown(0.5);
-  
-        doc
-          .font('Helvetica')
-          .text('User Email: ', { continued: true })
-          .font('Helvetica-Bold')
-          .text(userEmail)
-          .moveDown(2);
-  
-        doc
-          .fontSize(14)
-          .font('Helvetica-Bold')
-          .text('Contract Terms:', { underline: true })
-          .moveDown(1);
-  
-        doc
-          .fontSize(12)
-          .font('Helvetica')
-          .list([
-            'The user agrees to return the car in the same condition and with the same amount of fuel as received.',
-            'The user is liable for any damages caused to the car during the rental period.',
-            'This contract helps Spintrip legally in case of any issues during the rental period.',
-            'Spintrip reserves the right to take action in case of non-compliance with the terms of this contract.',
-          ], { bulletRadius: 3 })
-          .moveDown(2);
+            doc
+                .fontSize(20)
+                .font('Helvetica-Bold')
+                .text('Legal Contract Between Host and User', { align: 'center' })
+                .moveDown(1);
 
-        doc
-          .fontSize(10)
-          .font('Helvetica-Oblique')
-          .text(
-            'Note: This contract is legally binding between both parties. Any disputes should be resolved in accordance with the Spintrip terms and conditions.',
-            { align: 'center' }
-          );
-  
-        doc.end();
-  
-        writeStream.on('finish', () => {
-          resolve(filePath);
-        });
-  
-        writeStream.on('error', (err) => {
-          reject(new Error('Error writing to PDF file: ' + err.message));
-        });
-  
-      } catch (err) {
-        reject(new Error('Unexpected error: ' + err.message));
-      }
+            doc
+                .moveTo(50, 150)
+                .lineTo(550, 150)
+                .stroke()
+                .moveDown(2);
+
+            doc
+                .fontSize(12)
+                .font('Helvetica-Bold')
+                .text('Booking Details:', { underline: true })
+                .moveDown(1);
+
+            doc
+                .font('Helvetica')
+                .text('Car Model: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(bookingDetails.carModel)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('Booking Start Date: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(bookingDetails.startDate)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('Booking Start Time: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(bookingDetails.startTime)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('Booking End Date: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(bookingDetails.endDate)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('Booking End Time: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(bookingDetails.endTime)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('Host Email: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(hostEmail)
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .text('User Email: ', { continued: true })
+                .font('Helvetica-Bold')
+                .text(userEmail)
+                .moveDown(2);
+
+            doc
+                .fontSize(14)
+                .font('Helvetica-Bold')
+                .text('Contract Terms:', { underline: true })
+                .moveDown(1);
+
+            doc
+                .fontSize(12)
+                .font('Helvetica')
+                .list([
+                    'The user agrees to return the car in the same condition and with the same amount of fuel as received.',
+                    'The user is liable for any damages caused to the car during the rental period.',
+                    'This contract helps Spintrip legally in case of any issues during the rental period.',
+                    'Spintrip reserves the right to take action in case of non-compliance with the terms of this contract.',
+                ], { bulletRadius: 3 })
+                .moveDown(2);
+
+            doc
+                .fontSize(10)
+                .font('Helvetica-Oblique')
+                .text(
+                    'Note: This contract is legally binding between both parties. Any disputes should be resolved in accordance with the Spintrip terms and conditions.',
+                    { align: 'center' }
+                );
+
+            doc.end();
+
+            writeStream.on('finish', () => {
+                resolve(filePath);
+            });
+
+            writeStream.on('error', (err) => {
+                reject(new Error('Error writing to PDF file: ' + err.message));
+            });
+
+        } catch (err) {
+            reject(new Error('Unexpected error: ' + err.message));
+        }
     });
-  };
-  const fetchPrivacyPolicyPDF = async () => {
+};
+const fetchPrivacyPolicyPDF = async () => {
     try {
         const doc = new PDFDocument();
         const filePath = './privacy_policy.pdf';
-        
+
         const writeStream = fs.createWriteStream(filePath);
         doc.pipe(writeStream);
 
-        const logoPath = path.join(__dirname, 'assets', 'logo.png'); 
+        const logoPath = path.join(__dirname, 'assets', 'logo.png');
         doc.image(logoPath, 50, 45, { width: 100 })
-          .moveDown(5); 
-        
+            .moveDown(5);
+
         // Set the title and header for the PDF document
         doc.fontSize(18).text('Privacy Policy', { align: 'center', underline: true });
         doc.moveDown(2);
-        
+
         // Add the company name
         doc.fontSize(14).text('Spintrip Car Rentals Pvt Ltd', { align: 'center' });
         doc.moveDown();
-        
+
         // Add the full privacy policy text
         doc.fontSize(12).text(`
         THIS PRIVACY POLICY IS AN ELECTRONIC RECORD IN THE FORM OF AN ELECTRONIC CONTRACT FORMED UNDER THE INFORMATION TECHNOLOGY ACT, 2000 AND THE RULES MADE THEREUNDER AND THE AMENDED PROVISIONS PERTAINING TO ELECTRONIC DOCUMENTS/RECORDS IN VARIOUS STATUTES AS AMENDED BY THE INFORMATION TECHNOLOGY ACT, 2000. THIS PRIVACY POLICY DOES NOT REQUIRE ANY PHYSICAL, ELECTRONIC, OR DIGITAL SIGNATURE.
@@ -204,9 +204,9 @@ const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
         If you have any questions or concerns about our privacy policy or data processing, please contact us at support@spintrip.in.
         `, { align: 'left', lineGap: 6 });
-        
+
         doc.end();
-        
+
         return new Promise((resolve, reject) => {
             writeStream.on('finish', () => resolve(filePath));
             writeStream.on('error', (err) => reject(new Error('Error writing PDF file: ' + err.message)));
@@ -219,119 +219,187 @@ const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
 const generateInvoicePDF = async (userEmail, hostEmail, bookingDetails, pricingDetails) => {
     return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ margin: 50 });
-        
-        const buffers = [];
-        doc.on('data', buffers.push.bind(buffers));
-        
-        doc.on('end', async () => {
-            const pdfData = Buffer.concat(buffers);
-            const fileName = `invoice_${bookingDetails.bookingId || Date.now()}.pdf`;
-            
-            try {
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET_NAME || 'spintrip-s3-prod',
-                    Key: `invoices/${fileName}`,
-                    Body: pdfData,
-                    ContentType: 'application/pdf',
-                };
-                await s3.send(new PutObjectCommand(uploadParams));
-                const s3Url = `https://${uploadParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-                
-                resolve({ s3Url, pdfBuffer: pdfData });
-            } catch (error) {
-                reject(new Error('Failed to upload invoice to S3: ' + error.message));
-            }
-        });
-  
-        const logoPath = path.join(__dirname, 'assets', 'logo.png'); 
-        if (fs.existsSync(logoPath)) {
-            doc.image(logoPath, 50, 45, { width: 100 }).moveDown(5); 
-        } else {
-            doc.moveDown(5);
-        }
-  
-        doc
-          .fontSize(24)
-          .font('Helvetica-Bold')
-          .text('INVOICE', { align: 'right' })
-          .moveUp()
-          .fontSize(10)
-          .font('Helvetica')
-          .text(`Date: ${new Date().toLocaleDateString()}`, { align: 'right' })
-          .text(`Booking ID: ${bookingDetails.bookingId || 'N/A'}`, { align: 'right' })
-          .moveDown(2);
-  
-        doc
-          .moveTo(50, 150)
-          .lineTo(550, 150)
-          .stroke()
-          .moveDown(2);
-  
-        doc
-          .fontSize(12)
-          .font('Helvetica-Bold')
-          .text('Customer Details:', { underline: true })
-          .font('Helvetica')
-          .text(userEmail)
-          .moveDown(1);
-          
-        doc
-          .font('Helvetica-Bold')
-          .text('Trip Details:', { underline: true })
-          .font('Helvetica')
-          .text(`Vehicle: ${bookingDetails.carModel || 'N/A'}`)
-          .text(`Start: ${bookingDetails.startDate || ''} ${bookingDetails.startTime || ''}`)
-          .text(`End: ${bookingDetails.endDate || ''} ${bookingDetails.endTime || ''}`)
-          .moveDown(2);
-  
-        // Pricing Table
-        const tableTop = doc.y;
-        doc
-          .font('Helvetica-Bold')
-          .text('Description', 50, tableTop)
-          .text('Amount (INR)', 400, tableTop, { align: 'right' });
-        
-        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
-        
-        let currentY = tableTop + 25;
-        
-        const drawRow = (desc, amount, isBold = false) => {
-            doc.font(isBold ? 'Helvetica-Bold' : 'Helvetica')
-               .text(desc, 50, currentY)
-               .text(`Rs. ${Number(amount).toFixed(2)}`, 400, currentY, { align: 'right' });
-            currentY += 20;
-        };
+        try {
+            const doc = new PDFDocument({ margin: 50 });
 
-        const safePrice = (val) => val ? Number(val) : 0;
-        
-        drawRow('Base Fare', safePrice(pricingDetails?.price));
-        if (safePrice(pricingDetails?.Taxamount) > 0) drawRow('Taxes (GST)', safePrice(pricingDetails?.Taxamount));
-        if (safePrice(pricingDetails?.convinienceFee) > 0) drawRow('Convenience Fee', safePrice(pricingDetails?.convinienceFee));
-        if (safePrice(pricingDetails?.Discountamount) > 0) drawRow('Discount Applied', -safePrice(pricingDetails?.Discountamount));
-        if (safePrice(pricingDetails?.deliveryFee) > 0) drawRow('Delivery Fee', safePrice(pricingDetails?.deliveryFee));
-        if (safePrice(pricingDetails?.ExtraHoursGst) > 0) drawRow('Extra Time Charges', safePrice(pricingDetails?.ExtraHoursGst));
-        
-        doc.moveTo(50, currentY).lineTo(550, currentY).stroke();
-        currentY += 15;
-        
-        drawRow('Total Amount', safePrice(pricingDetails?.FinalPrice), true);
-  
-        doc
-          .moveDown(4)
-          .fontSize(10)
-          .font('Helvetica-Oblique')
-          .text(
-            'Thank you for traveling with Spintrip! This is a computer generated invoice and does not require a signature.',
-            50, doc.y, { align: 'center' }
-          );
-  
-        doc.end();
-  
-      } catch (err) {
-        reject(new Error('Unexpected error generating invoice: ' + err.message));
-      }
+            const buffers = [];
+            doc.on('data', buffers.push.bind(buffers));
+
+            doc.on('end', async () => {
+                const pdfData = Buffer.concat(buffers);
+                const fileName = `invoice_${bookingDetails.bookingId || Date.now()}.pdf`;
+
+                try {
+                    const uploadParams = {
+                        Bucket: process.env.AWS_S3_BUCKET_NAME || 'spintrip-s3bucket',
+                        Key: `invoices/${fileName}`,
+                        Body: pdfData,
+                        ContentType: 'application/pdf',
+                    };
+                    await s3.send(new PutObjectCommand(uploadParams));
+                    const s3Url = `https://${uploadParams.Bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
+
+                    resolve({ s3Url, pdfBuffer: pdfData });
+                } catch (error) {
+                    reject(new Error('Failed to upload invoice to S3: ' + error.message));
+                }
+            });
+
+            // Logo
+            const logoPath = path.join(__dirname, 'assets', 'logo.png');
+            if (fs.existsSync(logoPath)) {
+                doc.image(logoPath, 50, 40, { width: 100 });
+            }
+
+            // Invoice title
+            doc
+                .fontSize(24)
+                .font('Helvetica-Bold')
+                .text('INVOICE', 400, 50, { align: 'right' });
+
+            // Invoice meta
+            doc
+                .fontSize(10)
+                .font('Helvetica')
+                .text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 400, 85, { align: 'right' })
+                .text(`Booking ID: ${bookingDetails.bookingId || 'N/A'}`, 400, 100, { align: 'right' });
+
+            doc.moveTo(50, 150).lineTo(550, 150).stroke();
+            doc.x = 50;
+            doc.y = 170;
+
+            doc
+                .fontSize(12)
+                .font('Helvetica-Bold')
+                .text('Customer Details:', { underline: true , align: 'left' })
+                .font('Helvetica')
+                .text(userEmail)
+                .moveDown(1);
+
+            doc
+                .font('Helvetica-Bold')
+                .fontSize(12)
+                .text('Trip Details:', { underline: true, align: 'left' })
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .fontSize(10)
+                .text(`Booking ID: ${bookingDetails.bookingId || 'N/A'}`, { align: 'left' })
+                .text(`Booking Type: ${bookingDetails.bookingType || 'Local'}`, { align: 'left' })
+                .text(`Vehicle Type: ${bookingDetails.vehicleType || bookingDetails.carModel || 'Cab'}`, { align: 'left' })
+                .text(`Trip Date: ${bookingDetails.tripDate || bookingDetails.startDate || 'N/A'}`, { align: 'left' })
+                .text(`Pickup Time: ${bookingDetails.startTime || 'N/A'}`, { align: 'left' })
+                .text(`Drop Time: ${bookingDetails.endTime || 'N/A'}`, { align: 'left' })
+                .text(`Trip Duration: ${bookingDetails.tripDays || 1} day(s)`, { align: 'left' })
+                // .text(`Round Trip: ${bookingDetails.isRoundTrip ? 'Yes' : 'No'}`, { align: 'left' })
+                .moveDown(1);
+
+            doc
+                .font('Helvetica-Bold')
+                .fontSize(12)
+                .text('Route Details:', { underline: true, align: 'left' })
+                .moveDown(0.5);
+
+            doc
+                .font('Helvetica')
+                .fontSize(10)
+                .text(`Pickup Address: ${bookingDetails.pickupAddress || 'N/A'}`, { align: 'left', width: 500 })
+                .moveDown(0.5)
+                .text(`Drop Address: ${bookingDetails.dropAddress || 'N/A'}`, {
+                    align: 'left',
+                    width: 500
+                })
+                .moveDown(2);
+
+
+            // Pricing Table
+            const tableTop = doc.y;
+
+            doc
+                .font('Helvetica-Bold')
+                .fontSize(11)
+                .text('Description', 50, tableTop)
+                .text('Amount (INR)', 400, tableTop, { align: 'right' });
+
+            doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+            let currentY = tableTop + 25;
+
+            const safePrice = (val) => {
+                const num = Number(val);
+                return Number.isFinite(num) ? num : 0;
+            };
+
+            const drawRow = (desc, amount, isBold = false) => {
+                if (currentY > 720) {
+                    doc.addPage();
+                    currentY = 50;
+                }
+
+                const formatted =
+                    amount < 0
+                        ? `- Rs. ${Math.abs(amount).toFixed(2)}`
+                        : `Rs. ${amount.toFixed(2)}`;
+
+                doc
+                    .font(isBold ? 'Helvetica-Bold' : 'Helvetica')
+                    .fontSize(10)
+                    .text(desc, 50, currentY)
+                    .text(formatted, 400, currentY, { align: 'right' });
+
+                currentY += 20;
+            };
+
+
+            // Fare Breakdown
+            drawRow('Base Fare', safePrice(pricingDetails?.baseFare || pricingDetails?.price));
+
+
+            drawRow('Tax Amount', safePrice(pricingDetails?.gstAmount + pricingDetails?.tdsAmount ));
+
+            // if (safePrice(pricingDetails?.confirmationFee) > 0)
+            //     drawRow('Confirmation Fee', safePrice(pricingDetails?.confirmationFee));
+
+            // if (safePrice(pricingDetails?.convenienceFee || pricingDetails?.convinienceFee) > 0)
+            //     drawRow(
+            //         'Convenience Fee',
+            //         safePrice(pricingDetails?.convenienceFee || pricingDetails?.convinienceFee)
+            //     );
+
+            if (safePrice(pricingDetails?.discountAmount || pricingDetails?.Discountamount) > 0)
+                drawRow(
+                    'Discount Applied',
+                    -safePrice(pricingDetails?.discountAmount || pricingDetails?.Discountamount)
+                );
+
+
+            doc.moveTo(50, currentY).lineTo(550, currentY).stroke();
+            currentY += 15;
+
+            drawRow(
+                'Final Amount',
+                safePrice(pricingDetails?.estimatedPrice || pricingDetails?.estimatedPrice),
+                true
+            );
+
+            if (safePrice(pricingDetails?.estimatedPrice) > 0)
+                drawRow('Amount Paid', safePrice(pricingDetails?.estimatedPrice));
+
+            doc
+                .moveDown(4)
+                .fontSize(10)
+                .font('Helvetica-Oblique')
+                .text(
+                    'Thank you for traveling with Spintrip! This is a computer generated invoice and does not require a signature.',
+                    50, doc.y, { align: 'center' }
+                );
+
+            doc.end();
+
+        } catch (err) {
+            reject(new Error('Unexpected error generating invoice: ' + err.message));
+        }
     });
 };
 
@@ -344,11 +412,11 @@ const sendInvoiceEmail = async (userEmail, invoiceData, bookingDetails) => {
         <p>If you have any questions or require assistance regarding this billing, feel free to contact us at <a href="mailto:info@spintrip.in">info@spintrip.in</a>.</p>
         <p>We look forward to serving you again soon.</p>
     `;
-    
+
     // Attach the raw memory buffer directly to the email payload
     sendEmailWithAttachments(userEmail, subject, bodyContent, [
-        { 
-            filename: `Spintrip_Invoice_${bookingDetails.bookingId || 'Booking'}.pdf`, 
+        {
+            filename: `Spintrip_Invoice_${bookingDetails.bookingId || 'Booking'}.pdf`,
             content: invoiceData.pdfBuffer,
             contentType: 'application/pdf'
         },
@@ -625,11 +693,11 @@ const sendBookingCompletionEmail = async (userEmail, hostEmail, bookingDetails) 
     sendEmail(hostEmail, 'Your Spintrip Booking is Complete', bodyContent);
 };
 
-module.exports = { 
-    sendBookingConfirmationEmail, 
-    sendBookingApprovalEmail, 
-    sendTripStartEmail, 
-    sendTripEndEmail, 
+module.exports = {
+    sendBookingConfirmationEmail,
+    sendBookingApprovalEmail,
+    sendTripStartEmail,
+    sendTripEndEmail,
     sendPaymentConfirmationEmail,
     sendBookingCancellationEmail,
     sendBookingCompletionEmail,

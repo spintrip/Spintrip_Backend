@@ -589,18 +589,21 @@ const getVehicleAdditional = async (req, res) => {
 const getAllSubscriptions = async (req, res) => {
   try {
     const { vehicleType } = req.body;
+    const { audience } = req.query; // Expecting ?audience=host or driver
 
-    let subscriptions;
+    let whereClause = {};
 
     if (vehicleType) {
-      subscriptions = await Subscriptions.findAll({
-        where: {
-          vehicleType: vehicleType,
-        },
-      });
-    } else {
-      subscriptions = await Subscriptions.findAll();
+      whereClause.vehicleType = vehicleType;
     }
+
+    if (audience && audience !== 'both') {
+      whereClause.targetAudience = {
+        [Op.or]: [audience, 'both']
+      };
+    }
+
+    const subscriptions = await Subscriptions.findAll({ where: whereClause });
 
     // If no subscriptions are found
     if (!subscriptions || subscriptions.length === 0) {
@@ -639,7 +642,7 @@ const activateVehicle = async (req, res) => {
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    const expiryDays = subscription.expiry * 30;
+    const expiryDays = subscription.expiry ;
     const planEndDate = new Date();
     planEndDate.setDate(planEndDate.getDate() + expiryDays);
     const paymentId = uuid.v4();
@@ -651,8 +654,8 @@ const activateVehicle = async (req, res) => {
       PaymentDate: new Date(),
       PlanEndDate: planEndDate,
       Amount: amount,
-      GSTAmount: amount * 0.05,
-      TotalAmount: amount * 1.05,
+      GSTAmount: amount,
+      TotalAmount: amount,
       PaymentStatus: 1, // Assuming 1 means successful
       PaymentMethod: paymentMethod ? paymentMethod : 'Cashfree',
       Remarks: 'Vehicle activation payment'

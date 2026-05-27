@@ -222,7 +222,7 @@ const getSelfDriveBookings = async (req, res) => {
     // ⚡ PREFETCH RELATIONS
     const vehicleMap = await prefetchVehicles(rentals.map(r => r.vehicleid));
     const userMap = await prefetchUsers(rentals.map(r => r.id));
-    
+
     // ⚡ PREFETCH VEHICLE NAMES
     const vehicleRequests = rentals.map(r => {
       const v = vehicleMap[r.vehicleid];
@@ -232,11 +232,11 @@ const getSelfDriveBookings = async (req, res) => {
 
     const enrichedRentals = rentals.map((booking) => {
       const json = booking.toJSON();
-      
+
       const v = vehicleMap[json.vehicleid];
       const type = v ? v.vehicletype : 2;
       const vehicleName = vehicleNamesMap[`${type}_${json.vehicleid}`] || 'Vehicle ID: ' + json.vehicleid;
-      
+
       const user = userMap[json.id];
 
       return {
@@ -349,7 +349,7 @@ const getBookingById = async (req, res) => {
     let cabBooking = null;
 
     if (isNaN(id) || String(id).startsWith('CB-')) {
-      cabBooking = await CabBookingRequest.findOne({ 
+      cabBooking = await CabBookingRequest.findOne({
         where: { bookingId: id },
         include: [{
           model: User,
@@ -424,20 +424,20 @@ const getBookingById = async (req, res) => {
         };
       }
     } else {
-        // Enrich Rental/Self-Drive Booking
-        const json = booking.toJSON();
-        const user = json.User;
-        booking = {
-            ...json,
-            Bookingid: json.Bookingid,
-            id: json.userId || json.id,
-            customerName: user?.UserAdditional?.FullName || user?.phone || 'N/A',
-            customerPhone: user?.phone || 'N/A',
-            offerId: json.offerId || '',
-            discountAmount: json.discountAmount || 0,
-            isCab: false,
-            type: 'rental'
-        };
+      // Enrich Rental/Self-Drive Booking
+      const json = booking.toJSON();
+      const user = json.User;
+      booking = {
+        ...json,
+        Bookingid: json.Bookingid,
+        id: json.userId || json.id,
+        customerName: user?.UserAdditional?.FullName || user?.phone || 'N/A',
+        customerPhone: user?.phone || 'N/A',
+        offerId: json.offerId || '',
+        discountAmount: json.discountAmount || 0,
+        isCab: false,
+        type: 'rental'
+      };
     }
 
     if (!booking) {
@@ -564,7 +564,7 @@ const cancelCabBooking = async (req, res) => {
       // 🔔 Notify User & Driver
       await notifyUserById(booking.userId, "Booking Cancelled", "Your cab booking has been cancelled by admin.", { bookingId: id, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
       if (booking.driverid) {
-          await notifyUserById(booking.driverid, "Booking Cancelled", `The booking ${id} has been cancelled by admin.`, { bookingId: id, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
+        await notifyUserById(booking.driverid, "Booking Cancelled", `The booking ${id} has been cancelled by admin.`, { bookingId: id, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" });
       }
 
       res.status(200).json({ message: 'Cab Booking Cancelled successfully and coins refunded (if any)', booking });
@@ -589,26 +589,47 @@ const sendCabInvoice = async (req, res) => {
     }
 
     const { generateInvoicePDF, sendInvoiceEmail } = require('../emailController');
-    const user = await User.findByPk(cabBooking.userId);
+    const user = await UserAdditional.findByPk(cabBooking.userId);
 
     const bookingDetails = {
       bookingId: cabBooking.bookingId,
-      carModel: cabBooking.cabType || 'Cab',
-      startDate: cabBooking.date,
-      startTime: cabBooking.time,
-      endDate: cabBooking.date,
-      endTime: cabBooking.endTripTime
+
+      // Trip details
+      vehicleType: cabBooking.cabType || 'Cab',
+      bookingType: cabBooking.bookingType || 'Local',
+      tripDate: cabBooking.date,
+      startTime: cabBooking.startTripTime || cabBooking.time,
+      endTime: cabBooking.endTripTime,
+      tripDays: cabBooking.days || 1,
+      isRoundTrip: cabBooking.isRoundTrip,
+
+      // Pickup / drop
+      pickupAddress: cabBooking.startLocationAddress || 'N/A',
+      dropAddress: cabBooking.endLocationAddress || 'N/A',
+
+      // Payment
+      paymentStatus: cabBooking.paymentStatus || 'pending',
+      amountPaid: cabBooking.amountPaid || 0,
+
+      // Customer support reference
+      bookingStatus: cabBooking.status
     };
 
     const pricingDetails = {
-      price: cabBooking.subtotalBasePrice,
-      Taxamount: cabBooking.gstAmount,
-      FinalPrice: cabBooking.finalPrice,
-      tdsAmount: cabBooking.tdsAmount
+      estimatedPrice: cabBooking.estimatedPrice || 0,
+      baseFare: cabBooking.subtotalBasePrice || 0,
+      gstAmount: cabBooking.gstAmount || 0,
+      confirmationFee: cabBooking.confirmationFee || 0,
+      commissionAmount: cabBooking.commissionAmount || 0,
+      tdsAmount: cabBooking.tdsAmount || 0,
+      discountAmount: cabBooking.discountAmount || 0,
+      payToDriver: cabBooking.payToDriver || 0,
+      finalPrice: cabBooking.finalPrice || 0,
+      amountPaid: cabBooking.amountPaid || 0
     };
 
-    const invoiceData = await generateInvoicePDF(user.email, 'info@spintrip.in', bookingDetails, pricingDetails);
-    await sendInvoiceEmail(user.email, invoiceData, bookingDetails);
+    const invoiceData = await generateInvoicePDF(user.Email, 'info@spintrip.in', bookingDetails, pricingDetails);
+    await sendInvoiceEmail(user.Email, invoiceData, bookingDetails);
 
     res.status(200).json({
       success: true,

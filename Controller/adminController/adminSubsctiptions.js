@@ -5,7 +5,7 @@ const uuid = require('uuid');
 
 const subscriptions = async (req, res) => {
   try {
-    const { planName, vehicleType, remarks, expiry, amount  } = req.body; // Assume the request body contains subscription details
+    const { planName, vehicleType, remarks, expiry, amount, targetAudience } = req.body; // Assume the request body contains subscription details
     const adminId = req.user.id;
     const admin = await Admin.findByPk(adminId);
 
@@ -13,7 +13,15 @@ const subscriptions = async (req, res) => {
       return res.status(404).json({ message: 'Admin not found' });
     }
     const planType = uuid.v4();
-    const newSubscription = await Subscriptions.create({ PlanType: planType, vehicleType: vehicleType, PlanName: planName, expiry: expiry, amount: amount, remarks:remarks });
+    const newSubscription = await Subscriptions.create({ 
+      PlanType: planType, 
+      vehicleType: vehicleType, 
+      PlanName: planName, 
+      expiry: expiry, 
+      amount: amount, 
+      Remarks: remarks,
+      targetAudience: targetAudience || 'both'
+    });
 
     res.status(201).json({
       message: 'Subscription added successfully',

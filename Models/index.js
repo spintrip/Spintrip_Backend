@@ -97,6 +97,9 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     `);
 
     await sequelize.query(`ALTER TABLE "SurgePrices" ADD COLUMN IF NOT EXISTS "bookingType" VARCHAR(20);`);
+    // AUTO-PATCH: Add referenceId and description to Transactions for cab payment tracking
+    await sequelize.query(`ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "referenceId" VARCHAR(36);`);
+    await sequelize.query(`ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "description" VARCHAR(255);`);
     console.log('Offers and Discounts schema synchronized.');
     console.log('Driver Verification schema synchronized.');
     console.log('Support schema synchronized.');
@@ -287,5 +290,10 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
 };
 
 associateModels();
+
+// Auto-Patch DB for Subscriptions
+sequelize.query('ALTER TABLE "Subscriptions" ADD COLUMN IF NOT EXISTS "targetAudience" VARCHAR(255) DEFAULT \'both\';')
+  .then(() => console.log('Successfully patched Subscriptions table.'))
+  .catch((err) => console.log('DB Patch ignored (already exists or DB not ready).'));
 
 module.exports = db;

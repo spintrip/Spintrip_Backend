@@ -3,6 +3,7 @@ const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricin
 const uuid = require('uuid');
 const { Op } = require('sequelize');
 const moment = require('moment');
+const { sendTelegramAlert } = require('../../Utils/telegramService');
 
 const {
   sendBookingConfirmationEmail,
@@ -412,6 +413,12 @@ const booking = async (req, res) => {
 
     const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(bookings.bookingId);
     // await sendBookingConfirmationEmail(userEmail, hostEmail, bookingDetails, "Booking successful");
+
+    if (!isCab) {
+      let paymentMethod = req.body.paymentid ? "Online" : "Pay at Pickup";
+      const tMsg = `🚗 <b>New Self-Drive Booking!</b>\n\n<b>User:</b> ${req.user.FullName}\n<b>Vehicle ID:</b> <code>${vehicleid}</code>\n<b>Booking ID:</b> <code>${bookings.bookingId}</code>\n<b>Dates:</b> ${startDate} to ${endDate}\n<b>Est. Price:</b> ₹${amount}\n<b>Payment:</b> ${paymentMethod}`;
+      sendTelegramAlert(tMsg);
+    }
 
     res.status(201).json({ message: 'Booking successful', bookings });
 
@@ -989,6 +996,7 @@ const userbookings = async (req, res) => {
           driver: cabDriver,
           rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided", 
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
+          transaction: (cab.paymentStatus && cab.paymentStatus.toLowerCase() === 'paid') ? { transactionId: cab.bookingId, status: 1 } : null,
           createdAt: checkData(cab.createdAt)
         };
       });
@@ -1088,6 +1096,7 @@ const userbookings = async (req, res) => {
           driver: cabDriver,
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           otp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
+          transaction: (cab.paymentStatus && cab.paymentStatus.toLowerCase() === 'paid') ? { transactionId: cab.bookingId, status: 1 } : null,
           createdAt: checkData(cab.createdAt)
         };
       });

@@ -77,15 +77,15 @@ const initiateCabPayment = async (req, res) => {
     const response = await axios.request(options);
     if (response.data && response.status === 200) {
       // Save transaction/order details for cab payment
-      // await Transaction.create({
-      //   Transactionid: linkId,
-      //   referenceId: String(bookingId),
-      //   id: req.user.id,
-      //   status: 1, // 1 = created/pending
-      //   amount: roundedAmount,
-      //   description: 'cab_confirmation_fee'
-      // });
-      // console.log('Cab payment transaction created in DB:', linkId);
+      await Transaction.create({
+        Transactionid: linkId,
+        referenceId: String(bookingId),
+        id: req.user.id,
+        status: 1, // 1 = created/pending
+        amount: roundedAmount,
+        description: 'cab_confirmation_fee'
+      });
+      console.log('Cab payment transaction created in DB:', linkId);
 
       return res.status(200).json({
         message: 'Cab payment link created',
@@ -134,7 +134,7 @@ const initiatePayment = async (req, res) => {
       },
       // meta object allows return_url & notify_url and other options
       link_meta: {
-        return_url: `https://spintripfrontend.site/payment/complete?order_id=${uuid.v4()}`,
+        return_url: `https://spintrip.in/payment-success?order_id=${uuid.v4()}`,
         notify_url: `https://spintripbackend.site/api/users/webhook/cashfree`,
         // upi_intent: "false"  // example optional meta
       },
@@ -301,34 +301,58 @@ const checkPaymentStatus = async (req, res) => {
         }
 
         if (link_status === 'PARTIALLY_PAID' || link_status === 'PAID') {
-          // If this is a cab booking confirmation fee, update the booking status
-          if (transaction.description && transaction.description.includes('cab_confirmation_fee')) {
-             const { CabBookingRequest } = require('../Models');
-             await CabBookingRequest.update(
-               { status: 'pending', paymentStatus: 'paid' },
-               { where: { bookingId: transaction.referenceId } }
-             );
+          // ✅ FIXED: Use link_id prefix to detect cab payments (description column was missing from model)
+          if (link_id.startsWith('cab_fee_')) {
+            const { CabBookingRequest } = require('../Models');
+            // Primary: Extract bookingId from Cashfree's link_notes (set during payment link creation)
+            let bookingId = (data.link_notes && data.link_notes.bookingId) ? data.link_notes.bookingId : null;
+            
+            if (!bookingId) {
+              // Fallback: parse link_id format "cab_fee_<8-char-prefix>_<4-char-suffix>"
+              const parts = link_id.split('_');
+              if (parts.length >= 3) {
+                const prefix = parts[2]; // The first 8 chars of the bookingId
+                const { Op } = require('sequelize');
+                const foundBooking = await CabBookingRequest.findOne({
+                  where: { bookingId: { [Op.like]: `${prefix}%` } }
+                });
+                if (foundBooking) bookingId = foundBooking.bookingId;
+              }
+            }
+
+            if (bookingId) {
+              await CabBookingRequest.update(
+                { paymentStatus: 'paid' },
+                { where: { bookingId } }
+              );
+              console.log(`✅ Cab booking ${bookingId} paymentStatus updated to 'paid'`);
+            } else {
+              console.error(`❌ Could not resolve bookingId for cab payment link: ${link_id}`);
+            }
           }
-          await transaction.update({ status: 2 }); 
+          await transaction.update({ status: 2 });
         } else if (link_status === 'FAILED' || link_status === 'EXPIRED') {
-          await transaction.update({ status: 3 }); 
+          await transaction.update({ status: 3 });
         }
 
         console.log(`Payment status updated for link ID: ${link_id} with status: ${link_status}`);
 
-        // Fetch booking and user details if needed and send a confirmation email
-        const hostPayment = await HostPayment.findOne({ where: { VehicleId: transaction.vehicleid } });
-        const user = await User.findByPk(booking.id);
-
-        const PlanDetails = {
-          VehicleId: hostPayment.vehicleid,
-          PlanType: hostPayment.PlanType,
-          PlanEndDate: hostPayment.PlanEndDate,
-          amount: hostPayment.TotalAmount
-        };
-
-        // Send confirmation email
-        await sendBookingConfirmationEmail(user.email, bookingDetails);
+        // ✅ FIXED: Only run host plan email logic for NON-cab payments (prevents crash from undefined `booking`)
+        if (!link_id.startsWith('cab_fee_') && transaction.vehicleid) {
+          try {
+            const hostPayment = await HostPayment.findOne({ where: { VehicleId: transaction.vehicleid } });
+            if (hostPayment) {
+              const hostUser = await User.findByPk(hostPayment.HostId || hostPayment.hostId);
+              if (hostUser) {
+                console.log(`Host plan email would be sent to: ${hostUser.email}`);
+                // Note: sendBookingConfirmationEmail is not imported in this controller
+                // Add import and call here if needed
+              }
+            }
+          } catch (emailErr) {
+            console.error('Non-critical: Host plan email error:', emailErr.message);
+          }
+        }
         break;
 
       case 'TRANSFER_REJECTED':
@@ -438,7 +462,8 @@ const webhook = async (req, res) => {
 const verifyCabPayment = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { CabBookingRequest, User } = require('../Models');
+    const { CabBookingRequest, Transaction, User } = require('../Models');
+    const { Op } = require('sequelize');
     const { sendPushNotification } = require('../Utils/notificationService');
     
     const booking = await CabBookingRequest.findOne({ where: { bookingId } });
@@ -447,24 +472,102 @@ const verifyCabPayment = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
     
-    const isPaid = booking.paymentStatus === 'paid' || booking.paymentStatus === 'PAID';
+    // ✅ FAST PATH: Already paid in DB — no need to call Cashfree
+    if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'PAID') {
+      console.log(`✅ verifyCabPayment: ${bookingId} already paid in DB`);
+      return res.status(200).json({ paid: true, status: booking.status, source: 'db' });
+    }
 
-    // Send "Booking Confirmed" notification only once payment is verified
-    if (isPaid) {
-      const customer = await User.findByPk(booking.userId);
-      if (customer && customer.fcmToken) {
-        await sendPushNotification(
-          customer.fcmToken,
-          "Booking Confirmed ✅",
-          `Your cab booking is confirmed! Rs. ${booking.estimatedPrice}. A driver will be assigned shortly.`
+    // ✅ FIND TRANSACTION: Try referenceId first (new bookings), then linkId prefix (old bookings)
+    const bookingPrefix = bookingId.substring(0, 8);
+    let transaction = await Transaction.findOne({
+      where: { referenceId: bookingId },
+      order: [['createdAt', 'DESC']]
+    });
+    if (!transaction) {
+      // Fallback: match by link_id prefix pattern cab_fee_<prefix>_<suffix>
+      transaction = await Transaction.findOne({
+        where: { Transactionid: { [Op.like]: `cab_fee_${bookingPrefix}%` } },
+        order: [['createdAt', 'DESC']]
+      });
+    }
+
+    if (!transaction) {
+      console.warn(`⚠️ verifyCabPayment: No transaction found for booking ${bookingId}`);
+      return res.status(200).json({ paid: false, status: booking.status, source: 'no_transaction' });
+    }
+
+    console.log(`🔍 verifyCabPayment: Polling Cashfree for link ${transaction.Transactionid}`);
+
+    // ✅ SERVER-SIDE POLL LOOP: Cashfree redirects to success URL *before* marking PAID.
+    // We poll up to 8 times (every 2s = 16s max) to catch the status flip.
+    const MAX_ATTEMPTS = 8;
+    const DELAY_MS = 2000;
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const cfResponse = await axios.get(
+          `https://api.cashfree.com/pg/links/${transaction.Transactionid}`,
+          {
+            headers: {
+              accept: 'application/json',
+              'x-api-version': process.env.CASHFREE_API_VERSION || '2023-08-01',
+              'x-client-id': process.env.CASHFREE_APP_ID,
+              'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+            },
+            timeout: 5000,
+          }
         );
+
+        const cfStatus = cfResponse.data.link_status;
+        console.log(`  Attempt ${attempt}/${MAX_ATTEMPTS}: Cashfree status = ${cfStatus}`);
+
+        if (cfStatus === 'PAID' || cfStatus === 'PARTIALLY_PAID') {
+          // ✅ CONFIRMED PAID — Update DB immediately
+          await CabBookingRequest.update(
+            { paymentStatus: 'paid' },
+            { where: { bookingId } }
+          );
+          await transaction.update({ status: 2 });
+          console.log(`✅ verifyCabPayment: Booking ${bookingId} marked PAID on attempt ${attempt}`);
+
+          // 🔔 Push notification (fire-and-forget, don't block response)
+          User.findByPk(booking.userId).then(customer => {
+            if (customer && customer.fcmToken) {
+              sendPushNotification(
+                customer.fcmToken,
+                "Booking Confirmed ✅",
+                `Your cab booking is confirmed! Rs. ${booking.estimatedPrice}. A driver will be assigned shortly.`
+              ).catch(() => {});
+            }
+          }).catch(() => {});
+
+          return res.status(200).json({ paid: true, status: booking.status, source: 'cashfree', attempt });
+        }
+
+        // FAILED/EXPIRED — stop polling
+        if (cfStatus === 'EXPIRED' || cfStatus === 'CANCELLED') {
+          console.log(`❌ verifyCabPayment: Payment ${cfStatus} for ${bookingId}`);
+          return res.status(200).json({ paid: false, status: booking.status, cfStatus, source: 'cashfree' });
+        }
+
+        // Still INITIATED/PROCESSING — wait and retry
+        if (attempt < MAX_ATTEMPTS) {
+          await sleep(DELAY_MS);
+        }
+
+      } catch (cfErr) {
+        console.error(`  Attempt ${attempt} Cashfree error:`, cfErr.response?.data || cfErr.message);
+        if (attempt < MAX_ATTEMPTS) await sleep(DELAY_MS);
       }
     }
-    
-    res.status(200).json({ 
-      paid: isPaid,
-      status: booking.status
-    });
+
+    // Exhausted all attempts — payment not confirmed yet
+    console.warn(`⚠️ verifyCabPayment: Exhausted ${MAX_ATTEMPTS} attempts for ${bookingId}, payment unconfirmed`);
+    return res.status(200).json({ paid: false, status: booking.status, source: 'timeout' });
+
   } catch (error) {
     console.error('Verify Cab Payment Error:', error);
     res.status(500).json({ message: 'Internal server error' });

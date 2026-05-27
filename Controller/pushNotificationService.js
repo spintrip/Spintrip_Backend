@@ -23,6 +23,7 @@ const sendPushNotification = async (deviceToken, title, body, data = {}) => {
       notification: {
         title,
         body,
+        ...(data.image_url ? { imageUrl: data.image_url } : {})
       },
       data: data, // Optional additional data
       token: deviceToken,
@@ -51,12 +52,13 @@ const sendPushNotificationToMultipleDevices = async (deviceTokens, title, body, 
       notification: {
         title,
         body,
+        ...(data.image_url ? { imageUrl: data.image_url } : {})
       },
       data: data, // Optional additional data
       tokens: deviceTokens,
     };
 
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast(message);
     console.log("Push notifications batch sent successfully:", response);
     return response;
   } catch (error) {
