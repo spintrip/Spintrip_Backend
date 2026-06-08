@@ -156,6 +156,7 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerName" VARCHAR(255);`);
     await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerPhone" VARCHAR(50);`);
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "hours" INTEGER DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "Subscriptions" ADD COLUMN "broadcasts" INTEGER DEFAULT 0;`);
 
     // AUTO-PATCH: Add preference to Drivers for customized driver filter matches
     await sequelize.query(`ALTER TABLE "Drivers" ADD COLUMN IF NOT EXISTS "preference" VARCHAR(50) DEFAULT 'All';`);
