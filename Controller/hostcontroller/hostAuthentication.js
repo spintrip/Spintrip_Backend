@@ -57,7 +57,7 @@ const hostSignup = async (req, res) => {
       id: userId,
       phone,
       password: hashedPassword,
-      role: hostType
+      role: hostType.toLowerCase() === 'agent' ? 'agent' : hostType
     });
 
     // DRIVER FLOW
@@ -272,7 +272,8 @@ const hostVerifyOtp = async (req, res) => {
       }
     }
 
-    const token = jwt.sign({ id: user.id, role: 'host' }, 'your_secret_key');
+    const signedRole = (user.role && user.role.toLowerCase() === 'agent') ? 'agent' : 'host';
+    const token = jwt.sign({ id: user.id, role: signedRole }, 'your_secret_key');
     return res.json({ message: 'OTP verified successfully', id: user.id, token, role: user.role, isNewUser });
   } else {
     return res.status(401).json({ message: 'Invalid OTP' });

@@ -55,6 +55,20 @@ const sendPushNotification = async (fcmToken, title, body, dataPayload = {}, isH
     return true;
   } catch (error) {
     console.log('Error sending message:', error);
+    
+    // Auto-cleanup unregistered or invalid FCM tokens to keep DB healthy and prevent log spam
+    const errorCode = error.code || (error.errorInfo && error.errorInfo.code);
+    if (errorCode === 'messaging/registration-token-not-registered' || 
+        errorCode === 'messaging/invalid-registration-token' ||
+        error.message?.includes('registration-token-not-registered') ||
+        error.message?.includes('invalid-registration-token')) {
+      try {
+        console.log(`[Notification Service] Invalid FCM token detected. Cleaning up token in DB...`);
+        await User.update({ fcmToken: null }, { where: { fcmToken } });
+      } catch (dbErr) {
+        console.error('[Notification Service] Failed to clear invalid FCM token in DB:', dbErr.message);
+      }
+    }
     return false;
   }
 };

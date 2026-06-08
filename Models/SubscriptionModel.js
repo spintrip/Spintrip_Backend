@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     expiry: { type: DataTypes.INTEGER, allowNull: false },
     amount: { type: DataTypes.FLOAT, allowNull: false },
     Remarks: { type: DataTypes.TEXT, allowNull: true },
-    targetAudience: { type: DataTypes.ENUM('host', 'driver', 'both'), defaultValue: 'both' }
+    targetAudience: { type: DataTypes.STRING, defaultValue: 'both' },
+    broadcasts: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null }
   });
   return Subscriptions;
 };

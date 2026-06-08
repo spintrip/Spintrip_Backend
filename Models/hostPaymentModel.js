@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     TransactionId: { type: DataTypes.STRING, allowNull: true },
     PlanEndDate: { type: DataTypes.DATEONLY, allowNull: false },
     PlanType: { type: DataTypes.STRING(36), allowNull: false },
-    Remarks: { type: DataTypes.TEXT, allowNull: true }
+    Remarks: { type: DataTypes.TEXT, allowNull: true },
+    broadcastsUsed: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }
   });
 
   HostPayment.associate = (models) => {

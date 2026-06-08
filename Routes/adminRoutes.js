@@ -5,7 +5,7 @@ const {
   getAllUsers, getUserById, deleteUser, updateUser, getAllHosts, getHostById, deleteHost,
   getAllvehicles, getvehicleById, updatevehicleById, deletevehicleById, getAllListings, getListingById, updateListingById, deleteListingById,
   createPayout, getAllPayouts, getPayoutById, adminSignup, updatePayoutById, deletePayoutById,
-  getAllBookings, getSelfDriveBookings, getCabBookings, createAdminBooking, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice,
+  getAllBookings, getSelfDriveBookings, getCabBookings, createAdminBooking, getBookingById, updateBookingById, deleteBookingById, cancelCabBooking, sendCabInvoice, broadcastCabBooking,
   createOrUpdateBrand, getAllBrands, updateBrandById, getPricing, updatePricingById,
   createTax, getAllTaxes, updateTaxById, deleteTaxById, createFeature, getAllFeatures, deleteFeatureById,
   viewAllSupportTickets, replyToSupportTicket, escalateSupportTicket, resolveSupportTicket, viewAllChats,
@@ -252,6 +252,7 @@ router.put('/bookings/:id', authenticate, restrictToSuperadmin, updateBookingByI
 router.delete('/bookings/:id', authenticate, restrictToSuperadmin, deleteBookingById);
 router.put('/bookings/:id/cancel', authenticate, restrictToSuperadmin, cancelCabBooking);
 router.post('/bookings/:id/send-invoice', authenticate, restrictToSuperadmin, sendCabInvoice);
+router.post('/bookings/:id/broadcast', authenticate, restrictToSuperadmin, broadcastCabBooking);
 
 router.post('/Subscriptions', authenticate, restrictToSuperadmin, subscriptions);
 
@@ -302,5 +303,41 @@ router.get('/surge-pricing', authenticate, restrictToSuperadmin, getSurgeRules);
 router.post('/surge-pricing', authenticate, restrictToSuperadmin, createSurgeRule);
 router.put('/surge-pricing/:id', authenticate, restrictToSuperadmin, updateSurgeRule);
 router.delete('/surge-pricing/:id', authenticate, restrictToSuperadmin, deleteSurgeRule);
+
+// Global settings endpoints
+const getSettings = async (req, res) => {
+  try {
+    const { sequelize } = require('../Models');
+    const [settings] = await sequelize.query(`SELECT * FROM "AppSettings";`);
+    const settingsMap = {};
+    settings.forEach(s => {
+      settingsMap[s.key] = s.value;
+    });
+    res.status(200).json({ success: true, settings: settingsMap });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const updateSetting = async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key || value === undefined) {
+      return res.status(400).json({ success: false, message: "Missing key or value." });
+    }
+    const { sequelize } = require('../Models');
+    await sequelize.query(
+      `INSERT INTO "AppSettings" ("key", "value") VALUES (:key, :value)
+       ON CONFLICT ("key") DO UPDATE SET "value" = :value;`,
+      { replacements: { key, value: String(value) } }
+    );
+    res.status(200).json({ success: true, message: `Setting ${key} updated to ${value}.` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+router.get('/settings', authenticate, restrictToSuperadmin, getSettings);
+router.post('/settings', authenticate, restrictToSuperadmin, updateSetting);
 
 module.exports = router;

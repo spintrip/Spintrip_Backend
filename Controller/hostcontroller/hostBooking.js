@@ -137,7 +137,7 @@ const tripstart = async (req, res) => {
       }
       const t = await sequelize.transaction();
       try {
-        const endOtp = Math.floor(1000 + Math.random() * 9000);
+        const endOtp = cabBooking.agentId ? expectedOtp : Math.floor(1000 + Math.random() * 9000);
         cabBooking.status = 'started';
         cabBooking.otp = endOtp;
         await cabBooking.save({ transaction: t });
@@ -361,34 +361,134 @@ const bookingcompleted = async (req, res) => {
 const cancelbooking = async (req, res) => {
   try {
     const { bookingId, CancelReason } = req.body;
-    const booking = await Booking.findOne(
-      { where: { Bookingid: bookingId } }
-    );
-    if (booking) {
-      if (booking.status === 1) {
-        const today = new Date();
-        const cancelDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        await Booking.update(
-          {
-            status: 4,
-            cancelDate: cancelDate,
-            cancelReason: CancelReason
-          },
-          { where: { Bookingid: bookingId } }
-        );
-        const { userEmail, hostEmail, bookingDetails } = await getBookingDetails(booking.Bookingid);
-        // sendBookingCancellationEmail(userEmail, hostEmail, bookingDetails, 'The booking has been cancelled by user')
-        res.status(201).json({ message: 'Trip Has been Cancelled' });
+    const userId = req.user.id; // The authenticated driver or vendor ID
+
+    // Check if the user is a Driver
+    const driver = await Driver.findOne({ where: { id: userId } });
+
+    if (driver) {
+      // 🚕 DRIVER CANCELLATION: Go back to requested status (pending) so other drivers can accept it
+      const cabBooking = await CabBookingRequest.findOne({ where: { bookingId } });
+      if (cabBooking) {
+        if (cabBooking.status === 'completed' || cabBooking.status === 'cancelled') {
+          return res.status(400).json({ message: 'Trip is already completed or cancelled.' });
+        }
+
+        const t = await sequelize.transaction();
+        try {
+          // 1. Reset CabBookingRequest to pending status, clear driver & vehicle
+          cabBooking.status = 'pending';
+          cabBooking.driverid = null;
+          cabBooking.vehicleId = null;
+          cabBooking.vehicleid = null; // clear fallback casing key too
+          await cabBooking.save({ transaction: t });
+
+          // 2. Delete standard Booking record (since driver is no longer confirmed/assigned)
+          await Booking.destroy({ where: { Bookingid: bookingId }, transaction: t });
+
+          // 3. Delete CabBookingAccepted record
+          await CabBookingAccepted.destroy({ where: { bookingId }, transaction: t });
+
+          await t.commit();
+
+          // 🔔 Broadcast again to nearby online drivers
+          try {
+            const socketManager = require('../../Utils/socketManager');
+            const pickupLocation = {
+              latitude: cabBooking.startLocationLatitude,
+              longitude: cabBooking.startLocationLongitude,
+              address: cabBooking.startLocationAddress
+            };
+            socketManager.broadcastBookingToDrivers(cabBooking, pickupLocation);
+          } catch (socketErr) {
+            console.error("Failed to re-broadcast cancelled driver booking:", socketErr.message);
+          }
+
+          return res.status(200).json({ 
+            message: 'Trip has been returned to requested status for other drivers.', 
+            status: 'pending' 
+          });
+        } catch (err) {
+          await t.rollback();
+          console.error("Error processing driver cancellation:", err);
+          return res.status(500).json({ message: 'Server error processing cancellation' });
+        }
+      } else {
+        // Fallback for self-drive bookings where driver is assigned
+        const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
+        if (booking) {
+          booking.driverid = null;
+          await booking.save();
+          return res.status(200).json({ message: 'Driver unassigned from self-drive booking.' });
+        }
+        return res.status(404).json({ message: 'Booking not found.' });
       }
-      else {
-        res.status(404).json({ message: 'Ride Already Started' });
+    } else {
+      // 👤 VENDOR / HOST CANCELLATION: Cancel completely
+      const booking = await Booking.findOne({ where: { Bookingid: bookingId } });
+      if (booking) {
+        if (booking.status === 2 || booking.status === 3) {
+          return res.status(400).json({ message: 'Ride Already Started or Completed' });
+        }
+
+        const t = await sequelize.transaction();
+        try {
+          const today = new Date();
+          const cancelDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          
+          // 1. Cancel standard Booking
+          booking.status = 4;
+          booking.cancelDate = cancelDate;
+          booking.cancelReason = CancelReason || "Cancelled by Vendor";
+          await booking.save({ transaction: t });
+
+          // 2. Cancel CabBookingRequest if exists
+          await CabBookingRequest.update(
+            { status: 'cancelled' },
+            { where: { bookingId }, transaction: t }
+          );
+
+          // 3. Refund coins if any
+          try {
+            const { refundBookingCoins } = require('../cabController');
+            if (typeof refundBookingCoins === 'function') {
+              await refundBookingCoins(bookingId, t);
+            }
+          } catch (refundErr) {
+            console.error("Failed to refund coins:", refundErr.message);
+          }
+
+          await t.commit();
+
+          // 🔔 Notify User
+          if (booking.id) {
+            await notifyUserById(
+              booking.id,
+              "Booking Cancelled",
+              `Booking ID: ${bookingId} has been cancelled by the vendor.`,
+              { bookingId, type: "booking_cancelled", click_action: "FLUTTER_NOTIFICATION_CLICK" }
+            );
+          }
+
+          return res.status(200).json({ message: 'Trip Has been Cancelled by Vendor' });
+        } catch (err) {
+          await t.rollback();
+          console.error("Error processing vendor cancellation:", err);
+          return res.status(500).json({ message: 'Server error processing cancellation' });
+        }
+      } else {
+        // Fallback if standard Booking doesn't exist yet but request does
+        const cabBooking = await CabBookingRequest.findOne({ where: { bookingId } });
+        if (cabBooking) {
+          cabBooking.status = 'cancelled';
+          await cabBooking.save();
+          return res.status(200).json({ message: 'Booking request cancelled.' });
+        }
+        return res.status(404).json({ message: 'Booking Not found' });
       }
     }
-    else {
-      res.status(404).json({ message: 'Booking Not found' });
-    }
-  }
-  catch (err) {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error: ' + err.message });
   }
 }
@@ -671,6 +771,7 @@ const DriverBookings = async (req, res) => {
       const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
       return {
+        agentId: cab.agentId,
         bookingId: cab.bookingId,
         vehicleid: cab.vehicleId || "",
         id: cab.userId,

@@ -61,7 +61,8 @@ const checkData = (value) => {
         pan: checkImage(panFile),
         profilePic: checkImage(profilePic),
         upiId: driverData ? driverData.upiId : null,
-        bankAccountNumber: driverData ? driverData.bankAccountNumber : null
+        bankAccountNumber: driverData ? driverData.bankAccountNumber : null,
+        isCorporate: driverData ? driverData.isCorporate === true : false
       };
   
       res.json({
@@ -110,15 +111,25 @@ const getAllVehicleTypes = async (req, res) => {
       }
   
       // Update additional user information
-      const { dlNumber, fullName, aadharId, aadharNumber, panNumber, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber } = req.body;
+      const { dlNumber, fullName, aadharId, aadharNumber, panNumber, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber, isCorporate } = req.body;
       
       if (user.role === 'Driver' || user.role === 'driver') {
         const { Driver } = require('../../Models');
         const driverExists = await Driver.findOne({ where: { id: userId } });
         if (driverExists) {
-           await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: userId } });
+           await Driver.update({ 
+             upiId: upiId || null, 
+             bankAccountNumber: bankAccountNumber || null,
+             isCorporate: isCorporate === true || isCorporate === 'true'
+           }, { where: { id: userId } });
         } else {
-           await Driver.create({ id: userId, hostid: null, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
+           await Driver.create({ 
+             id: userId, 
+             hostid: null, 
+             upiId: upiId || null, 
+             bankAccountNumber: bankAccountNumber || null,
+             isCorporate: isCorporate === true || isCorporate === 'true'
+           });
         }
       }
 

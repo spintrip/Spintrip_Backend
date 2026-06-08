@@ -5,7 +5,7 @@ const uuid = require('uuid');
 
 const subscriptions = async (req, res) => {
   try {
-    const { planName, vehicleType, remarks, expiry, amount, targetAudience } = req.body; // Assume the request body contains subscription details
+    const { planName, vehicleType, remarks, expiry, amount, targetAudience, broadcasts } = req.body; // Assume the request body contains subscription details
     const adminId = req.user.id;
     const admin = await Admin.findByPk(adminId);
 
@@ -15,12 +15,13 @@ const subscriptions = async (req, res) => {
     const planType = uuid.v4();
     const newSubscription = await Subscriptions.create({ 
       PlanType: planType, 
-      vehicleType: vehicleType, 
+      vehicleType: vehicleType !== undefined ? vehicleType : 3, 
       PlanName: planName, 
       expiry: expiry, 
       amount: amount, 
       Remarks: remarks,
-      targetAudience: targetAudience || 'both'
+      targetAudience: targetAudience || 'both',
+      broadcasts: broadcasts !== undefined && broadcasts !== null ? parseInt(broadcasts) : null
     });
 
     res.status(201).json({

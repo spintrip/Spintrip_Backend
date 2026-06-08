@@ -31,7 +31,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     discountAmount: { type: DataTypes.FLOAT, defaultValue: 0 },
-    offerId: { type: DataTypes.STRING(36), allowNull: true }
+    offerId: { type: DataTypes.STRING(36), allowNull: true },
+    passengerName: { type: DataTypes.STRING(255), allowNull: true },
+    passengerPhone: { type: DataTypes.STRING(50), allowNull: true },
+    isCorporate: { type: DataTypes.BOOLEAN, defaultValue: false }
   });
 
   Booking.associate = (models) => {

@@ -750,6 +750,12 @@ const cancelbooking = async (req, res) => {
           { where: { Bookingid: bookingId } }
         );
 
+        // Also cancel CabBookingRequest if it exists
+        await CabBookingRequest.update(
+          { status: 'cancelled' },
+          { where: { bookingId } }
+        );
+
         // 🔔 Notify Host/Driver
         const recipientId = booking.driverid || (await Vehicle.findByPk(booking.vehicleid))?.hostId;
         if (recipientId) {
@@ -783,6 +789,15 @@ const cancelbooking = async (req, res) => {
              await refundBookingCoins(bookingId, t);
 
              await t.commit();
+
+             // Cancel live broadcast dialogs on driver apps instantly
+             try {
+               const socketManager = require('../../Utils/socketManager');
+               socketManager.cancelBroadcasts(bookingId, null);
+             } catch (err) {
+               console.error("Failed to cancel socket broadcasts:", err.message);
+             }
+
              res.status(201).json({ message: 'Trip Has been Cancelled' });
            } catch (err) {
              await t.rollback();
@@ -963,6 +978,7 @@ const userbookings = async (req, res) => {
         const dEarn = Math.round((netBaseAmount - commOut - tdsOut) * 100) / 100;
 
         return {
+          agentId: cab.agentId,
           bookingId: cab.bookingId,
           vehicleid: cab.vehicleId || "",
           id: cab.userId,

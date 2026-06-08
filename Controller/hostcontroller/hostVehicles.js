@@ -598,9 +598,13 @@ const getAllSubscriptions = async (req, res) => {
     }
 
     if (audience && audience !== 'both') {
-      whereClause.targetAudience = {
-        [Op.or]: [audience, 'both']
-      };
+      if (audience === 'agent') {
+        whereClause.targetAudience = 'agent';
+      } else {
+        whereClause.targetAudience = {
+          [Op.or]: [audience, 'both']
+        };
+      }
     }
 
     const subscriptions = await Subscriptions.findAll({ where: whereClause });
@@ -681,7 +685,7 @@ const getActiveSubscriptionForVehicle = async (req, res) => {
 
   try {
 
-    const subscription = await HostPayment.findAll({
+    const subscriptions = await HostPayment.findAll({
       where: {
         HostId: req.user.id,
         PlanEndDate: {
@@ -690,14 +694,32 @@ const getActiveSubscriptionForVehicle = async (req, res) => {
       }
     });
 
-    if (!subscription) {
+    if (!subscriptions || subscriptions.length === 0) {
       return res.status(404).json({ message: 'No active subscription found for this vehicle' });
     }
+
+    // Enrich each subscription with plan details (broadcasts allowed)
+    const enriched = await Promise.all(subscriptions.map(async (sub) => {
+      const plan = await Subscriptions.findOne({ where: { PlanType: sub.PlanType } });
+      const broadcastsAllowed = plan?.broadcasts ?? null; // null = unlimited
+      const broadcastsUsed = sub.broadcastsUsed || 0;
+      const broadcastsRemaining = broadcastsAllowed !== null
+        ? Math.max(0, broadcastsAllowed - broadcastsUsed)
+        : null; // null = unlimited
+
+      return {
+        ...sub.toJSON(),
+        planName: plan?.PlanName || sub.PlanType,
+        broadcastsAllowed,
+        broadcastsUsed,
+        broadcastsRemaining
+      };
+    }));
 
     // Return the active subscription details
     res.status(200).json({
       message: 'Active subscription fetched successfully',
-      subscription: subscription,
+      subscription: enriched,
     });
   } catch (error) {
     console.error(error);

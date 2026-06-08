@@ -35,7 +35,7 @@ const signup = async (req, res) => {
 
   try {
     // 1. Role validation
-    if (!['user', 'host', 'admin'].includes(role)) {
+    if (!['user', 'host', 'admin', 'agent'].includes(role)) {
       await t.rollback();
       return res.status(400).json({ message: 'Invalid role' });
     }
@@ -99,7 +99,7 @@ const signup = async (req, res) => {
       id: userId,
       phone,
       password: hashedPassword,
-      role: role === 'host' ? 'host' : (role === 'admin' ? 'admin' : 'user'),
+      role: ['host', 'admin', 'agent'].includes(role) ? role : 'user',
       referralCode: myPersonalCode,
       referredBy: referredById,
       referralCount: 0 // This tracks number of users brought IN, not coins

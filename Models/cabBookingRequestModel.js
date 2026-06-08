@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(36), 
         allowNull: false 
       },
+      agentId: {
+        type: DataTypes.STRING(36),
+        allowNull: true
+      },
       vehicleId: DataTypes.STRING(36),  
       driverid: DataTypes.STRING(36),
       date: DataTypes.DATEONLY,
@@ -60,7 +64,11 @@ module.exports = (sequelize, DataTypes) => {
       offerId: { type: DataTypes.STRING(36), allowNull: true },
       offerCode: { type: DataTypes.STRING, allowNull: true },
       days: { type: DataTypes.INTEGER, defaultValue: 1 },
+      hours: { type: DataTypes.INTEGER, defaultValue: 1 },
       isRoundTrip: { type: DataTypes.BOOLEAN, defaultValue: true },
+      passengerName: { type: DataTypes.STRING(255), allowNull: true },
+      passengerPhone: { type: DataTypes.STRING(50), allowNull: true },
+      isCorporate: { type: DataTypes.BOOLEAN, defaultValue: false }
     });
   
     CabBookingRequest.associate = (models) => {

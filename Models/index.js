@@ -100,6 +100,95 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     // AUTO-PATCH: Add referenceId and description to Transactions for cab payment tracking
     await sequelize.query(`ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "referenceId" VARCHAR(36);`);
     await sequelize.query(`ALTER TABLE "Transactions" ADD COLUMN IF NOT EXISTS "description" VARCHAR(255);`);
+    
+    // AUTO-PATCH: Add agentId and related structures for Agents manually booking ETS
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "agentId" VARCHAR(36);`);
+
+    // AUTO-PATCH: Create AgentWallets and AgentWalletTransactions tables safely
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "AgentWallets" (
+        "id" UUID PRIMARY KEY,
+        "agentId" VARCHAR(36) NOT NULL UNIQUE,
+        "balance" DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
+        "creditLimit" DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
+        "outstandingCredit" DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
+        "escrowBalance" DOUBLE PRECISION DEFAULT 0.0 NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "AgentWalletTransactions" (
+        "id" UUID PRIMARY KEY,
+        "walletId" UUID NOT NULL,
+        "amount" DOUBLE PRECISION NOT NULL,
+        "type" VARCHAR(50) NOT NULL,
+        "referenceId" VARCHAR(36),
+        "description" VARCHAR(255),
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
+    // AUTO-PATCH: Create ReturnTripMarketplaces table safely
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "ReturnTripMarketplaces" (
+        "id" UUID PRIMARY KEY,
+        "driverId" VARCHAR(36) NOT NULL,
+        "vehicleId" VARCHAR(36) NOT NULL,
+        "origin" VARCHAR(255) NOT NULL,
+        "destination" VARCHAR(255) NOT NULL,
+        "date" DATE NOT NULL,
+        "timeWindowStart" TIME,
+        "timeWindowEnd" TIME,
+        "expectedPrice" DOUBLE PRECISION NOT NULL,
+        "discountPercentage" DOUBLE PRECISION DEFAULT 20.0 NOT NULL,
+        "status" VARCHAR(50) DEFAULT 'active' NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
+    // AUTO-PATCH: Add passengerName and passengerPhone to CabBookingRequests and Bookings for Family Booking Mode
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "passengerName" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "passengerPhone" VARCHAR(50);`);
+    await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerName" VARCHAR(255);`);
+    await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerPhone" VARCHAR(50);`);
+
+    // AUTO-PATCH: Add preference to Drivers for customized driver filter matches
+    await sequelize.query(`ALTER TABLE "Drivers" ADD COLUMN IF NOT EXISTS "preference" VARCHAR(50) DEFAULT 'All';`);
+
+    // AUTO-PATCH: Create AirportQueues table safely for FIFO driver airport queuing
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "AirportQueues" (
+        "id" UUID PRIMARY KEY,
+        "driverId" VARCHAR(36) NOT NULL UNIQUE,
+        "airportCode" VARCHAR(10) NOT NULL,
+        "queuePosition" INTEGER NOT NULL,
+        "status" VARCHAR(50) DEFAULT 'waiting' NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+        "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `);
+
+    // AUTO-PATCH: AppSettings table
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "AppSettings" (
+        "key" VARCHAR(255) PRIMARY KEY,
+        "value" VARCHAR(255) NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    
+    // Seed disable_vehicle_addition setting if not present
+    const [settings] = await sequelize.query(`SELECT * FROM "AppSettings" WHERE "key" = 'disable_vehicle_addition';`);
+    if (settings.length === 0) {
+      await sequelize.query(`INSERT INTO "AppSettings" ("key", "value") VALUES ('disable_vehicle_addition', 'false');`);
+      console.log('Seeded disable_vehicle_addition = false');
+    }
+    
     console.log('Offers and Discounts schema synchronized.');
     console.log('Driver Verification schema synchronized.');
     console.log('Support schema synchronized.');
@@ -168,6 +257,11 @@ db.VehicleType = require('./vehicleTypeModel')(sequelize, DataTypes);
 db.ReferralReward = require('./referralRewardModel')(sequelize, DataTypes);
 db.Offer = require('./OfferModel')(sequelize, DataTypes);
 db.SurgePrice = require('./SurgeModel')(sequelize, DataTypes);
+db.AppSetting = require('./appSettingModel')(sequelize, DataTypes);
+db.AgentWallet = require('./AgentWalletModel')(sequelize, DataTypes);
+db.AgentWalletTransaction = require('./AgentWalletTransactionModel')(sequelize, DataTypes);
+db.ReturnTripMarketplace = require('./ReturnTripModel')(sequelize, DataTypes);
+db.AirportQueue = require('./AirportQueueModel')(sequelize, DataTypes);
 
 const associateModels = () => {
   const {
@@ -175,7 +269,8 @@ const associateModels = () => {
     Booking, Listing, Feedback, Pricing, Support, SupportChat, Wishlist, Feature, carFeature,
     Device, carDevices, Blog, BlogComment, Transaction, HostPayment, Driver,
     CabBookingRequest, CabBookingAccepted, DriverKeepAlive, Cab, UserAddress, CabSchedule,
-    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward, Offer, SurgePrice
+    Wallet, WalletTransaction, HostCabRateCard, DriverWithdrawal, VehicleType, ReferralReward, Offer, SurgePrice,
+    AgentWallet, AgentWalletTransaction, ReturnTripMarketplace, AirportQueue
   } = sequelize.models;
 
   // User and related associations
@@ -287,6 +382,21 @@ Vehicle.belongsTo(HostAdditional, { foreignKey: 'hostId' });
   // Referral associations
   ReferralReward.belongsTo(User, { foreignKey: 'userId', targetKey: 'id' });
 
+  // Agent Wallet associations
+  User.hasOne(AgentWallet, { foreignKey: 'agentId', sourceKey: 'id', onDelete: 'CASCADE' });
+  AgentWallet.belongsTo(User, { foreignKey: 'agentId', targetKey: 'id' });
+  AgentWallet.hasMany(AgentWalletTransaction, { foreignKey: 'walletId', sourceKey: 'id', onDelete: 'CASCADE' });
+  AgentWalletTransaction.belongsTo(AgentWallet, { foreignKey: 'walletId', targetKey: 'id' });
+
+  // ReturnTripMarketplace associations
+  Driver.hasMany(ReturnTripMarketplace, { foreignKey: 'driverId', sourceKey: 'id', onDelete: 'CASCADE' });
+  ReturnTripMarketplace.belongsTo(Driver, { foreignKey: 'driverId', targetKey: 'id' });
+  Vehicle.hasMany(ReturnTripMarketplace, { foreignKey: 'vehicleId', sourceKey: 'vehicleid', onDelete: 'CASCADE' });
+  ReturnTripMarketplace.belongsTo(Vehicle, { foreignKey: 'vehicleId', targetKey: 'vehicleid' });
+
+  // AirportQueue associations
+  Driver.hasOne(AirportQueue, { foreignKey: 'driverId', sourceKey: 'id', onDelete: 'CASCADE' });
+  AirportQueue.belongsTo(Driver, { foreignKey: 'driverId', targetKey: 'id' });
 };
 
 associateModels();
@@ -295,5 +405,23 @@ associateModels();
 sequelize.query('ALTER TABLE "Subscriptions" ADD COLUMN IF NOT EXISTS "targetAudience" VARCHAR(255) DEFAULT \'both\';')
   .then(() => console.log('Successfully patched Subscriptions table.'))
   .catch((err) => console.log('DB Patch ignored (already exists or DB not ready).'));
+
+// Auto-Patch DB for HostPayment - add broadcastsUsed tracking
+sequelize.query('ALTER TABLE "HostPayments" ADD COLUMN IF NOT EXISTS "broadcastsUsed" INTEGER NOT NULL DEFAULT 0;')
+  .then(() => console.log('Successfully patched HostPayments table (broadcastsUsed).'))
+  .catch((err) => console.log('DB Patch (broadcastsUsed) ignored (already exists or DB not ready).'));
+
+// Auto-Patch DB for Corporate setup
+sequelize.query('ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "isCorporate" BOOLEAN DEFAULT false;')
+  .then(() => console.log('Successfully patched CabBookingRequests table (isCorporate).'))
+  .catch((err) => console.log('DB Patch (CabBookingRequests.isCorporate) ignored:', err.message));
+
+sequelize.query('ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "isCorporate" BOOLEAN DEFAULT false;')
+  .then(() => console.log('Successfully patched Bookings table (isCorporate).'))
+  .catch((err) => console.log('DB Patch (Bookings.isCorporate) ignored:', err.message));
+
+sequelize.query('ALTER TABLE "Drivers" ADD COLUMN IF NOT EXISTS "isCorporate" BOOLEAN DEFAULT false;')
+  .then(() => console.log('Successfully patched Drivers table (isCorporate).'))
+  .catch((err) => console.log('DB Patch (Drivers.isCorporate) ignored:', err.message));
 
 module.exports = db;

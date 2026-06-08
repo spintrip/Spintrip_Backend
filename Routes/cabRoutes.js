@@ -12,15 +12,26 @@ const {
   bookCab,
   checkBookingStatus,
   acceptBooking,
+  rejectBooking,
   createSoftBooking,
   superhostAssignDriver,
   confirmBankPayment,
   trackDriverLocation,
   toggleDriverStatus,
+  cancelUnpaidBooking,
+  refundBookingCoins,
+  unassignDriverFromVehicle,
+  createReturnTripListing,
+  getReturnTripListings,
+  bookReturnTrip,
   startTrip,
   endTrip,
   addCab,
   getBulkEstimates,
+  updateDriverPreference,
+  joinAirportQueue,
+  leaveAirportQueue,
+  getAirportQueueStatus
 } = require("../Controller/cabController");
 const { updateFcmToken } = require('../Controller/notificationController');
 
@@ -50,6 +61,7 @@ router.post("/search-cabs", authenticate, searchForCabs); // Search for nearby c
 router.post("/book-cab", authenticate, bookCab); // Direct booking with immediate confirmation
 router.post("/soft-book", authenticate, createSoftBooking); // Create a soft booking
 router.post("/accept-booking", authenticate, acceptBooking); // Driver accepts the booking
+router.post("/reject-booking", authenticate, rejectBooking); // Driver rejects the booking
 router.get("/booking-status/:bookingId", authenticate, checkBookingStatus); // Check booking status
 // Superhost Routes
 router.post("/superhost/assign", authenticate, superhostAssignDriver);
@@ -59,5 +71,16 @@ router.post("/pay/bank-transfer", authenticate, confirmBankPayment);
 
 // Customer Tracking
 router.get("/track/:bookingId", authenticate, trackDriverLocation);
+
+// Outstation Return-Trip Marketplace Routes
+router.post("/driver/return-trip", authenticate, createReturnTripListing);
+router.get("/return-trips", authenticate, getReturnTripListings);
+router.post("/book-return-trip", authenticate, bookReturnTrip);
+
+// Driver Preference & Airport Command queue routes
+router.put("/driver/preference", authenticate, updateDriverPreference);
+router.post("/driver/airport/join-queue", authenticate, joinAirportQueue);
+router.post("/driver/airport/leave-queue", authenticate, leaveAirportQueue);
+router.get("/driver/airport/queue-status", authenticate, getAirportQueueStatus);
 
 module.exports = router;

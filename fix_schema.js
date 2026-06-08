@@ -24,6 +24,22 @@ async function runFix() {
     console.log('➜ Adding financial columns to "CabBookingRequests"...');
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "confirmationFee" FLOAT DEFAULT 0.0;`);
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "payToDriver" FLOAT DEFAULT 0.0;`);
+    await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "agentId" VARCHAR(36);`);
+
+    // 2b. Patch AppSettings Table
+    console.log('➜ Creating and seeding "AppSettings" table...');
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "AppSettings" (
+        "key" VARCHAR(255) PRIMARY KEY,
+        "value" VARCHAR(255) NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+    const [settings] = await sequelize.query(`SELECT * FROM "AppSettings" WHERE "key" = 'disable_vehicle_addition';`);
+    if (settings.length === 0) {
+      await sequelize.query(`INSERT INTO "AppSettings" ("key", "value") VALUES ('disable_vehicle_addition', 'false');`);
+    }
 
     // 3. Patch HostCabRateCards (Local & Airport Rates for Payout Formulas)
     console.log('➜ Adding extra rates to "HostCabRateCards"...');

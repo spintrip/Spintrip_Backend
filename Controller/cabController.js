@@ -9,6 +9,7 @@ const {
   Cab,
   Pricing,
   Listing,
+  Booking,
   CabBookingRequest,
   CabBookingAccepted,
   Driver,
@@ -22,6 +23,8 @@ const {
   HostCabRateCard,
   City,
   SurgePrice,
+  ReturnTripMarketplace,
+  AirportQueue,
 } = require("../Models");
 const sequelize = require("../Models").sequelize;
 const { Op } = require("sequelize");
@@ -544,7 +547,7 @@ const searchForCabs = async (req, res) => {
 
 
 const bookCab = async (req, res) => {
-  const { startLocation, endLocation, startDate, startTime, vehicleId, cabType, bookingType, estimatedPrice: reqEstimatedPrice } = req.body;
+  const { startLocation, endLocation, startDate, startTime, vehicleId, cabType, bookingType, estimatedPrice: reqEstimatedPrice, passengerName, passengerPhone } = req.body;
   const userId = req.user.id;
   try {
     // Validate input (Rentals don't need an end location)
@@ -707,6 +710,8 @@ const bookCab = async (req, res) => {
         offerCode: req.offerCode || null,
         days: req.body.days || 1,
         isRoundTrip: req.body.isRoundTrip !== false,
+        passengerName: passengerName || null,
+        passengerPhone: passengerPhone || null,
       }, { transaction: t });
       // ✅ ZERO-RUPEE PAYMENT BYPASS (With Epsilon for technical robustness)
       const isBypassed = confirmationFeeAmount < 1.0;
@@ -716,6 +721,19 @@ const bookCab = async (req, res) => {
       }
 
       await t.commit();
+
+      // Trigger socket geofenced broadcast alert to nearby drivers
+      if (booking.status === "pending") {
+         const socketManager = require("../Utils/socketManager");
+         const pickupLocation = {
+           latitude: parseFloat(startLocation.latitude),
+           longitude: parseFloat(startLocation.longitude),
+           address: startLocation.address || ""
+         };
+         socketManager.broadcastBookingToDrivers(booking, pickupLocation).catch(err => {
+           console.error("Failed to broadcast booking:", err.message);
+         });
+      }
 
       const customer = await User.findByPk(userId);
       if (customer && customer.fcmToken && !isBypassed) {
@@ -768,6 +786,14 @@ const addCab = async (req, res) => {
   } = req.body;
 
   try {
+    // Check if vehicle addition is restricted for non-admins
+    if (req.user && req.user.role !== 'admin') {
+      const [settings] = await sequelize.query(`SELECT value FROM "AppSettings" WHERE "key" = 'disable_vehicle_addition';`);
+      if (settings && settings[0] && settings[0].value === 'true') {
+        return res.status(403).json({ message: "Forbidden: Vehicle registration is currently disabled by the Super Administrator." });
+      }
+    }
+
     // Validate host
     let host = await Host.findByPk(req.user.id);
     if (!host) {
@@ -973,7 +999,7 @@ const getDriver = async (req, res) => {
  * Create a soft booking and notify nearby drivers
  */
 const createSoftBooking = async (req, res) => {
-  const { startLocation, endLocation, startDate, startTime, vehicleId } = req.body;
+  const { startLocation, endLocation, startDate, startTime, vehicleId, passengerName, passengerPhone } = req.body;
   const userId = req.user.id;
 
   try {
@@ -1040,6 +1066,8 @@ const createSoftBooking = async (req, res) => {
         bookingType: req.body.bookingType || 'Local',
         days: req.body.days || 1,
         isRoundTrip: req.body.isRoundTrip !== false,
+        passengerName: passengerName || null,
+        passengerPhone: passengerPhone || null,
       }, { transaction: t });
 
       await t.commit();
@@ -1104,28 +1132,36 @@ const acceptBooking = async (req, res) => {
 
   try {
     // Fetch the soft booking
-    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 5 } });
+    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 'pending' } });
     if (!booking) {
       return res.status(404).json({ message: "Soft booking not found or already taken." });
     }
 
-    // Update soft booking to confirmed (status 1)
+    // Fetch the driver's assigned cab to get their vehicleId
+    const cab = await Cab.findOne({ where: { driverId } });
+    if (!cab) {
+      return res.status(400).json({ message: "You do not have an assigned cab. Please assign a cab to your profile before accepting rides." });
+    }
+    const vehicleId = cab.vehicleid;
+
+    // Generate an OTP for the trip
+    const tripOtp = generateOTP();
+
+    // Update soft booking to confirmed (status 1) and link the driver's vehicle
     await CabBookingRequest.update(
-      { status: 1, driverId, otp: tripOtp },
+      { status: 'accepted', driverid: driverId, vehicleId: vehicleId, vehicleid: vehicleId, otp: tripOtp },
       { where: { bookingId } }
     );
 
     // Set Driver to Offline so they don't appear in new ping searches
     await Driver.update({ isActive: true }, { where: { id: driverId } });
 
-    // Generate an OTP for the trip
-    const tripOtp = generateOTP();
-
     // Save the confirmed booking in `Booking` table
     const newBooking = await Booking.create({
       Bookingid: bookingId,
       Date: new Date(),
-      vehicleid: booking.vehicleId,
+      vehicleid: vehicleId,
+      driverid: driverId,
       id: booking.userId,
       status: 1, // 1 indicates "confirmed"
       amount: booking.subtotalBasePrice || booking.estimatedPrice, // Save exact base fare
@@ -1138,10 +1174,13 @@ const acceptBooking = async (req, res) => {
     // Save the confirmed booking details
     await CabBookingAccepted.create({
       bookingId,
-      driverId,
-      userId: booking.userId,
-      tripOtp,
+      driverid: driverId,
+      acceptedAt: new Date(),
     });
+
+    // Clear matching broadcast alerts for all other drivers
+    const socketManager = require("../Utils/socketManager");
+    socketManager.cancelBroadcasts(bookingId, driverId);
 
     // 🔔 Notify the user
     await notifyUserById(
@@ -1159,6 +1198,27 @@ const acceptBooking = async (req, res) => {
     });
   } catch (error) {
     console.error("Error accepting booking:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const rejectBooking = async (req, res) => {
+  const { bookingId } = req.body;
+  const driverId = req.user.id;
+
+  try {
+    const socketManager = require("../Utils/socketManager");
+    socketManager.rejectBroadcastForDriver(bookingId, driverId);
+
+    console.log(`[Driver Action] Driver ${driverId} rejected booking ${bookingId}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Booking rejected successfully",
+      bookingId,
+    });
+  } catch (error) {
+    console.error("Error rejecting booking:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -1244,7 +1304,7 @@ const superhostAssignDriver = async (req, res) => {
   const superhostId = req.user.id;
 
   try {
-    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 5 } });
+    const booking = await CabBookingRequest.findOne({ where: { bookingId, status: 'pending' } });
     if (!booking) {
       return res.status(400).json({ message: "Booking not found or not in searching state." });
     }
@@ -1260,7 +1320,7 @@ const superhostAssignDriver = async (req, res) => {
     // Link vehicle to booking and assign driver
     booking.vehicleId = vehicleId;
     booking.driverid = driverId;
-    booking.status = 1; // 1 = Upcoming / Confirmed
+    booking.status = 'accepted'; // 'accepted' = Confirmed / Upcoming
     await booking.save();
 
     // --- SEND NOTIFICATIONS (GENERIC HELPER) ---
@@ -1303,12 +1363,41 @@ const trackDriverLocation = async (req, res) => {
 
   try {
     const booking = await CabBookingRequest.findOne({ where: { bookingId } });
-    if (!booking || !booking.vehicleId) {
+    
+    // 🕒 TIME RESTRICTION: Only allow tracking starting 15 minutes before scheduled pickup time (unless ride already started)
+    if (booking && booking.status !== 'started' && booking.status !== 'ongoing') {
+      const bookingDate = booking.date; // "YYYY-MM-DD"
+      const bookingTimeStr = booking.time; // "HH:MM:SS"
+      if (bookingDate && bookingTimeStr) {
+        const scheduledTime = new Date(`${bookingDate}T${bookingTimeStr}`);
+        const now = new Date();
+        const differenceMs = scheduledTime - now;
+        const fifteenMinutesMs = 15 * 60 * 1000;
+
+        if (differenceMs > fifteenMinutesMs) {
+          return res.status(403).json({ 
+            message: "Live tracking is only available starting 15 minutes before the scheduled booking time." 
+          });
+        }
+      }
+    }
+
+    let vehicleId = booking ? (booking.vehicleId || booking.vehicleid) : null;
+
+    if (!vehicleId) {
+      // Fallback: Check the standard Booking table which is created when a ride is accepted
+      const stdBooking = await Booking.findOne({ where: { Bookingid: bookingId } });
+      if (stdBooking) {
+        vehicleId = stdBooking.vehicleid;
+      }
+    }
+
+    if (!vehicleId) {
       return res.status(404).json({ message: "Booking or assigned vehicle not found." });
     }
 
     const vehicleLocation = await VehicleAdditional.findOne({
-      where: { vehicleid: booking.vehicleId },
+      where: { vehicleid: vehicleId },
       attributes: ['latitude', 'longitude', 'timestamp']
     });
 
@@ -2278,9 +2367,7 @@ const getBulkEstimates = async (req, res) => {
         const trafficMult = ratio > 2.5 ? 1.3 : (ratio > 1.5 ? 1.1 : 1);
 
         const hostSurgeFromCard = (card.surgeMultiplier || 1.0);
-         //console.log(`[Pricing] Calculated base price: ${matchedCity}, ${type}, ${scheduledDate}, ${scheduledTime}, Host Surge from Card: ${hostSurgeFromCard}`); 
-        // 🔥 NEW: Check Global Surge per vehicle type
-        const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, type, scheduledDate, scheduledTime);
+        const globalSurgeMultiplier = await getActiveSurgeMultiplier(matchedCity, type, evaluatedType, scheduledDate, scheduledTime);
         //console.log(`[Surge] Global surge multiplier for ${type}: ${globalSurgeMultiplier}`);
         let total = Math.round((base * trafficMult * hostSurgeFromCard * globalSurgeMultiplier) + (card.tollCharges || 0));
 
@@ -2421,6 +2508,348 @@ const cancelUnpaidBooking = async (req, res) => {
   }
 };
 
+const createReturnTripListing = async (req, res) => {
+  const { origin, destination, date, timeWindowStart, timeWindowEnd, expectedPrice, discountPercentage } = req.body;
+  const driverId = req.user.id;
+
+  try {
+    if (!origin || !destination || !date || !expectedPrice) {
+      return res.status(400).json({ message: "Origin, destination, date, and expectedPrice are required." });
+    }
+
+    const cab = await Cab.findOne({ where: { driverId } });
+    if (!cab) {
+      return res.status(404).json({ message: "Driver is not currently assigned to any vehicle." });
+    }
+
+    const listing = await ReturnTripMarketplace.create({
+      id: uuid.v4(),
+      driverId,
+      vehicleId: cab.vehicleid,
+      origin,
+      destination,
+      date,
+      timeWindowStart: timeWindowStart || null,
+      timeWindowEnd: timeWindowEnd || null,
+      expectedPrice: parseFloat(expectedPrice),
+      discountPercentage: parseFloat(discountPercentage || 20.0),
+      status: "active"
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Outstation return-trip leg listed in marketplace successfully!",
+      listing
+    });
+
+  } catch (error) {
+    console.error("Error creating return trip listing:", error.message);
+    res.status(500).json({ message: "Server error creating return trip", error: error.message });
+  }
+};
+
+const getReturnTripListings = async (req, res) => {
+  const { origin, destination, date } = req.query;
+
+  try {
+    const whereClause = { status: "active" };
+    if (origin) {
+      whereClause.origin = { [Op.iLike]: `%${origin}%` };
+    }
+    if (destination) {
+      whereClause.destination = { [Op.iLike]: `%${destination}%` };
+    }
+    if (date) {
+      whereClause.date = date;
+    }
+
+    const listings = await ReturnTripMarketplace.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: Driver,
+          required: true,
+          include: [
+            {
+              model: DriverAdditional,
+              attributes: ["FullName", "profilepic"]
+            }
+          ]
+        }
+      ],
+      order: [["date", "ASC"]]
+    });
+
+    res.status(200).json({
+      success: true,
+      listings
+    });
+
+  } catch (error) {
+    console.error("Error fetching return trips:", error.message);
+    res.status(500).json({ message: "Server error fetching return trips", error: error.message });
+  }
+};
+
+const bookReturnTrip = async (req, res) => {
+  const { returnTripId } = req.body;
+  const userId = req.user.id;
+
+  const t = await sequelize.transaction();
+
+  try {
+    if (!returnTripId) {
+      await t.rollback();
+      return res.status(400).json({ message: "returnTripId is required" });
+    }
+
+    const returnTrip = await ReturnTripMarketplace.findOne({
+      where: { id: returnTripId, status: "active" },
+      transaction: t
+    });
+
+    if (!returnTrip) {
+      await t.rollback();
+      return res.status(404).json({ message: "Marketplace return-trip listing not found or already booked." });
+    }
+
+    returnTrip.status = "booked";
+    await returnTrip.save({ transaction: t });
+
+    const bookingId = uuid.v4();
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    const discountFactor = (100.0 - returnTrip.discountPercentage) / 100.0;
+    const finalDiscountedPrice = Math.round(returnTrip.expectedPrice * discountFactor * 100) / 100;
+
+    const booking = await CabBookingRequest.create({
+      bookingId,
+      userId,
+      vehicleId: returnTrip.vehicleId,
+      driverid: returnTrip.driverId,
+      date: returnTrip.date,
+      time: returnTrip.timeWindowStart || "12:00:00",
+      status: "accepted",
+      startTripTime: returnTrip.timeWindowStart || "12:00:00",
+      startLocationAddress: returnTrip.origin,
+      endLocationAddress: returnTrip.destination,
+      estimatedPrice: finalDiscountedPrice,
+      subtotalBasePrice: finalDiscountedPrice / 1.05,
+      gstAmount: finalDiscountedPrice - (finalDiscountedPrice / 1.05),
+      otp,
+      bookingType: "Outstation",
+      paymentStatus: "pending",
+      payToDriver: finalDiscountedPrice * 0.80
+    }, { transaction: t });
+
+    await Booking.create({
+      Bookingid: bookingId,
+      Date: returnTrip.date,
+      vehicleid: returnTrip.vehicleId,
+      id: userId,
+      status: 1,
+      amount: finalDiscountedPrice,
+      driverid: returnTrip.driverId,
+      pickup: { address: returnTrip.origin },
+      destination: { address: returnTrip.destination }
+    }, { transaction: t });
+
+    await CabBookingAccepted.create({
+      id: uuid.v4(),
+      bookingId,
+      driverId: returnTrip.driverId,
+      vehicleId: returnTrip.vehicleId,
+      acceptedAt: new Date(),
+      tripOtp: otp.toString()
+    }, { transaction: t });
+
+    await t.commit();
+
+    res.status(200).json({
+      success: true,
+      message: "Return-trip booking created successfully with a marketplace discount!",
+      bookingId,
+      otp,
+      finalPrice: finalDiscountedPrice
+    });
+
+  } catch (error) {
+    await t.rollback();
+    console.error("Error booking return trip:", error.message);
+    res.status(500).json({ message: "Server error booking return trip", error: error.message });
+  }
+};
+
+const updateDriverPreference = async (req, res) => {
+  const driverId = req.user.id;
+  const { preference } = req.body; // e.g. "All", "Airport Only", "Local Only", "Outstation Only", "Rentals Only"
+
+  const validPreferences = ["All", "Airport Only", "Local Only", "Outstation Only", "Rentals Only"];
+
+  if (!preference || !validPreferences.includes(preference)) {
+    return res.status(400).json({ message: `Invalid preference. Must be one of: ${validPreferences.join(", ")}` });
+  }
+
+  try {
+    const driver = await Driver.findByPk(driverId);
+    if (!driver) {
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    driver.preference = preference;
+    await driver.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Driver preference updated to ${preference} successfully!`,
+      preference: driver.preference
+    });
+  } catch (error) {
+    console.error("Error updating driver preference:", error.message);
+    res.status(500).json({ message: "Server error updating preference", error: error.message });
+  }
+};
+
+const joinAirportQueue = async (req, res) => {
+  const driverId = req.user.id;
+  const { airportCode } = req.body; // e.g. "BLR", "CCU", "HYD"
+
+  if (!airportCode) {
+    return res.status(400).json({ message: "airportCode is required (e.g. BLR, CCU, HYD)" });
+  }
+
+  const t = await sequelize.transaction();
+
+  try {
+    const driver = await Driver.findByPk(driverId, { transaction: t });
+    if (!driver) {
+      await t.rollback();
+      return res.status(404).json({ message: "Driver not found" });
+    }
+
+    const cab = await Cab.findOne({ where: { driverId }, transaction: t });
+    if (!cab) {
+      await t.rollback();
+      return res.status(400).json({ message: "Driver is not assigned to a vehicle. Cannot join queue." });
+    }
+
+    let existing = await AirportQueue.findOne({ where: { driverId }, transaction: t });
+    if (existing) {
+      await t.rollback();
+      return res.status(400).json({ 
+        message: `Driver is already in the queue for ${existing.airportCode} at position ${existing.queuePosition}` 
+      });
+    }
+
+    const lastInQueue = await AirportQueue.findOne({
+      where: { airportCode, status: "waiting" },
+      order: [["queuePosition", "DESC"]],
+      transaction: t
+    });
+
+    const nextPosition = lastInQueue ? lastInQueue.queuePosition + 1 : 1;
+
+    const queueEntry = await AirportQueue.create({
+      id: uuid.v4(),
+      driverId,
+      airportCode,
+      queuePosition: nextPosition,
+      status: "waiting"
+    }, { transaction: t });
+
+    await t.commit();
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully joined ${airportCode} airport queue!`,
+      queuePosition: nextPosition
+    });
+
+  } catch (error) {
+    await t.rollback();
+    console.error("Error joining airport queue:", error.message);
+    res.status(500).json({ message: "Server error joining airport queue", error: error.message });
+  }
+};
+
+const leaveAirportQueue = async (req, res) => {
+  const driverId = req.user.id;
+  const t = await sequelize.transaction();
+
+  try {
+    const queueEntry = await AirportQueue.findOne({ 
+      where: { driverId, status: "waiting" },
+      transaction: t
+    });
+
+    if (!queueEntry) {
+      await t.rollback();
+      return res.status(404).json({ message: "Driver is not active in any airport queue." });
+    }
+
+    const airportCode = queueEntry.airportCode;
+    const departedPosition = queueEntry.queuePosition;
+
+    await queueEntry.destroy({ transaction: t });
+
+    const trailingEntries = await AirportQueue.findAll({
+      where: { 
+        airportCode, 
+        status: "waiting",
+        queuePosition: { [Op.gt]: departedPosition }
+      },
+      order: [["queuePosition", "ASC"]],
+      transaction: t
+    });
+
+    for (const entry of trailingEntries) {
+      entry.queuePosition -= 1;
+      await entry.save({ transaction: t });
+    }
+
+    await t.commit();
+
+    res.status(200).json({
+      success: true,
+      message: `Left the ${airportCode} airport queue successfully. Remaining positions recalculated.`
+    });
+
+  } catch (error) {
+    await t.rollback();
+    console.error("Error leaving airport queue:", error.message);
+    res.status(500).json({ message: "Server error leaving airport queue", error: error.message });
+  }
+};
+
+const getAirportQueueStatus = async (req, res) => {
+  const driverId = req.user.id;
+
+  try {
+    const queueEntry = await AirportQueue.findOne({ where: { driverId, status: "waiting" } });
+    if (!queueEntry) {
+      return res.status(200).json({
+        inQueue: false,
+        message: "Driver is not currently in any airport queue."
+      });
+    }
+
+    const totalInQueue = await AirportQueue.count({
+      where: { airportCode: queueEntry.airportCode, status: "waiting" }
+    });
+
+    res.status(200).json({
+      success: true,
+      inQueue: true,
+      airportCode: queueEntry.airportCode,
+      queuePosition: queueEntry.queuePosition,
+      totalInQueue
+    });
+
+  } catch (error) {
+    console.error("Error getting queue status:", error.message);
+    res.status(500).json({ message: "Server error fetching queue status", error: error.message });
+  }
+};
+
 module.exports = {
   getCabAvailability,
   searchForCabs,
@@ -2438,6 +2867,7 @@ module.exports = {
   getDriver,
   checkBookingStatus,
   acceptBooking,
+  rejectBooking,
   createSoftBooking,
   checkPendingBookings,
   startTrip,
@@ -2448,5 +2878,12 @@ module.exports = {
   toggleDriverStatus,
   cancelUnpaidBooking,
   refundBookingCoins,
-  unassignDriverFromVehicle
+  unassignDriverFromVehicle,
+  createReturnTripListing,
+  getReturnTripListings,
+  bookReturnTrip,
+  updateDriverPreference,
+  joinAirportQueue,
+  leaveAirportQueue,
+  getAirportQueueStatus
 };

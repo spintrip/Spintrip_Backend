@@ -1,6 +1,7 @@
 const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, Car, Bike, sequelize } = require('../../Models');
 const { notifyBookingAllocation, notifyUserById } = require('../../Utils/notificationService');
 const { refundBookingCoins } = require('../cabController');
+const socketManager = require('../../Utils/socketManager');
 
 const { Op } = require('sequelize');
 
@@ -642,8 +643,40 @@ const sendCabInvoice = async (req, res) => {
   }
 };
 
+// Admin broadcasts a pending cab booking request
+const broadcastCabBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await CabBookingRequest.findByPk(id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Cab Booking Request not found' });
+    }
+
+    if (booking.status !== 'pending') {
+      return res.status(400).json({ message: 'Only pending/requested bookings can be broadcasted.' });
+    }
+
+    const pickupLocation = {
+      latitude: parseFloat(booking.startLocationLatitude),
+      longitude: parseFloat(booking.startLocationLongitude),
+      address: booking.startLocationAddress
+    };
+
+    // Trigger geofenced broadcast
+    socketManager.broadcastBookingToDrivers(booking, pickupLocation).catch(err => {
+      console.error("Failed to broadcast booking:", err.message);
+    });
+
+    res.status(200).json({ success: true, message: 'Booking broadcasted successfully to nearby drivers.', booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error broadcasting booking', error: error.message });
+  }
+};
+
 module.exports = {
   getAllBookings, getBookingById, updateBookingById, deleteBookingById,
   cancelCabBooking, sendCabInvoice, createAdminBooking,
-  getSelfDriveBookings, getCabBookings
+  getSelfDriveBookings, getCabBookings, broadcastCabBooking
 };

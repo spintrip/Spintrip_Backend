@@ -44,17 +44,8 @@ const io = new Server(server, {
     },
 });
 
-io.on('connection', (socket) => {
-    console.log('a user connected');
-
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });
-
-    socket.on('chat message', (msg) => {
-        io.emit('chat message', msg);
-    });
-});
+const socketManager = require('./Utils/socketManager');
+socketManager.init(io);
 
 // Logger setup
 const logger = winston.createLogger({
@@ -138,10 +129,12 @@ app.get('/uploads/host/CarAdditional/:vehicleid/:imageName', (req, res) => {
 });
 
 // Routes
+const agentRoutes = require('./Routes/agentRoutes');
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/host', hostRoutes);
 app.use('/api/cab', cabRoutes);
+app.use('/api/agent', agentRoutes);
 
 // Synchronizing the database
 db.sequelize.sync().then(() => {

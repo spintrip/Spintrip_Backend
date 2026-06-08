@@ -36,6 +36,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    preference: {
+      type: DataTypes.STRING(50),
+      defaultValue: "All",
+      allowNull: false,
+    },
+    isCorporate: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
   });
 
   return Driver;

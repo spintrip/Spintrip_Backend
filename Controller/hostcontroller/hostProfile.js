@@ -208,7 +208,8 @@ const driverProfile = async (req, res) => {
       upiId: driver.upiId || null,
       bankAccountNumber: driver.bankAccountNumber || null,
       panNumber: additionalInfo?.PanVfid || null, // 🆔 Driver PAN storage
-      isActive: driver?.isActive !== undefined ? driver.isActive : false
+      isActive: driver?.isActive !== undefined ? driver.isActive : false,
+      isCorporate: driver?.isCorporate === true
     };
 
     res.status(200).json({ profile });
@@ -228,7 +229,7 @@ const updateProfile = async (req, res) => {
     if (!host) {
       const driver = await Driver.findByPk(hostId);
       if (driver) {
-         const { fullName, aadharId, aadharNumber, panNumber, email, address, upiId, bankAccountNumber } = req.body;
+         const { fullName, aadharId, aadharNumber, panNumber, email, address, upiId, bankAccountNumber, isCorporate } = req.body;
          if (fullName || aadharId || aadharNumber || panNumber || email || address) {
             await DriverAdditional.update({
               FullName: fullName,
@@ -252,7 +253,11 @@ const updateProfile = async (req, res) => {
             });
          }
          
-         await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: hostId } });
+         await Driver.update({ 
+            upiId: upiId || null, 
+            bankAccountNumber: bankAccountNumber || null,
+            isCorporate: isCorporate === true || isCorporate === 'true'
+          }, { where: { id: hostId } });
          
          return res.status(200).json({ message: 'Driver Profile Updated successfully' });
       }
