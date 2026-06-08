@@ -11,7 +11,7 @@ const getAllWithdrawals = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ['FullName', 'phone', 'email']
+              attributes: ['phone', 'email']
             }
           ]
         }
