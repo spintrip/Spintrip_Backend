@@ -1,5 +1,5 @@
 const { User, Vehicle, Chat, UserAdditional, Listing, sequelize, Booking, Pricing,
-  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction, CabBookingRequest, CabBookingAccepted, Offer } = require('../../Models');
+  carFeature, Feedback, Host, Tax, Wishlist, Feature, Blog, Bike, Car, Cab, HostAdditional, VehicleAdditional, DriverAdditional, Driver, BookingExtension, Transaction, CabBookingRequest, CabBookingAccepted, Offer, HostPayment } = require('../../Models');
 const uuid = require('uuid');
 const { Op } = require('sequelize');
 const moment = require('moment');
@@ -788,6 +788,23 @@ const cancelbooking = async (req, res) => {
              // --- 🪙 REFUND COINS ---
              await refundBookingCoins(bookingId, t);
 
+             // --- 🎫 REFUND SUBSCRIPTION BROADCAST ---
+             if (cabBooking.agentId) {
+               const activeSub = await HostPayment.findOne({
+                 where: {
+                   HostId: cabBooking.agentId,
+                   PlanEndDate: { [Op.gt]: new Date() }
+                 },
+                 order: [['PlanEndDate', 'DESC']],
+                 transaction: t
+               });
+               if (activeSub && activeSub.broadcastsUsed > 0) {
+                 activeSub.broadcastsUsed = activeSub.broadcastsUsed - 1;
+                 await activeSub.save({ transaction: t });
+                 console.log(`[Broadcast] Refunded/Decremented broadcastsUsed to ${activeSub.broadcastsUsed} for Agent ${cabBooking.agentId} due to cancellation of booking ${bookingId}`);
+               }
+             }
+
              await t.commit();
 
              // Cancel live broadcast dialogs on driver apps instantly
@@ -839,6 +856,9 @@ const userbookings = async (req, res) => {
         const vehicle = await Vehicle.findOne({ where: { vehicleid: booking.vehicleid } });
         if (!vehicle) {
           return null;
+        }
+        if (vehicle.vehicletype == 3) {
+          return null; // Exclude cab bookings (handled by CabBookingRequest)
         }
 
         const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
@@ -1013,6 +1033,10 @@ const userbookings = async (req, res) => {
           rcNumber: vehicle ? checkData(vehicle.Rcnumber) : "Not Provided", 
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           transaction: (cab.paymentStatus && cab.paymentStatus.toLowerCase() === 'paid') ? { transactionId: cab.bookingId, status: 1 } : null,
+          bookingType: cab.bookingType,
+          isRoundTrip: cab.isRoundTrip,
+          days: cab.days,
+          hours: cab.hours,
           createdAt: checkData(cab.createdAt)
         };
       });
@@ -1113,6 +1137,10 @@ const userbookings = async (req, res) => {
           userOtp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           otp: (await CabBookingAccepted.findOne({ where: { bookingId: cab.bookingId } }))?.tripOtp || cab.otp || user.otp,
           transaction: (cab.paymentStatus && cab.paymentStatus.toLowerCase() === 'paid') ? { transactionId: cab.bookingId, status: 1 } : null,
+          bookingType: cab.bookingType,
+          isRoundTrip: cab.isRoundTrip,
+          days: cab.days,
+          hours: cab.hours,
           createdAt: checkData(cab.createdAt)
         };
       });

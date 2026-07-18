@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Ride Tracking - Spintrip</title>
+  
+  <!-- Premium Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <style>
+    :root {
+      --primary: #f5bf0f;
+      --primary-dark: #d4a20a;
+      --bg-dark: #121214;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(245, 191, 15, 0.2);
+      --text-main: #1e1e24;
+      --text-muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* Floating Panel */
+    .tracking-card {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 1000;
+      width: 380px;
+      max-width: calc(100% - 48px);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      color: #000;
+    }
+
+    .brand-logo span {
+      color: var(--primary-dark);
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .status-badge.pending {
+      background-color: rgba(245, 191, 15, 0.1);
+      color: #b48608;
+      border-color: rgba(245, 191, 15, 0.3);
+    }
+
+    .status-badge.active {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #059669;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.ended {
+      background-color: rgba(107, 114, 128, 0.1);
+      color: #4b5563;
+      border-color: rgba(107, 114, 128, 0.3);
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background-color: rgba(0, 0, 0, 0.06);
+      width: 100%;
+    }
+
+    /* Details Group */
+    .details-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .icon-wrap {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(245, 191, 15, 0.15);
+      color: var(--primary-dark);
+      flex-shrink: 0;
+    }
+
+    .info-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .info-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .info-val {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #000;
+      line-height: 1.4;
+    }
+
+    /* Route Progress visual line */
+    .route-timeline {
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      top: 6px;
+    }
+
+    .timeline-dot.destination {
+      background: #ef4444;
+      top: unset;
+      bottom: 6px;
+    }
+
+    .timeline-line {
+      position: absolute;
+      left: 4px;
+      top: 16px;
+      bottom: 16px;
+      width: 2px;
+      background: #e5e7eb;
+    }
+
+    .timeline-item {
+      padding: 4px 0;
+    }
+
+    /* Actions */
+    .action-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #000;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(245, 191, 15, 0.3);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 191, 15, 0.45);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    .action-btn.download-btn {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      color: #000;
+      box-shadow: none;
+    }
+
+    .action-btn.download-btn:hover {
+      background: rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .action-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Live update indicator */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* Leaflet Attribution custom style */
+    .leaflet-control-attribution {
+      background: rgba(255, 255, 255, 0.7) !important;
+      font-size: 10px !important;
+    }
+
+    /* Mobile Layout adjustments */
+    @media (max-width: 600px) {
+      .tracking-card {
+        top: auto;
+        bottom: 16px;
+        left: 16px;
+        width: calc(100% - 32px);
+        max-width: none;
+        padding: 20px;
+        border-radius: 20px;
+        gap: 12px;
+      }
+    }
+
+    /* Loading and Error states overlay */
+    .state-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      color: #fff;
+      transition: opacity 0.5s ease;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(245, 191, 15, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 32px;
+      border-radius: 20px;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      color: #fff;
+    }
+
+    .error-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #ef4444;
+    }
+
+    .error-msg {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading State -->
+  <div id="loading-state" class="state-overlay">
+    <div class="spinner"></div>
+    <p style="color: #9ca3af; font-weight: 500;">Loading dispatch map...</p>
+  </div>
+
+  <!-- Error State (Hidden by default) -->
+  <div id="error-state" class="state-overlay" style="display: none;">
+    <div class="error-card">
+      <div class="error-title">Unable to Load Ride</div>
+      <div id="error-message" class="error-msg">Invalid tracking link or booking no longer active.</div>
+      <a href="https://spintrip.in" class="action-btn">Go to Spintrip</a>
+    </div>
+  </div>
+
+  <!-- Main App Layout -->
+  <div id="map"></div>
+
+  <!-- Overlaid Panel -->
+  <div class="tracking-card" id="tracking-panel">
+    <div class="card-header">
+      <div class="brand-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="6" fill="#f5bf0f"/>
+          <path d="M7 16H17V15.2C17 13.5431 15.6569 12.2 14 12.2H10C8.34315 12.2 7 13.5431 7 15.2V16Z" fill="black"/>
+          <circle cx="9" cy="18" r="1.5" fill="black"/>
+          <circle cx="15" cy="18" r="1.5" fill="black"/>
+          <path d="M12 5.5L8 9.5H16L12 5.5Z" fill="black"/>
+        </svg>
+        Spin<span>Trip</span>
+      </div>
+      <span id="status-badge" class="status-badge pending">Locating</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Booking details / Route -->
+    <div class="details-group">
+      <div class="info-row">
+        <div class="icon-wrap">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+          </svg>
+        </div>
+        <div class="info-content">
+          <span class="info-label">Pickup Location</span>
+          <span id="pickup-addr" class="info-val">Loading...</span>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="icon-wrap" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M11.354 5.646a.5.5 0 0 0-.708 0L8 8.293 6.854 7.146a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0 0-.708z"/>
+          </svg>
+        </div>
+        <div class="info-content">
+          <span class="info-label">Drop Location</span>
+          <span id="drop-addr" class="info-val">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <a id="app-deep-link" class="action-btn" href="#">
+      <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12.0003 1.80005C6.36832 1.80005 1.80034 6.36803 1.80034 12C1.80034 17.632 6.36832 22.2 12.0003 22.2C17.6324 22.2 22.2003 17.632 22.2003 12C22.2003 6.36803 17.6324 1.80005 12.0003 1.80005ZM10.2003 16.2V7.80005L16.2003 12L10.2003 16.2Z"/>
+      </svg>
+      Open in App
+    </a>
+
+    <a class="action-btn download-btn" href="https://spintrip.in/app" target="_blank">
+      <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 20h14v-2H5v2zm7-18L5.33 9h4v6h5.34V9h4L12 2z"/>
+      </svg>
+      Download the App
+    </a>
+
+    <div class="live-indicator">
+      <div class="pulse-dot"></div>
+      <span id="update-timer">Updates live from driver's GPS</span>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    // Extract bookingId from URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingId = urlParams.get('bookingId');
+
+    if (!bookingId) {
+      showError("Invalid link. Please verify the URL contains a valid booking ID.");
+    } else {
+      // Set the native app deep link
+      document.getElementById('app-deep-link').href = `spintrip://track?bookingId=${bookingId}`;
+      initTracking();
+    }
+
+    let map, pickupMarker, dropMarker, driverMarker, routePolyline;
+    let pollInterval;
+
+    function showError(message) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-state').style.display = 'flex';
+    }
+
+    async function initTracking() {
+      try {
+        const response = await fetch(`/api/cab/track/public/${bookingId}`);
+        if (!response.ok) {
+          throw new Error(response.status === 404 ? "Booking details not found." : "Server error retrieving booking details.");
+        }
+        
+        const data = await response.json();
+        
+        // Hide loading
+        document.getElementById('loading-state').style.opacity = 0;
+        setTimeout(() => {
+          document.getElementById('loading-state').style.display = 'none';
+        }, 500);
+
+        // Update Text Info
+        document.getElementById('pickup-addr').textContent = data.pickup.address || 'Pickup Point';
+        document.getElementById('drop-addr').textContent = data.destination.address || 'Drop Point';
+        updateStatusDisplay(data.status);
+
+        // Initialize Map
+        const centerLat = data.pickup.latitude || 12.9716;
+        const centerLng = data.pickup.longitude || 77.5946;
+        
+        map = L.map('map', {
+          zoomControl: false // Move zoom control to bottom right later
+        }).setView([centerLat, centerLng], 13);
+
+        // Add beautiful custom map tile style
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20
+        }).addTo(map);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // Create Custom Icons
+        const pickupIcon = L.divIcon({
+          html: `<div style="background: #10b981; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3)"></div>`,
+          className: 'custom-div-icon',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+
+        const dropIcon = L.divIcon({
+          html: `<div style="background: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3)"></div>`,
+          className: 'custom-div-icon',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+
+        const driverIcon = L.divIcon({
+          html: `
+            <div style="position: relative; width: 34px; height: 34px; background: #f5bf0f; border-radius: 50%; border: 3.5px solid #121214; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.25)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 8H5C3.9 8 3 8.9 3 10V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V10C21 8.9 20.1 8 19 8Z" fill="black"/>
+                <path d="M5 8V6C5 4.9 5.9 4 7 4H17C18.1 4 19 4.9 19 6V8" stroke="black" stroke-width="2.5"/>
+                <circle cx="7" cy="15" r="1.5" fill="white"/>
+                <circle cx="17" cy="15" r="1.5" fill="white"/>
+              </svg>
+              <div style="position: absolute; top: -2px; left: -2px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #f5bf0f; animation: pulse 2s infinite;"></div>
+            </div>`,
+          className: 'custom-div-icon',
+          iconSize: [34, 34],
+          iconAnchor: [17, 17]
+        });
+
+        // Add Markers
+        pickupMarker = L.marker([data.pickup.latitude, data.pickup.longitude], { icon: pickupIcon }).addTo(map);
+        dropMarker = L.marker([data.destination.latitude, data.destination.longitude], { icon: dropIcon }).addTo(map);
+
+        // Optional Polyline route line
+        const routeCoords = [
+          [data.pickup.latitude, data.pickup.longitude],
+          [data.destination.latitude, data.destination.longitude]
+        ];
+        routePolyline = L.polyline(routeCoords, { color: '#f5bf0f', weight: 4, opacity: 0.8, dashArray: '5, 8' }).addTo(map);
+
+        // Set Driver Marker if location exists
+        if (data.driverLocation) {
+          driverMarker = L.marker([data.driverLocation.latitude, data.driverLocation.longitude], { icon: driverIcon }).addTo(map);
+          fitMapBounds(true);
+        } else {
+          fitMapBounds(false);
+        }
+
+        // Start polling updates
+        pollInterval = setInterval(updateDriverLocation, 5000);
+
+      } catch (err) {
+        showError(err.message);
+      }
+    }
+
+    function fitMapBounds(includeDriver) {
+      const group = new L.featureGroup([pickupMarker, dropMarker]);
+      if (includeDriver && driverMarker) {
+        group.addLayer(driverMarker);
+      }
+      map.fitBounds(group.getBounds().pad(0.18));
+    }
+
+    async function updateDriverLocation() {
+      try {
+        const response = await fetch(`/api/cab/track/public/${bookingId}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        
+        updateStatusDisplay(data.status);
+
+        if (data.driverLocation) {
+          const newPos = [data.driverLocation.latitude, data.driverLocation.longitude];
+          
+          if (!driverMarker) {
+            const driverIcon = L.divIcon({
+              html: `
+                <div style="position: relative; width: 34px; height: 34px; background: #f5bf0f; border-radius: 50%; border: 3.5px solid #121214; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 12px rgba(0,0,0,0.25)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 8H5C3.9 8 3 8.9 3 10V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V10C21 8.9 20.1 8 19 8Z" fill="black"/>
+                    <path d="M5 8V6C5 4.9 5.9 4 7 4H17C18.1 4 19 4.9 19 6V8" stroke="black" stroke-width="2.5"/>
+                    <circle cx="7" cy="15" r="1.5" fill="white"/>
+                    <circle cx="17" cy="15" r="1.5" fill="white"/>
+                  </svg>
+                  <div style="position: absolute; top: -2px; left: -2px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #f5bf0f; animation: pulse 2s infinite;"></div>
+                </div>`,
+              className: 'custom-div-icon',
+              iconSize: [34, 34],
+              iconAnchor: [17, 17]
+            });
+            driverMarker = L.marker(newPos, { icon: driverIcon }).addTo(map);
+          } else {
+            // Smoothly move marker
+            driverMarker.setLatLng(newPos);
+          }
+          
+          // Gently pan map to center driver and pickup/drop if they move out
+          if (!map.getBounds().contains(newPos)) {
+            fitMapBounds(true);
+          }
+        }
+      } catch (err) {
+        console.error("Polling error: ", err);
+      }
+    }
+
+    function updateStatusDisplay(status) {
+      const badge = document.getElementById('status-badge');
+      
+      switch(status) {
+        case 'soft_booked':
+        case 'pending':
+          badge.textContent = 'Searching Driver';
+          badge.className = 'status-badge pending';
+          break;
+        case 'accepted':
+          badge.textContent = 'Driver Assigned';
+          badge.className = 'status-badge active';
+          break;
+        case 'started':
+        case 'ongoing':
+          badge.textContent = 'In Progress';
+          badge.className = 'status-badge active';
+          break;
+        case 'completed':
+          badge.textContent = 'Completed';
+          badge.className = 'status-badge ended';
+          break;
+        case 'cancelled':
+          badge.textContent = 'Cancelled';
+          badge.className = 'status-badge ended';
+          break;
+        default:
+          badge.textContent = status || 'Confirmed';
+          badge.className = 'status-badge active';
+      }
+    }
+  </script>
+</body>
+</html>

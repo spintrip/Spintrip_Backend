@@ -1,4 +1,4 @@
-const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, Car, Bike, sequelize } = require('../../Models');
+const { Booking, CabBookingRequest, Cab, CabBookingAccepted, Driver, Vehicle, User, UserAdditional, Car, Bike, sequelize, HostPayment } = require('../../Models');
 const { notifyBookingAllocation, notifyUserById } = require('../../Utils/notificationService');
 const { refundBookingCoins } = require('../cabController');
 const socketManager = require('../../Utils/socketManager');
@@ -131,13 +131,28 @@ const createAdminBooking = async (req, res) => {
 // Get all bookings
 const getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.findAll();
+    const bookings = await Booking.findAll({
+      include: [{
+        model: Vehicle,
+        attributes: ['vehicletype']
+      }]
+    });
+    const filteredBookings = bookings.filter(b => !b.Vehicle || b.Vehicle.vehicletype !== 3);
     // Fetch both Rentals and Cab Bookings
     const cabBookingsRaw = await CabBookingRequest.findAll({
       include: [
         {
           model: User,
           as: 'Customer',
+          attributes: ['phone'],
+          include: [{
+            model: UserAdditional,
+            attributes: ['FullName']
+          }]
+        },
+        {
+          model: User,
+          as: 'Agent',
           attributes: ['phone'],
           include: [{
             model: UserAdditional,
@@ -166,8 +181,10 @@ const getAllBookings = async (req, res) => {
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
-        customerName: cab.Customer?.UserAdditional?.FullName || cab.Customer?.phone || 'N/A',
-        customerPhone: cab.Customer?.phone || 'N/A',
+        customerName: cab.Customer?.UserAdditional?.FullName || cab.passengerName || cab.Customer?.phone || 'N/A',
+        customerPhone: cab.passengerPhone || cab.Customer?.phone || 'N/A',
+        agentName: cab.Agent?.UserAdditional?.FullName || (cab.agentId ? 'Agent' : null),
+        agentPhone: cab.Agent?.phone || null,
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
         date: cab.date,
@@ -188,7 +205,7 @@ const getAllBookings = async (req, res) => {
         pickUpLat: cab.startLocationLatitude || null,
         pickUpLng: cab.startLocationLongitude || null,
         distance: '',
-        carname: vehicleName, // Resolved brand + model from batch fetch
+        carname: cab.cabType || '',
         pointAToBDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
         pointAToBTime: cab.time || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[1].slice(0, 5) : ''),
         paymentMethod: cab.paymentStatus || '',
@@ -197,12 +214,14 @@ const getAllBookings = async (req, res) => {
         type: 'cab',
         bookingType: cab.bookingType || 'Local',
         days: cab.days || 1,
+        hours: cab.hours || 1,
         isRoundTrip: cab.isRoundTrip !== false,
+        isCorporate: cab.isCorporate === true,
         isCab: true
       };
     });
 
-    const unifiedBookings = [...bookings, ...mappedCabBookings];
+    const unifiedBookings = [...filteredBookings, ...mappedCabBookings];
 
     res.status(200).json({ message: "All available bookings", bookings: unifiedBookings });
   } catch (error) {
@@ -235,6 +254,8 @@ const getSelfDriveBookings = async (req, res) => {
       const json = booking.toJSON();
 
       const v = vehicleMap[json.vehicleid];
+      if (v && v.vehicletype === 3) return null; // Exclude cab bookings from self-drive list
+
       const type = v ? v.vehicletype : 2;
       const vehicleName = vehicleNamesMap[`${type}_${json.vehicleid}`] || 'Vehicle ID: ' + json.vehicleid;
 
@@ -254,7 +275,9 @@ const getSelfDriveBookings = async (req, res) => {
 
     });
 
-    res.status(200).json({ message: "Self-Drive Booking Session", bookings: enrichedRentals });
+    const filteredRentals = enrichedRentals.filter(r => r !== null);
+
+    res.status(200).json({ message: "Self-Drive Booking Session", bookings: filteredRentals });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching self-drive bookings", error: error.message });
@@ -270,6 +293,15 @@ const getCabBookings = async (req, res) => {
         {
           model: User,
           as: 'Customer',
+          attributes: ['phone'],
+          include: [{
+            model: UserAdditional,
+            attributes: ['FullName']
+          }]
+        },
+        {
+          model: User,
+          as: 'Agent',
           attributes: ['phone'],
           include: [{
             model: UserAdditional,
@@ -297,8 +329,10 @@ const getCabBookings = async (req, res) => {
       return {
         Bookingid: cab.bookingId,
         id: cab.userId,
-        customerName: cab.Customer?.UserAdditional?.FullName || cab.Customer?.phone || 'N/A',
-        customerPhone: cab.Customer?.phone || 'N/A',
+        customerName: cab.Customer?.UserAdditional?.FullName || cab.passengerName || cab.Customer?.phone || 'N/A',
+        customerPhone: cab.passengerPhone || cab.Customer?.phone || 'N/A',
+        agentName: cab.Agent?.UserAdditional?.FullName || (cab.agentId ? 'Agent' : null),
+        agentPhone: cab.Agent?.phone || null,
         vehicleid: cab.vehicleId,
         driverid: cab.driverid,
         date: cab.date,
@@ -319,7 +353,7 @@ const getCabBookings = async (req, res) => {
         pickUpLat: cab.startLocationLatitude || null,
         pickUpLng: cab.startLocationLongitude || null,
         distance: cab.distanceTaken || '',
-        carname: vehicleName,
+        carname: cab.cabType || '',
         pointAToBDate: cab.date || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[0] : ''),
         pointAToBTime: cab.time || (cab.createdAt ? new Date(cab.createdAt).toISOString().split('T')[1].slice(0, 5) : ''),
         paymentMethod: cab.paymentStatus || '',
@@ -352,11 +386,18 @@ const getBookingById = async (req, res) => {
     if (isNaN(id) || String(id).startsWith('CB-')) {
       cabBooking = await CabBookingRequest.findOne({
         where: { bookingId: id },
-        include: [{
-          model: User,
-          as: 'Customer',
-          include: [{ model: UserAdditional }]
-        }]
+        include: [
+          {
+            model: User,
+            as: 'Customer',
+            include: [{ model: UserAdditional }]
+          },
+          {
+            model: User,
+            as: 'Agent',
+            include: [{ model: UserAdditional }]
+          }
+        ]
       });
     } else {
       booking = await Booking.findByPk(id, {
@@ -367,11 +408,18 @@ const getBookingById = async (req, res) => {
       });
       if (!booking) {
         cabBooking = await CabBookingRequest.findByPk(id, {
-          include: [{
-            model: User,
-            as: 'Customer',
-            include: [{ model: UserAdditional }]
-          }]
+          include: [
+            {
+              model: User,
+              as: 'Customer',
+              include: [{ model: UserAdditional }]
+            },
+            {
+              model: User,
+              as: 'Agent',
+              include: [{ model: UserAdditional }]
+            }
+          ]
         });
       }
     }
@@ -389,8 +437,10 @@ const getBookingById = async (req, res) => {
         booking = {
           Bookingid: cabBooking.bookingId,
           id: cabBooking.userId,
-          customerName: cabBooking.Customer?.UserAdditional?.FullName || cabBooking.Customer?.phone || 'N/A',
-          customerPhone: cabBooking.Customer?.phone || 'N/A',
+          customerName: cabBooking.Customer?.UserAdditional?.FullName || cabBooking.passengerName || cabBooking.Customer?.phone || 'N/A',
+          customerPhone: cabBooking.passengerPhone || cabBooking.Customer?.phone || 'N/A',
+          agentName: cabBooking.Agent?.UserAdditional?.FullName || (cabBooking.agentId ? 'Agent' : null),
+          agentPhone: cabBooking.Agent?.phone || null,
           vehicleid: cabBooking.vehicleId,
           driverid: cabBooking.driverid,
           date: cabBooking.date,
@@ -417,7 +467,9 @@ const getBookingById = async (req, res) => {
           updatedAt: cabBooking.updatedAt,
           bookingType: cabBooking.bookingType || 'Cab',
           days: cabBooking.days || 1,
+          hours: cabBooking.hours || 1,
           isRoundTrip: cabBooking.isRoundTrip !== false,
+          isCorporate: cabBooking.isCorporate === true,
           offerCode: cabBooking.offerCode || '',
           discountAmount: cabBooking.discountAmount || 0,
           commissionAmount: cabBooking.commissionAmount || 0,
@@ -559,6 +611,23 @@ const cancelCabBooking = async (req, res) => {
 
       // --- 🪙 REFUND COINS ---
       await refundBookingCoins(id, t);
+
+      // --- 🎫 REFUND SUBSCRIPTION BROADCAST ---
+      if (booking.agentId) {
+        const activeSub = await HostPayment.findOne({
+          where: {
+            HostId: booking.agentId,
+            PlanEndDate: { [Op.gt]: new Date() }
+          },
+          order: [['PlanEndDate', 'DESC']],
+          transaction: t
+        });
+        if (activeSub && activeSub.broadcastsUsed > 0) {
+          activeSub.broadcastsUsed = activeSub.broadcastsUsed - 1;
+          await activeSub.save({ transaction: t });
+          console.log(`[Broadcast] Refunded/Decremented broadcastsUsed to ${activeSub.broadcastsUsed} for Agent ${booking.agentId} due to admin cancellation of booking ${id}`);
+        }
+      }
 
       await t.commit();
 

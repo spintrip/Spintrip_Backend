@@ -667,6 +667,7 @@ const DriverBookings = async (req, res) => {
     const hostBooking = bookings.map(async (booking) => {
       const vehicle = await Vehicle.findOne({ where: { vehicleid: booking.vehicleid } });
       if (!vehicle) return null;
+      if (vehicle.vehicletype == 3) return null; // Exclude cab bookings (handled by CabBookingRequest)
       
       const vehicleAdditional = await VehicleAdditional.findOne({ where: { vehicleid: booking.vehicleid } });
       if (!vehicleAdditional) return null;
@@ -798,6 +799,10 @@ const DriverBookings = async (req, res) => {
         vehicletype: 3,
         pickup: pickupObj,
         destination: destObj,
+        bookingType: cab.bookingType,
+        isRoundTrip: cab.isRoundTrip,
+        days: cab.days,
+        hours: cab.hours,
         driver: null
       };
     });

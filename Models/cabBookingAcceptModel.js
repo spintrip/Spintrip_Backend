@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE, 
         allowNull: false 
       },
+      tripOtp: {
+        type: DataTypes.STRING(10),
+        allowNull: true
+      }
     });
   
     CabBookingAccepted.associate = (models) => {

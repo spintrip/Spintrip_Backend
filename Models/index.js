@@ -156,10 +156,14 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
     await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerName" VARCHAR(255);`);
     await sequelize.query(`ALTER TABLE "Bookings" ADD COLUMN IF NOT EXISTS "passengerPhone" VARCHAR(50);`);
     await sequelize.query(`ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "hours" INTEGER DEFAULT 0;`);
-    await sequelize.query(`ALTER TABLE "Subscriptions" ADD COLUMN "broadcasts" INTEGER DEFAULT 0;`);
+    await sequelize.query(`ALTER TABLE "Subscriptions" ADD COLUMN IF NOT EXISTS "broadcasts" INTEGER DEFAULT 0;`);
 
     // AUTO-PATCH: Add preference to Drivers for customized driver filter matches
     await sequelize.query(`ALTER TABLE "Drivers" ADD COLUMN IF NOT EXISTS "preference" VARCHAR(50) DEFAULT 'All';`);
+
+    // AUTO-PATCH: Add mParivahan and driverUniform to Cabs
+    await sequelize.query(`ALTER TABLE "Cabs" ADD COLUMN IF NOT EXISTS "mParivahan" VARCHAR(500);`);
+    await sequelize.query(`ALTER TABLE "Cabs" ADD COLUMN IF NOT EXISTS "driverUniform" BOOLEAN DEFAULT false;`);
 
     
 
@@ -295,6 +299,9 @@ const associateModels = () => {
   Driver.belongsTo(User, { foreignKey: 'id', onDelete: 'CASCADE' });
   // Admin associations
   CabBookingRequest.belongsTo(User, { foreignKey: 'userId', as: 'Customer' });
+  CabBookingRequest.belongsTo(User, { foreignKey: 'agentId', as: 'Agent' });
+  CabBookingRequest.hasOne(CabBookingAccepted, { foreignKey: 'bookingId' });
+  CabBookingAccepted.belongsTo(CabBookingRequest, { foreignKey: 'bookingId' });
   Admin.hasMany(SupportChat, { foreignKey: 'adminId', onDelete: 'CASCADE' });
   Admin.belongsTo(User, { foreignKey: 'id', onDelete: 'SET NULL' });
 
@@ -414,6 +421,11 @@ sequelize.query('ALTER TABLE "Subscriptions" ADD COLUMN IF NOT EXISTS "targetAud
 sequelize.query('ALTER TABLE "HostPayments" ADD COLUMN IF NOT EXISTS "broadcastsUsed" INTEGER NOT NULL DEFAULT 0;')
   .then(() => console.log('Successfully patched HostPayments table (broadcastsUsed).'))
   .catch((err) => console.log('DB Patch (broadcastsUsed) ignored (already exists or DB not ready).'));
+
+// Auto-Patch DB for CabBookingAccepteds - add tripOtp column
+sequelize.query('ALTER TABLE "CabBookingAccepteds" ADD COLUMN IF NOT EXISTS "tripOtp" VARCHAR(10);')
+  .then(() => console.log('Successfully patched CabBookingAccepteds table (tripOtp).'))
+  .catch((err) => console.log('DB Patch (CabBookingAccepteds.tripOtp) ignored:', err.message));
 
 // Auto-Patch DB for Corporate setup
 sequelize.query('ALTER TABLE "CabBookingRequests" ADD COLUMN IF NOT EXISTS "isCorporate" BOOLEAN DEFAULT false;')

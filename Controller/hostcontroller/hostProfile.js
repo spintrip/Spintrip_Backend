@@ -143,7 +143,7 @@ const hostProfile = async (req, res) => {
       bankAccountNumber: hostDriverLookup ? hostDriverLookup.bankAccountNumber : null,
     }
     // You can include more fields as per your User model
-    res.json({ hostDetails, vehicle: processedVehicles, profile });
+    res.json({ hostDetails, vehicle: processedVehicles, profile, role: user.role });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -279,12 +279,22 @@ const updateProfile = async (req, res) => {
       }, { where: { id: hostId } });
     }
 
-    const { upiId, bankAccountNumber } = req.body;
+    const { upiId, bankAccountNumber, isCorporate } = req.body;
     const hostDriverRecord = await Driver.findOne({ where: { id: hostId } });
     if (hostDriverRecord) {
-       await Driver.update({ upiId: upiId || null, bankAccountNumber: bankAccountNumber || null }, { where: { id: hostId } });
-    } else if (upiId || bankAccountNumber) {
-       await Driver.create({ id: hostId, hostid: null, upiId: upiId || null, bankAccountNumber: bankAccountNumber || null });
+       await Driver.update({ 
+         upiId: upiId || null, 
+         bankAccountNumber: bankAccountNumber || null,
+         isCorporate: isCorporate === true || isCorporate === 'true'
+       }, { where: { id: hostId } });
+    } else if (upiId || bankAccountNumber || isCorporate !== undefined) {
+       await Driver.create({ 
+         id: hostId, 
+         hostid: null, 
+         upiId: upiId || null, 
+         bankAccountNumber: bankAccountNumber || null,
+         isCorporate: isCorporate === true || isCorporate === 'true'
+       });
     }
 
     // Update host's preference for only verified users

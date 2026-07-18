@@ -783,6 +783,7 @@ const addCab = async (req, res) => {
     address,
     timeStamp,
     costperkm, // Add costperkm to the request body
+    driverUniform,
   } = req.body;
 
   try {
@@ -832,6 +833,12 @@ const addCab = async (req, res) => {
     const userRoleCheck = await User.findByPk(req.user.id);
     const isDriver = userRoleCheck && (userRoleCheck.role === 'Driver' || userRoleCheck.role === 'driver');
 
+    // Extract mParivahan screenshot file if present
+    let mParivahanUrl = null;
+    if (req.files && req.files['mParivahanFile'] && req.files['mParivahanFile'][0]) {
+      mParivahanUrl = req.files['mParivahanFile'][0].location;
+    }
+
     // Create Cab entry
     await Cab.create({
       vehicleid: vehicleId,
@@ -843,6 +850,8 @@ const addCab = async (req, res) => {
       bodytype: bodyType,
       city,
       driverId: isDriver ? req.user.id : null,
+      mParivahan: mParivahanUrl,
+      driverUniform: driverUniform === 'true' || driverUniform === true,
     });
 
     // Create Listing entry
@@ -1144,8 +1153,8 @@ const acceptBooking = async (req, res) => {
     }
     const vehicleId = cab.vehicleid;
 
-    // Generate an OTP for the trip
-    const tripOtp = generateOTP();
+    // Generate an OTP for the trip (preserve agent's generated OTP if present)
+    const tripOtp = (booking.agentId && booking.otp) ? booking.otp : generateOTP();
 
     // Update soft booking to confirmed (status 1) and link the driver's vehicle
     await CabBookingRequest.update(
@@ -1176,6 +1185,7 @@ const acceptBooking = async (req, res) => {
       bookingId,
       driverid: driverId,
       acceptedAt: new Date(),
+      tripOtp: tripOtp,
     });
 
     // Clear matching broadcast alerts for all other drivers
@@ -1236,11 +1246,27 @@ const checkBookingStatus = async (req, res) => {
       return res.status(404).json({ message: "Booking not found." });
     }
 
+    let cabDriver = null;
+    const did = booking.driverid || booking.driverId;
+    if (did) {
+      const driverData = await Driver.findOne({ where: { id: did } });
+      const driverAdditional = await DriverAdditional.findOne({ where: { id: did } });
+      const driverPhoneUser = await User.findOne({ where: { id: did } });
+      if (driverData) {
+        cabDriver = {
+          id: driverData.id,
+          name: driverAdditional?.FullName || driverData.name || null,
+          phone: driverPhoneUser?.phone || driverData.phoneNumber || driverData.phone || null
+        };
+      }
+    }
+
     res.status(200).json({ 
       status: booking.status, 
       tripOtp: booking.CabBookingAccepted?.tripOtp,
       booking: {
         bookingId: booking.bookingId,
+        agentId: booking.agentId,
         estimatedPrice: booking.estimatedPrice,
         confirmationFee: booking.confirmationFee,
         payToDriver: booking.payToDriver,
@@ -1252,7 +1278,18 @@ const checkBookingStatus = async (req, res) => {
         startLocationAddress: booking.startLocationAddress,
         endLocationAddress: booking.endLocationAddress,
         date: booking.date,
-        time: booking.time
+        time: booking.time,
+        driver: cabDriver,
+        pickup: {
+          latitude: booking.startLocationLatitude,
+          longitude: booking.startLocationLongitude,
+          address: booking.startLocationAddress
+        },
+        destination: {
+          latitude: booking.endLocationLatitude,
+          longitude: booking.endLocationLongitude,
+          address: booking.endLocationAddress
+        }
       }
     });
   } catch (error) {
@@ -1322,6 +1359,30 @@ const superhostAssignDriver = async (req, res) => {
     booking.driverid = driverId;
     booking.status = 'accepted'; // 'accepted' = Confirmed / Upcoming
     await booking.save();
+
+    // Create the confirmed booking in `Booking` table to support starting the trip
+    await Booking.create({
+      Bookingid: bookingId,
+      Date: new Date(),
+      vehicleid: vehicleId,
+      driverid: driverId,
+      id: booking.userId,
+      status: 1, // 1 indicates "confirmed"
+      amount: booking.subtotalBasePrice || booking.estimatedPrice, // Save exact base fare
+      GSTAmount: booking.gstAmount || 0,
+      TDSAmount: booking.tdsAmount || 0,
+      totalUserAmount: booking.estimatedPrice, // Total charged to customer
+      startTripDate: new Date(),
+    });
+
+    // Create the CabBookingAccepted record to hold the trip OTP
+    const tripOtp = booking.otp || generateOTP();
+    await CabBookingAccepted.create({
+      bookingId: bookingId,
+      driverid: driverId,
+      acceptedAt: new Date(),
+      tripOtp: tripOtp,
+    });
 
     // --- SEND NOTIFICATIONS (GENERIC HELPER) ---
     await notifyBookingAllocation(booking.bookingId, driverId, booking.userId, true);
@@ -1412,6 +1473,58 @@ const trackDriverLocation = async (req, res) => {
     });
   } catch (error) {
     console.error("Error tracking driver:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const trackDriverLocationPublic = async (req, res) => {
+  const { bookingId } = req.params;
+
+  try {
+    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found." });
+    }
+
+    let vehicleId = booking.vehicleId || booking.vehicleid;
+
+    if (!vehicleId) {
+      const stdBooking = await Booking.findOne({ where: { Bookingid: bookingId } });
+      if (stdBooking) {
+        vehicleId = stdBooking.vehicleid;
+      }
+    }
+
+    let vehicleLocation = null;
+    if (vehicleId) {
+      vehicleLocation = await VehicleAdditional.findOne({
+        where: { vehicleid: vehicleId },
+        attributes: ['latitude', 'longitude', 'timestamp']
+      });
+    }
+
+    res.status(200).json({
+      status: booking.status,
+      bookingType: booking.bookingType,
+      cabType: booking.cabType,
+      pickup: {
+        address: booking.startLocationAddress,
+        latitude: booking.startLocationLatitude,
+        longitude: booking.startLocationLongitude
+      },
+      destination: {
+        address: booking.endLocationAddress,
+        latitude: booking.endLocationLatitude,
+        longitude: booking.endLocationLongitude
+      },
+      driverLocation: vehicleLocation ? {
+        latitude: vehicleLocation.latitude,
+        longitude: vehicleLocation.longitude,
+        lastUpdated: vehicleLocation.timestamp
+      } : null
+    });
+  } catch (error) {
+    console.error("Error tracking driver public:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -1562,7 +1675,7 @@ const endTrip = async (req, res) => {
 
     // OTP Verification against CabBookingAccepted
     const acceptedBooking = await CabBookingAccepted.findOne({
-      where: { cabBookingId: bookingId },
+      where: { bookingId: bookingId },
       transaction
     });
 
@@ -2875,6 +2988,7 @@ module.exports = {
   superhostAssignDriver,
   confirmBankPayment,
   trackDriverLocation,
+  trackDriverLocationPublic,
   toggleDriverStatus,
   cancelUnpaidBooking,
   refundBookingCoins,

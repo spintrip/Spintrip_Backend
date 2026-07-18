@@ -32,15 +32,33 @@ const checkData = (value) => {
         return res.status(404).json({ message: 'Additional user info not found' });
       }
   
-      // Construct the URLs for the files stored in S3
-      const aadharFile = additionalInfo.aadhar ? [additionalInfo.aadhar] : [];
-      const dlFile = additionalInfo.dl ? [additionalInfo.dl] : [];
-      const panFile = additionalInfo.pan ? [additionalInfo.pan] : [];
-      const profilePic = additionalInfo.profilepic ? [additionalInfo.profilepic] : [];
-      
-      const { Driver } = require('../../Models');
+      const { Driver, DriverAdditional } = require('../../Models');
       const driverData = await Driver.findOne({ where: { id: userId } });
+      const driverAdditionalInfo = await DriverAdditional.findOne({ where: { id: userId } });
 
+      // Fallback matching: UserAdditional first, then DriverAdditional
+      const getDocVal = (primary, fallback) => {
+        if (primary && primary !== 'Not Provided' && primary !== '') return primary;
+        if (fallback && fallback !== 'Not Provided' && fallback !== '') return fallback;
+        return null;
+      };
+
+      const dlVal = getDocVal(additionalInfo.dl, driverAdditionalInfo?.dl);
+      const aadharVal = getDocVal(additionalInfo.aadhar, driverAdditionalInfo?.aadhar);
+      const panVal = getDocVal(additionalInfo.pan, driverAdditionalInfo?.pan);
+      const profilePicVal = getDocVal(additionalInfo.profilepic, driverAdditionalInfo?.profilepic);
+
+      const aadharFile = aadharVal ? [aadharVal] : [];
+      const dlFile = dlVal ? [dlVal] : [];
+      const panFile = panVal ? [panVal] : [];
+      const profilePic = profilePicVal ? [profilePicVal] : [];
+
+      const getFieldVal = (primary, fallback) => {
+        if (primary && primary !== 'Not Provided') return primary;
+        if (fallback && fallback !== 'Not Provided') return fallback;
+        return 'Not Provided';
+      };
+      
       if (!user.referralCode) {
         const newCode = Math.random().toString(36).substring(2, 6).toUpperCase() + user.phone.slice(-4);
         await user.update({ referralCode: newCode });
@@ -49,13 +67,13 @@ const checkData = (value) => {
       const wallet = await Wallet.findOne({ where: { userId: req.user.id } });
       let profile = {
         id: checkData(additionalInfo.id),
-        dlNumber: checkData(additionalInfo.Dlverification),
-        fullName: checkData(additionalInfo.FullName),
-        email: checkData(additionalInfo.Email),
-        aadharNumber: checkData(additionalInfo.AadharVfid),
-        panNumber: checkData(additionalInfo.PanVfid),
-        address: checkData(additionalInfo.Address),
-        verificationStatus: checkStatus(additionalInfo.verification_status),
+        dlNumber: getFieldVal(additionalInfo.Dlverification, null),
+        fullName: getFieldVal(additionalInfo.FullName, driverAdditionalInfo?.FullName),
+        email: getFieldVal(additionalInfo.Email, driverAdditionalInfo?.Email),
+        aadharNumber: getFieldVal(additionalInfo.AadharVfid, driverAdditionalInfo?.AadharVfid),
+        panNumber: getFieldVal(additionalInfo.PanVfid, driverAdditionalInfo?.PanVfid),
+        address: getFieldVal(additionalInfo.Address, driverAdditionalInfo?.Address),
+        verificationStatus: checkStatus(additionalInfo.verification_status || driverAdditionalInfo?.verification_status),
         dl: checkImage(dlFile),
         aadhar: checkImage(aadharFile),
         pan: checkImage(panFile),
@@ -113,7 +131,7 @@ const getAllVehicleTypes = async (req, res) => {
       // Update additional user information
       const { dlNumber, fullName, aadharId, aadharNumber, panNumber, email, address, currentAddressVfId, mlData, upiId, bankAccountNumber, isCorporate } = req.body;
       
-      if (user.role === 'Driver' || user.role === 'driver') {
+      if (user.role === 'Driver' || user.role === 'driver' || user.role === 'Host' || user.role === 'host') {
         const { Driver } = require('../../Models');
         const driverExists = await Driver.findOne({ where: { id: userId } });
         if (driverExists) {

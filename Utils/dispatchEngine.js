@@ -137,7 +137,9 @@ async function getMatchingDriversForStage(booking, pickupLocation, onlineDriverI
           // --- CORPORATE FILTERING ---
           const bookingIsCorporate = booking.isCorporate === true;
           const driverIsCorporate = driver.isCorporate === true;
-          if (bookingIsCorporate !== driverIsCorporate) {
+          // Corporate bookings can only be taken by corporate drivers.
+          // Non-corporate bookings can be taken by both corporate and non-corporate drivers.
+          if (bookingIsCorporate && !driverIsCorporate) {
             console.log(`[DispatchEngine] Skipping driver ${cab.driverId} due to corporate mismatch (Booking: ${bookingIsCorporate}, Driver: ${driverIsCorporate})`);
             continue;
           }

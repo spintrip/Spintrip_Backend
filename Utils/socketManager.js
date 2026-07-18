@@ -42,6 +42,12 @@ function init(io) {
           { isActive: true, lastPingTime: new Date() },
           { where: { id: userId } }
         ).catch((err) => console.error("Error setting driver active in DB:", err.message));
+      } else {
+        // Fallback ping for users who have a driver profile but connect with a different role (e.g. host-driver)
+        Driver.update(
+          { lastPingTime: new Date() },
+          { where: { id: userId } }
+        ).catch(() => {});
       }
     });
 
@@ -161,9 +167,32 @@ async function broadcastBookingToDrivers(booking, pickupLocation) {
 
   // Get all online drivers
   const onlineDriverIds = [];
+  
+  // 1. Add those who registered socket session strictly as "driver"
   for (const [userId, session] of onlineUsers.entries()) {
     if (session.role?.toLowerCase() === "driver") {
       onlineDriverIds.push(userId);
+    }
+  }
+
+  // 2. Add online users who registered under other roles but are active drivers in the DB
+  const otherOnlineUserIds = Array.from(onlineUsers.keys()).filter(id => !onlineDriverIds.includes(id));
+  if (otherOnlineUserIds.length > 0) {
+    try {
+      const activeDbDrivers = await Driver.findAll({
+        where: {
+          id: otherOnlineUserIds,
+          isActive: true
+        },
+        attributes: ["id"]
+      });
+      activeDbDrivers.forEach(d => {
+        if (!onlineDriverIds.includes(d.id)) {
+          onlineDriverIds.push(d.id);
+        }
+      });
+    } catch (dbErr) {
+      console.error("[DispatchEngine] Error querying active drivers from DB:", dbErr.message);
     }
   }
 
@@ -250,8 +279,12 @@ async function broadcastBookingToDrivers(booking, pickupLocation) {
         setTimeout(async () => {
           const finalBookingState = await booking.constructor.findByPk(bookingId);
           if (finalBookingState && finalBookingState.status === "pending") {
-            await finalBookingState.update({ status: "cancelled" });
-            console.log(`[DispatchEngine] Booking request ${bookingId} auto-expired due to driver timeout.`);
+            if (finalBookingState.agentId) {
+              console.log(`[DispatchEngine] Booking request ${bookingId} broadcast finished. Agent booking, keeping pending status.`);
+            } else {
+              await finalBookingState.update({ status: "cancelled" });
+              console.log(`[DispatchEngine] Booking request ${bookingId} auto-expired due to driver timeout.`);
+            }
             
             // Notify customer app
             ioInstance.to(`booking_${bookingId}`).emit("booking_expired", { bookingId });
@@ -284,8 +317,37 @@ async function cancelBroadcasts(bookingId, acceptedDriverId) {
   bookingRejections.delete(bookingId);
 
   // Broadly broadcast 'booking_unavailable' to all drivers so their screens clear and alarms stop
+  const targetDriverIds = [];
+  const otherUserIds = [];
   for (const [userId, session] of onlineUsers.entries()) {
-    if (session.role?.toLowerCase() === "driver" && userId !== acceptedDriverId) {
+    if (session.role?.toLowerCase() === "driver") {
+      targetDriverIds.push(userId);
+    } else {
+      otherUserIds.push(userId);
+    }
+  }
+
+  if (otherUserIds.length > 0) {
+    try {
+      const activeDbDrivers = await Driver.findAll({
+        where: {
+          id: otherUserIds,
+          isActive: true
+        },
+        attributes: ["id"]
+      });
+      activeDbDrivers.forEach(d => {
+        if (!targetDriverIds.includes(d.id)) {
+          targetDriverIds.push(d.id);
+        }
+      });
+    } catch (dbErr) {
+      console.error("[DispatchEngine] Error querying active drivers during cancel:", dbErr.message);
+    }
+  }
+
+  for (const userId of targetDriverIds) {
+    if (userId !== acceptedDriverId) {
       sendToUser(userId, "booking_unavailable", { bookingId });
     }
   }

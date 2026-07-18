@@ -17,6 +17,7 @@ const {
   superhostAssignDriver,
   confirmBankPayment,
   trackDriverLocation,
+  trackDriverLocationPublic,
   toggleDriverStatus,
   cancelUnpaidBooking,
   refundBookingCoins,
@@ -34,6 +35,27 @@ const {
   getAirportQueueStatus
 } = require("../Controller/cabController");
 const { updateFcmToken } = require('../Controller/notificationController');
+const multer = require('multer');
+const multerS3 = require('multer-s3');
+const s3 = require('../s3Config');
+const path = require('path');
+
+const ImageStorage = multerS3({
+  s3: s3,
+  bucket: 'spintrip-s3bucket',
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  key: function (req, file, cb) {
+    const userId = req.user.id;
+    const fileName = `${file.fieldname}${path.extname(file.originalname)}`;
+    const filePath = `cabs/${userId}/${fileName}`;
+    cb(null, filePath);
+  }
+});
+
+const upload = multer({ storage: ImageStorage, limits: { fileSize: 10 * 1024 * 1024 }  });
+const cabUpload = upload.fields([
+  { name: 'mParivahanFile', maxCount: 1 }
+]);
 
 const router = express.Router();
 
@@ -52,7 +74,7 @@ router.put('/fcm-token', authenticate, updateFcmToken);
 // Host Routes
 router.post("/add-driver", authenticate, addDriver);
 router.post("/assign-driver", authenticate, assignDriverToVehicle);
-router.post("/add-cab", authenticate, addCab);
+router.post("/add-cab", authenticate, cabUpload, addCab);
 router.get("/host/drivers", authenticate, getDriver);
 
 // Cab Booking Routes
@@ -71,6 +93,7 @@ router.post("/pay/bank-transfer", authenticate, confirmBankPayment);
 
 // Customer Tracking
 router.get("/track/:bookingId", authenticate, trackDriverLocation);
+router.get("/track/public/:bookingId", trackDriverLocationPublic);
 
 // Outstation Return-Trip Marketplace Routes
 router.post("/driver/return-trip", authenticate, createReturnTripListing);

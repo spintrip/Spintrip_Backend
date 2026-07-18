@@ -1,5 +1,5 @@
 const uuid = require("uuid");
-const { CabBookingRequest, User, CabBookingAccepted, Wallet, WalletTransaction, sequelize, Vehicle, Cab, VehicleAdditional, Driver, DriverAdditional, Tax, AgentWallet, AgentWalletTransaction, HostPayment, Subscriptions } = require("../Models");
+const { CabBookingRequest, User, UserAdditional, CabBookingAccepted, Wallet, WalletTransaction, sequelize, Vehicle, Cab, VehicleAdditional, Driver, DriverAdditional, Tax, AgentWallet, AgentWalletTransaction, HostPayment, Subscriptions } = require("../Models");
 const { Op } = require("sequelize");
 const socketManager = require("../Utils/socketManager");
 
@@ -25,7 +25,8 @@ const createAgentBooking = async (req, res) => {
     rentalHours,
     days,
     outstationDays,
-    isCorporate
+    isCorporate,
+    isRoundTrip
   } = req.body;
 
   const agentId = req.user.id; // Authenticated agent
@@ -33,6 +34,7 @@ const createAgentBooking = async (req, res) => {
 
   // We run this inside an atomic database transaction to prevent double spending
   const t = await sequelize.transaction();
+  let committed = false;
 
   try {
     if (!customerPhone || !pickupAddress || !pickupLat || !pickupLng || !bookingType) {
@@ -40,39 +42,69 @@ const createAgentBooking = async (req, res) => {
       return res.status(400).json({ message: "Missing required booking details." });
     }
 
-    // 1. Fetch or create AgentWallet for backward compatibility
-    let wallet = await AgentWallet.findOne({ where: { agentId }, transaction: t });
-    if (!wallet) {
-      wallet = await AgentWallet.create({
-        agentId,
-        balance: 100.0, // Pre-loaded with 100 coins balance
-        creditLimit: 5000.0,
-        outstandingCredit: 0.0,
-        escrowBalance: 0.0
-      }, { transaction: t });
-      console.log(`[AgentWallet] Initialized default trial wallet for Agent ${agentId}`);
-    }
+    // 1. Check free trial (first 2 broadcasts are free) vs active subscription requirements
+    const totalBookings = await CabBookingRequest.count({ where: { agentId }, transaction: t });
+    let broadcastsUsed = null;
+    let broadcastsRemaining = null;
 
-    // 2. Validate sufficient available balance + credit line
-    const availableCreditLine = wallet.creditLimit - wallet.outstandingCredit;
-    const totalAvailable = wallet.balance + availableCreditLine;
-
-    if (totalAvailable < fare) {
-      await t.rollback();
-      return res.status(400).json({ 
-        message: `Insufficient balance and credit line to create booking. Total available: ₹${totalAvailable.toFixed(2)} (Fare: ₹${fare.toFixed(2)})` 
+    if (totalBookings >= 2) {
+      // Must have an active subscription
+      const activeSub = await HostPayment.findOne({
+        where: {
+          HostId: agentId,
+          PlanEndDate: { [Op.gt]: new Date() }
+        },
+        order: [['PlanEndDate', 'DESC']],
+        transaction: t
       });
-    }
 
-    // 3. Deduct fare from wallet ledger
-    if (wallet.balance >= fare) {
-      wallet.balance -= fare;
+      if (!activeSub) {
+        await t.rollback();
+        return res.status(200).json({
+          success: false,
+          code: "SUBSCRIPTION_REQUIRED",
+          message: "You have used your 2 free broadcasts. Please subscribe to a plan to continue broadcasting bookings."
+        });
+      }
+
+      // Check if broadcasts limit exceeded
+      const plan = await Subscriptions.findOne({ where: { PlanType: activeSub.PlanType }, transaction: t });
+      const allowed = plan?.broadcasts ?? null;
+      
+      if (allowed !== null && (activeSub.broadcastsUsed || 0) >= allowed) {
+        await t.rollback();
+        return res.status(200).json({
+          success: false,
+          code: "LIMIT_EXCEEDED",
+          message: "You have reached the broadcast limit on your active subscription plan. Please upgrade your plan."
+        });
+      }
+
+      // Increment broadcastsUsed
+      activeSub.broadcastsUsed = (activeSub.broadcastsUsed || 0) + 1;
+      await activeSub.save({ transaction: t });
+      broadcastsUsed = activeSub.broadcastsUsed;
+      broadcastsRemaining = allowed !== null ? Math.max(0, allowed - broadcastsUsed) : null;
+      console.log(`[Broadcast] Incremented broadcastsUsed to ${broadcastsUsed} for Agent ${agentId} (Sub: ${activeSub.PaymentId})`);
     } else {
-      const remainingFare = fare - wallet.balance;
-      wallet.balance = 0.0;
-      wallet.outstandingCredit += remainingFare;
+      // Under free trial, but if they DO have an active subscription anyway, let's also increment it to keep track
+      const activeSub = await HostPayment.findOne({
+        where: {
+          HostId: agentId,
+          PlanEndDate: { [Op.gt]: new Date() }
+        },
+        order: [['PlanEndDate', 'DESC']],
+        transaction: t
+      });
+      if (activeSub) {
+        activeSub.broadcastsUsed = (activeSub.broadcastsUsed || 0) + 1;
+        await activeSub.save({ transaction: t });
+        const plan = await Subscriptions.findOne({ where: { PlanType: activeSub.PlanType }, transaction: t });
+        const allowed = plan?.broadcasts ?? null;
+        broadcastsUsed = activeSub.broadcastsUsed;
+        broadcastsRemaining = allowed !== null ? Math.max(0, allowed - broadcastsUsed) : null;
+      }
     }
-    await wallet.save({ transaction: t });
 
     // 4. Find or create the customer by phone number
     let customer = await User.findOne({ where: { phone: customerPhone }, transaction: t });
@@ -87,6 +119,21 @@ const createAgentBooking = async (req, res) => {
       console.log(`Created new customer account for phone ${customerPhone}`);
     }
 
+    // Now find or create UserAdditional profile for customerName
+    let profile = await UserAdditional.findOne({ where: { id: customer.id }, transaction: t });
+    if (!profile) {
+      profile = await UserAdditional.create({
+        id: customer.id,
+        FullName: customerName || "Customer",
+        verification_status: 1
+      }, { transaction: t });
+      console.log(`Created UserAdditional profile for user ${customer.id} with FullName ${customerName}`);
+    } else if (customerName && (!profile.FullName || profile.FullName === "Customer" || profile.FullName.trim() === "")) {
+      profile.FullName = customerName;
+      await profile.save({ transaction: t });
+      console.log(`Updated UserAdditional profile FullName to ${customerName} for user ${customer.id}`);
+    }
+
     const bookingId = uuid.v4();
     const rideOtp = Math.floor(1000 + Math.random() * 9000);
 
@@ -95,6 +142,8 @@ const createAgentBooking = async (req, res) => {
       bookingId,
       userId: customer.id, // Booked for this customer
       agentId: agentId,    // Created by this agent
+      passengerName: customerName || "Customer",
+      passengerPhone: customerPhone,
       date: date || new Date().toISOString().split('T')[0],
       time: time || new Date().toTimeString().split(' ')[0],
       startLocationLatitude: parseFloat(pickupLat),
@@ -115,46 +164,14 @@ const createAgentBooking = async (req, res) => {
       payToDriver: fare,
       hours: hours || rentalHours || 1,
       days: days || outstationDays || 1,
-      isCorporate: isCorporate === true || isCorporate === 'true' || false
-    }, { transaction: t });
-
-    // 6. Create Agent Wallet Transaction log
-    await AgentWalletTransaction.create({
-      walletId: wallet.id,
-      amount: -fare,
-      type: "payment",
-      referenceId: bookingId,
-      description: `Ride booking deduction for OTP: ${rideOtp}`
+      isCorporate: isCorporate === true || isCorporate === 'true' || false,
+      isRoundTrip: isRoundTrip !== false
     }, { transaction: t });
 
     console.log(`Created Agent Manual Booking ${bookingId} for customer ${customer.id}`);
 
     await t.commit();
-
-    // 7. Increment broadcastsUsed on the agent's active subscription (ALWAYS - even if no driver accepts)
-    let broadcastsUsed = null;
-    let broadcastsRemaining = null;
-    try {
-      const { HostPayment, Subscriptions } = require('../Models');
-      const activeSub = await HostPayment.findOne({
-        where: {
-          HostId: agentId,
-          PlanEndDate: { [require('sequelize').Op.gt]: new Date() }
-        },
-        order: [['PlanEndDate', 'DESC']]
-      });
-      if (activeSub) {
-        activeSub.broadcastsUsed = (activeSub.broadcastsUsed || 0) + 1;
-        await activeSub.save();
-        const plan = await Subscriptions.findOne({ where: { PlanType: activeSub.PlanType } });
-        const allowed = plan?.broadcasts ?? null;
-        broadcastsUsed = activeSub.broadcastsUsed;
-        broadcastsRemaining = allowed !== null ? Math.max(0, allowed - broadcastsUsed) : null;
-        console.log(`[Broadcast] Incremented broadcastsUsed to ${broadcastsUsed} for Agent ${agentId} (Sub: ${activeSub.PaymentId})`);
-      }
-    } catch (subErr) {
-      console.error('[Broadcast] Failed to increment broadcastsUsed:', subErr.message);
-    }
+    committed = true;
 
     // 8. Trigger Nearby Geofenced Broadcast via Sockets
     const pickupLocation = {
@@ -173,11 +190,6 @@ const createAgentBooking = async (req, res) => {
       message: "Booking created successfully and broadcasted to nearby drivers.",
       bookingId,
       otp: rideOtp,
-      wallet: {
-        balance: wallet.balance,
-        creditLimit: wallet.creditLimit,
-        outstandingCredit: wallet.outstandingCredit
-      },
       subscription: {
         broadcastsUsed,
         broadcastsRemaining
@@ -185,7 +197,9 @@ const createAgentBooking = async (req, res) => {
     });
 
   } catch (error) {
-    await t.rollback();
+    if (!committed) {
+      await t.rollback();
+    }
     console.error("Error creating agent booking:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -198,9 +212,12 @@ const getAgentPerformance = async (req, res) => {
   const agentId = req.user.id;
 
   try {
-    // 1. Fetch all bookings created by this agent
+    // 1. Fetch all bookings created by this agent (excluding cancelled ones)
     const bookings = await CabBookingRequest.findAll({
-      where: { agentId }
+      where: { 
+        agentId,
+        status: { [Op.ne]: 'cancelled' }
+      }
     });
 
     // 2. Compute performance metrics
@@ -374,6 +391,10 @@ const getAgentBookings = async (req, res) => {
         rcNumber: vehicle ? vehicle.Rcnumber : "Not Provided",
         userOtp: otpVal,
         transaction: (cab.paymentStatus && cab.paymentStatus.toLowerCase() === 'paid') ? { transactionId: cab.bookingId, status: 1 } : null,
+        bookingType: cab.bookingType,
+        isRoundTrip: cab.isRoundTrip,
+        days: cab.days,
+        hours: cab.hours,
         createdAt: cab.createdAt
       };
     }));

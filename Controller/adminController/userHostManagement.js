@@ -57,15 +57,27 @@ const getUserById = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const { UserAdditional, Host, HostAdditional, Driver, DriverAdditional } = require('../../Models');
+
     // Fetch the additional info separately
     const additionalInfo = await UserAdditional.findOne({
       where: { id: user.id }
     });
 
+    const hostData = await Host.findByPk(user.id);
+    const hostAdditional = await HostAdditional.findOne({ where: { id: user.id } });
+
+    const driverData = await Driver.findByPk(user.id);
+    const driverAdditional = await DriverAdditional.findOne({ where: { id: user.id } });
+
     res.status(200).json({
       user: {
         ...user.toJSON(),
         additionalInfo: additionalInfo ? additionalInfo.toJSON() : null,
+        host: hostData ? hostData.toJSON() : null,
+        hostAdditional: hostAdditional ? hostAdditional.toJSON() : null,
+        driver: driverData ? driverData.toJSON() : null,
+        driverAdditional: driverAdditional ? driverAdditional.toJSON() : null,
       }
     });
   } catch (error) {

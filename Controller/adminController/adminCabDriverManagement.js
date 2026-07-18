@@ -69,17 +69,20 @@ const getAllDrivers = async (req, res) => {
         // Frontend often expects basic properties flattened
         const formattedDrivers = drivers.map(d => {
             const json = d.toJSON();
-            const additionalInfo = json.DriverAdditional || json.User?.UserAdditional || {};
+            const dAdd = json.DriverAdditional || {};
+            const uAdd = json.User?.UserAdditional || {};
+            const additionalInfo = { ...uAdd, ...dAdd }; // Merge to preserve all fields, prioritizing DriverAdditional
             
-            json.name = additionalInfo.FullName || '--';
-            json.FullName = additionalInfo.FullName || '--';
+            json.name = dAdd.FullName || uAdd.FullName || '--';
+            json.FullName = dAdd.FullName || uAdd.FullName || '--';
             json.phone = json.User?.phone || '--';
-            json.verification_status = additionalInfo.verification_status || 0;
-            json.profilepic = additionalInfo.profilepic || null;
-            json.aadhar = additionalInfo.aadhar || null;
-            json.pan = additionalInfo.pan || null;
-            json.dl = additionalInfo.dl || null;
-            json.businessName = additionalInfo.businessName || '--';
+            json.verification_status = dAdd.verification_status !== undefined ? dAdd.verification_status : (uAdd.verification_status || 0);
+            json.profilepic = dAdd.profilepic || uAdd.profilepic || null;
+            json.aadhar = dAdd.aadhar || uAdd.aadhar || null;
+            json.pan = dAdd.pan || uAdd.pan || null;
+            json.dl = dAdd.dl || uAdd.dl || null;
+            json.mParivahan = json.Cab?.mParivahan || null;
+            json.businessName = dAdd.businessName || uAdd.businessName || '--';
             json.latitude = json.Cab?.Vehicle?.VehicleAdditional?.latitude || null;
             json.longitude = json.Cab?.Vehicle?.VehicleAdditional?.longitude || null;
             json.additionalInfo = additionalInfo; // Crucial for frontend mapping
