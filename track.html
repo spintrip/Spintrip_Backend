@@ -6,7 +6,7 @@
   <title>Live Ride Tracking - Spintrip</title>
   
   <!-- Premium Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -26,7 +26,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Montserrat', sans-serif;
     }
 
     body, html {
@@ -380,14 +380,7 @@
   <div class="tracking-card" id="tracking-panel">
     <div class="card-header">
       <div class="brand-logo">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="24" height="24" rx="6" fill="#f5bf0f"/>
-          <path d="M7 16H17V15.2C17 13.5431 15.6569 12.2 14 12.2H10C8.34315 12.2 7 13.5431 7 15.2V16Z" fill="black"/>
-          <circle cx="9" cy="18" r="1.5" fill="black"/>
-          <circle cx="15" cy="18" r="1.5" fill="black"/>
-          <path d="M12 5.5L8 9.5H16L12 5.5Z" fill="black"/>
-        </svg>
-        Spin<span>Trip</span>
+        <img src="/api/uploads/logo.png" alt="Spintrip Logo" style="height: 28px; width: auto; object-fit: contain;">
       </div>
       <span id="status-badge" class="status-badge pending">Locating</span>
     </div>
