@@ -143,6 +143,11 @@ db.sequelize.sync().then(() => {
 });
 
 
+// Default route
+app.get('/cab/track', (req, res) => {
+    res.sendFile(path.join(__dirname, 'track.html'));
+});
+
 app.get('/', (req, res) => {
     res.send(`
         <html>
