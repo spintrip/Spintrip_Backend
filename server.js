@@ -142,10 +142,6 @@ db.sequelize.sync().then(() => {
     // initCronJobs(); // Start background tasks
 });
 
-// Default route
-app.get('/api/track', (req, res) => {
-    res.sendFile(path.join(__dirname, 'track.html'));
-});
 
 app.get('/', (req, res) => {
     res.send(`

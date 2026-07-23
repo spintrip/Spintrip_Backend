@@ -92,6 +92,9 @@ router.post("/superhost/assign", authenticate, superhostAssignDriver);
 router.post("/pay/bank-transfer", authenticate, confirmBankPayment);
 
 // Customer Tracking
+router.get("/track", (req, res) => {
+  res.sendFile(require('path').join(__dirname, "../track.html"));
+});
 router.get("/track/:bookingId", authenticate, trackDriverLocation);
 router.get("/track/public/:bookingId", trackDriverLocationPublic);
 
