@@ -143,7 +143,7 @@ db.sequelize.sync().then(() => {
 });
 
 // Default route
-app.get('/track', (req, res) => {
+app.get('/api/track', (req, res) => {
     res.sendFile(path.join(__dirname, 'track.html'));
 });
 

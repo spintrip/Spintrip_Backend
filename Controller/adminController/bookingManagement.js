@@ -362,6 +362,7 @@ const getCabBookings = async (req, res) => {
         type: 'cab',
         bookingType: cab.bookingType || 'Local',
         days: cab.days || 1,
+        hours: cab.hours || 1,
         isRoundTrip: cab.isRoundTrip !== false,
         isCab: true
       };
