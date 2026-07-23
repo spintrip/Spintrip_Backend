@@ -63,7 +63,18 @@ logger.add(new winston.transports.Console({
 }));
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https://*.basemaps.cartocdn.com", "https://unpkg.com", "https://spintrip.in", "http://localhost:2000"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            connectSrc: ["'self'", "https://spintrip.in", "wss://spintrip.in", "http://localhost:2000", "ws://localhost:2000"],
+        },
+    },
+}));
 
 // Prevent aggressive browser/proxy caching on dynamic API endpoints
 app.use('/api', (req, res, next) => {
@@ -147,6 +158,7 @@ db.sequelize.sync().then(() => {
 app.get('/cab/track', (req, res) => {
     res.sendFile(path.join(__dirname, 'track.html'));
 });
+app.get('/cab/track/public/:bookingId', require('./Controller/cabController').trackDriverLocationPublic);
 
 app.get('/', (req, res) => {
     res.send(`
