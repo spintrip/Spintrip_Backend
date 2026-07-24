@@ -1261,6 +1261,15 @@ const checkBookingStatus = async (req, res) => {
       }
     }
 
+    const vehicle = booking.vehicleId ? await Vehicle.findOne({ where: { vehicleid: booking.vehicleId } }) : null;
+    let vehicleModel = booking.cabType || "Mini Cab";
+    if (vehicle) {
+      const cabData = await Cab.findOne({ where: { vehicleid: vehicle.vehicleid } });
+      if (cabData && cabData.brand) {
+        vehicleModel = cabData.brand.charAt(0).toUpperCase() + cabData.brand.slice(1).toLowerCase();
+      }
+    }
+
     res.status(200).json({ 
       status: booking.status, 
       tripOtp: booking.CabBookingAccepted?.tripOtp,
@@ -1280,6 +1289,8 @@ const checkBookingStatus = async (req, res) => {
         date: booking.date,
         time: booking.time,
         driver: cabDriver,
+        vehicleModel: vehicleModel,
+        vehicletype: "3",
         pickup: {
           latitude: booking.startLocationLatitude,
           longitude: booking.startLocationLongitude,
@@ -1481,7 +1492,10 @@ const trackDriverLocationPublic = async (req, res) => {
   const { bookingId } = req.params;
 
   try {
-    const booking = await CabBookingRequest.findOne({ where: { bookingId } });
+    const booking = await CabBookingRequest.findOne({ 
+      where: { bookingId },
+      include: [{ model: CabBookingAccepted, attributes: ["tripOtp"] }]
+    });
     if (!booking) {
       return res.status(404).json({ message: "Booking not found." });
     }
@@ -1507,6 +1521,8 @@ const trackDriverLocationPublic = async (req, res) => {
       status: booking.status,
       bookingType: booking.bookingType,
       cabType: booking.cabType,
+      startOtp: booking.otp || null,
+      endOtp: booking.CabBookingAccepted?.tripOtp || null,
       pickup: {
         address: booking.startLocationAddress,
         latitude: booking.startLocationLatitude,

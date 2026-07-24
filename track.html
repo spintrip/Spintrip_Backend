@@ -415,6 +415,22 @@
       </div>
     </div>
 
+    <!-- OTP Details -->
+    <div id="otp-section" class="otp-container" style="display: none; margin-top: 14px; padding: 12px 16px; background: #fff8e1; border: 1.5px dashed #ffe082; border-radius: 12px; text-align: center;">
+      <div style="font-size: 10px; font-weight: bold; color: #ff8f00; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px;">Trip Security OTPs</div>
+      <div style="display: flex; justify-content: space-around; align-items: center;">
+        <div>
+          <div style="font-size: 10px; color: #757575; font-weight: 500; margin-bottom: 2px;">Start OTP</div>
+          <div id="start-otp-val" style="font-size: 18px; font-weight: 700; color: #e65100; font-family: 'Montserrat', monospace; letter-spacing: 0.5px;">----</div>
+        </div>
+        <div style="width: 1px; height: 28px; background: #ffe082;"></div>
+        <div>
+          <div style="font-size: 10px; color: #757575; font-weight: 500; margin-bottom: 2px;">End OTP</div>
+          <div id="end-otp-val" style="font-size: 18px; font-weight: 700; color: #e65100; font-family: 'Montserrat', monospace; letter-spacing: 0.5px;">----</div>
+        </div>
+      </div>
+    </div>
+
     <div class="divider"></div>
 
     <a id="app-deep-link" class="action-btn" href="#">
@@ -481,6 +497,7 @@
         document.getElementById('pickup-addr').textContent = data.pickup.address || 'Pickup Point';
         document.getElementById('drop-addr').textContent = data.destination.address || 'Drop Point';
         updateStatusDisplay(data.status);
+        updateOtpDisplay(data.startOtp, data.endOtp);
 
         // Initialize Map
         const centerLat = data.pickup.latitude || 12.9716;
@@ -573,6 +590,7 @@
         const data = await response.json();
         
         updateStatusDisplay(data.status);
+        updateOtpDisplay(data.startOtp, data.endOtp);
 
         if (data.driverLocation) {
           const newPos = [data.driverLocation.latitude, data.driverLocation.longitude];
@@ -638,6 +656,20 @@
         default:
           badge.textContent = status || 'Confirmed';
           badge.className = 'status-badge active';
+      }
+    }
+
+    function updateOtpDisplay(startOtp, endOtp) {
+      const section = document.getElementById('otp-section');
+      const startVal = document.getElementById('start-otp-val');
+      const endVal = document.getElementById('end-otp-val');
+      
+      if (startOtp || endOtp) {
+        section.style.display = 'block';
+        startVal.textContent = startOtp || '----';
+        endVal.textContent = endOtp || '----';
+      } else {
+        section.style.display = 'none';
       }
     }
   </script>
